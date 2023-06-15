@@ -15,18 +15,10 @@ all:
 issue:  set
 	cp --remove-destination Watchy*.bin release
 
-set:	solo wroom pico
+set:	watchy
 
-pico:
+watchy:
 	components/ESP32-RevK/setbuildsuffix -S1-PICO
-	@make
-
-wroom:
-	components/ESP32-RevK/setbuildsuffix -S1
-	@make
-
-solo:
-	components/ESP32-RevK/setbuildsuffix -S1-SOLO
 	@make
 
 flash:
