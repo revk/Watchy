@@ -1,5 +1,7 @@
 # Watchy code by RevK
 
+<img align=right width=25% src='Manuals/face.jpg'>
+
 This is planned to be code for the SQFMI Watchy product - it is a work in progress.
 
 - [x] Base build and flash
