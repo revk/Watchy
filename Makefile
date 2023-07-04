@@ -18,7 +18,7 @@ issue:  set
 set:	watchy
 
 watchy:
-	components/ESP32-RevK/setbuildsuffix -S1-PICO
+	components/ESP32-RevK/setbuildsuffix -S1-SOLO
 	@make
 
 flash:
