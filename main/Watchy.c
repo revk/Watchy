@@ -62,7 +62,7 @@ settings
 #undef b
 #undef s
 const char *
-gfx_qr (const char *value)
+gfx_qr (uint8_t mode, const char *value)
 {
 #ifndef CONFIG_GFX_NONE
    int W = gfx_width ();
@@ -84,7 +84,7 @@ gfx_qr (const char *value)
                   for (int dx = 0; dx < s; dx++)
                      gfx_pixel (ox + x * s + dx, oy + y * s + dy, 0xFF);
    }
-   gfx_unlock ();
+   gfx_unlock (mode);
    if (!qr)
       return "QR failed";
    free (qr);
@@ -143,7 +143,7 @@ app_main ()
       ESP_LOGI (TAG, "Start E-paper");
     const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height:200);
       if (!e)
-         e = gfx_qr ("HTTPS://WATCHY.REVK.UK");
+         e = gfx_qr (0, "HTTPS://WATCHY.REVK.UK");
       if (e)
       {
          ESP_LOGE (TAG, "gfx %s", e);
@@ -152,6 +152,18 @@ app_main ()
          jo_string (j, "description", e);
          revk_error ("gfx", &j);
       }
+   }
+   sleep(2);
+   // Dummy code
+   while (1)
+   {
+      char temp[30];
+      time_t now = time (0);
+      struct tm t;
+      localtime_r (&now, &t);
+      strftime (temp, sizeof (temp), "%F %T %Z", &t);
+      gfx_qr (1, temp);
+      sleep (60 - t.tm_sec);
    }
 
 }
