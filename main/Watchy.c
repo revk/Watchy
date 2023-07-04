@@ -16,7 +16,6 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #define settings                \
 	ioa(button,4,"26,25,35,4")	\
 	io(ss,5)	\
-	io(cs,)		\
 	io(dc,10)	\
 	io(res,9)	\
 	io(sck,18)	\
@@ -144,7 +143,8 @@ app_main ()
       revk_start ();
    if (mosi || dc || sck)
    {        
-    const char *e = gfx_init(port: HSPI_HOST, cs: port_mask(cs), sck: port_mask(sck), mosi: port_mask(mosi), dc: port_mask(dc), rst: port_mask(res), busy: port_mask(busy), flip:flip);
+	   ESP_LOGI(TAG,"Start E-paper");
+    const char *e = gfx_init(port: HSPI_HOST, sck: port_mask(sck), mosi: port_mask(mosi), dc: port_mask(dc), rst: port_mask(res), busy: port_mask(busy), flip:flip);
       if (e)
       {  
          ESP_LOGE(TAG, "gfx %s", e); 
@@ -153,7 +153,7 @@ app_main ()
          jo_string(j, "description", e);
          revk_error("gfx", &j);
       } else
-         gfx_qr("HTTPS://GENERIC.REVK.UK");
+         gfx_qr("HTTPS://WATCHY.REVK.UK");
    }    
 
 
