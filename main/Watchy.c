@@ -45,7 +45,7 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #define s(n,d) char * n;
 #define io(n,d)           uint8_t n;
 #define ioa(n,a,d)      uint8_t n[a];
-settings                        
+settings
 #undef ioa
 #undef io
 #undef u32
@@ -61,37 +61,35 @@ settings
 #undef u8l
 #undef b
 #undef s
-
-const char *gfx_qr(const char *value)
+const char *
+gfx_qr (const char *value)
 {
 #ifndef CONFIG_GFX_NONE
+   int W = gfx_width ();
+   int H = gfx_height ();
    unsigned int width = 0;
- uint8_t *qr = qr_encode(strlen(value), value, widthp: &width, noquiet:1);
-   if (!qr)
-      return "Failed to encode";
-   if (!width || width > CONFIG_GFX_WIDTH)
+   gfx_lock ();
+   gfx_clear (0);
+ uint8_t *qr = qr_encode (strlen (value), value, widthp: &width, noquiet:1);
+   if (qr && width <= W && width <= H)
    {
-      free(qr);
-      return "Too wide";
+      const int w = W > H ? H : W;
+      int s = w / width;
+      int ox = (W - width * s) / 2;
+      int oy = (H - width * s) / 2;
+      for (int y = 0; y < width; y++)
+         for (int x = 0; x < width; x++)
+            if (qr[width * y + x] & QR_TAG_BLACK)
+               for (int dy = 0; dy < s; dy++)
+                  for (int dx = 0; dx < s; dx++)
+                     gfx_pixel (ox + x * s + dx, oy + y * s + dy, 0xFF);
    }
-   gfx_lock();
-   gfx_clear(0);
-#if CONFIG_GFX_WIDTH > CONFIG_GFX_HEIGH
-   const int w = CONFIG_GFX_HEIGHT;
-#else
-   const int w = CONFIG_GFX_WIDTH;
-#endif
-   int s = w / width;
-   int ox = (CONFIG_GFX_WIDTH - width * s) / 2;
-   int oy = (CONFIG_GFX_HEIGHT - width * s) / 2;
-   for (int y = 0; y < width; y++)
-      for (int x = 0; x < width; x++)
-         if (qr[width * y + x] & QR_TAG_BLACK)
-            for (int dy = 0; dy < s; dy++)
-               for (int dx = 0; dx < s; dx++)
-                  gfx_pixel(ox + x * s + dx, oy + y * s + dy, 0xFF);
-   gfx_unlock();
-   free(qr);
+   gfx_unlock ();
+   if (!qr)
+      return "QR failed";
+   free (qr);
+   if (width > W || width>H)
+      return "Too big";
 #endif
    return NULL;
 }
@@ -101,7 +99,7 @@ app_callback (int client, const char *prefix, const char *target, const char *su
 {
    if (client || !prefix || target || strcmp (prefix, prefixcommand))
       return NULL;              // Not for us or not a command from main MQTT
-				return NULL;
+   return NULL;
 }
 
 void
@@ -123,7 +121,7 @@ app_main ()
 #define s16r(n,d) revk_register(#n,0,sizeof(n),&n,#d,0); revk_register("ring"#n,0,sizeof(ring##n),&ring##n,#d,SETTING_SIGNED);
 #define u8l(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_LIVE);
 #define s(n,d) revk_register(#n,0,0,&n,#d,0);
-   settings                     
+   settings
 #undef io
 #undef ioa
 #undef u32
@@ -141,19 +139,19 @@ app_main ()
 #undef s
       revk_start ();
    if (mosi || dc || sck)
-   {        
-	   ESP_LOGI(TAG,"Start E-paper");
-    const char *e = gfx_init(sck: port_mask(sck), mosi: port_mask(mosi), dc: port_mask(dc), rst: port_mask(res), busy: port_mask(busy), flip:flip);
+   {
+      ESP_LOGI (TAG, "Start E-paper");
+    const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height:200);
+      if (!e)
+         e = gfx_qr ("HTTPS://WATCHY.REVK.UK");
       if (e)
-      {  
-         ESP_LOGE(TAG, "gfx %s", e); 
-         jo_t j = jo_object_alloc();
-         jo_string(j, "error", "Failed to start");
-         jo_string(j, "description", e);
-         revk_error("gfx", &j);
-      } else
-         gfx_qr("HTTPS://WATCHY.REVK.UK");
-   }    
-
+      {
+         ESP_LOGE (TAG, "gfx %s", e);
+         jo_t j = jo_object_alloc ();
+         jo_string (j, "error", "Failed to start");
+         jo_string (j, "description", e);
+         revk_error ("gfx", &j);
+      }
+   }
 
 }
