@@ -153,7 +153,7 @@ app_main ()
          revk_error ("gfx", &j);
       }
    }
-   sleep(2);
+   sleep(5);
    // Dummy code
    while (1)
    {
@@ -162,7 +162,7 @@ app_main ()
       struct tm t;
       localtime_r (&now, &t);
       strftime (temp, sizeof (temp), "%F %T %Z", &t);
-      gfx_qr (1, temp);
+      gfx_qr (t.tm_min?1:0, temp);
       sleep (60 - t.tm_sec);
    }
 
