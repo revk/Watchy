@@ -8,11 +8,15 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #include "esp_task_wdt.h"
 #include <driver/gpio.h>
 #include <driver/uart.h>
+#include <hal/spi_types.h>
+#include "gfx.h"
+#include "iec18004.h"
 
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
 	ioa(button,4,"26,25,35,4")	\
 	io(ss,5)	\
+	io(cs,)		\
 	io(dc,10)	\
 	io(res,9)	\
 	io(sck,18)	\
@@ -25,8 +29,9 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 	io(accint2,12)	\
 	io(accint1,14)	\
 	io(busy,19)	\
+	u8(flip,0)	\
 
-
+#define	port_mask(x)	((x)&0x7F)
 #define u32(n,d)        uint32_t n;
 #define u32l(n,d)        uint32_t n;
 #define s8(n,d) int8_t n;
@@ -58,6 +63,40 @@ settings
 #undef u8l
 #undef b
 #undef s
+
+const char *gfx_qr(const char *value)
+{
+#ifndef CONFIG_GFX_NONE
+   unsigned int width = 0;
+ uint8_t *qr = qr_encode(strlen(value), value, widthp: &width, noquiet:1);
+   if (!qr)
+      return "Failed to encode";
+   if (!width || width > CONFIG_GFX_WIDTH)
+   {
+      free(qr);
+      return "Too wide";
+   }
+   gfx_lock();
+   gfx_clear(0);
+#if CONFIG_GFX_WIDTH > CONFIG_GFX_HEIGH
+   const int w = CONFIG_GFX_HEIGHT;
+#else
+   const int w = CONFIG_GFX_WIDTH;
+#endif
+   int s = w / width;
+   int ox = (CONFIG_GFX_WIDTH - width * s) / 2;
+   int oy = (CONFIG_GFX_HEIGHT - width * s) / 2;
+   for (int y = 0; y < width; y++)
+      for (int x = 0; x < width; x++)
+         if (qr[width * y + x] & QR_TAG_BLACK)
+            for (int dy = 0; dy < s; dy++)
+               for (int dx = 0; dx < s; dx++)
+                  gfx_pixel(ox + x * s + dx, oy + y * s + dy, 0xFF);
+   gfx_unlock();
+   free(qr);
+#endif
+   return NULL;
+}
 
 const char *
 app_callback (int client, const char *prefix, const char *target, const char *suffix, jo_t j)
@@ -103,4 +142,19 @@ app_main ()
 #undef b
 #undef s
       revk_start ();
+   if (mosi || dc || sck)
+   {        
+    const char *e = gfx_init(port: HSPI_HOST, cs: port_mask(cs), sck: port_mask(sck), mosi: port_mask(mosi), dc: port_mask(dc), rst: port_mask(res), busy: port_mask(busy), flip:flip);
+      if (e)
+      {  
+         ESP_LOGE(TAG, "gfx %s", e); 
+         jo_t j = jo_object_alloc();
+         jo_string(j, "error", "Failed to start");
+         jo_string(j, "description", e);
+         revk_error("gfx", &j);
+      } else
+         gfx_qr("HTTPS://GENERIC.REVK.UK");
+   }    
+
+
 }
