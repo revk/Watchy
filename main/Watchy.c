@@ -88,7 +88,7 @@ gfx_qr (const char *value)
    if (!qr)
       return "QR failed";
    free (qr);
-   if (width > W || width>H)
+   if (width > W || width > H)
       return "Too big";
 #endif
    return NULL;
@@ -142,7 +142,6 @@ app_main ()
    {
       ESP_LOGI (TAG, "Start E-paper");
     const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height:200);
-    sleep(10);
       if (!e)
          e = gfx_qr ("HTTPS://WATCHY.REVK.UK");
       if (e)
