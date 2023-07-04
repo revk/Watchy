@@ -141,6 +141,7 @@ app_main ()
 #undef b
 #undef s
       revk_start ();
+	   ESP_LOGI(TAG,"Watchy start %X %X %X",mosi,dc,sck);
    if (mosi || dc || sck)
    {        
 	   ESP_LOGI(TAG,"Start E-paper");
