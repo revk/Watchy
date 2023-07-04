@@ -18,7 +18,7 @@ issue:  set
 set:	watchy
 
 watchy:
-	components/ESP32-RevK/setbuildsuffix -S1-SOLO-V0-SSD1681-D4
+	components/ESP32-RevK/setbuildsuffix -S1-V0-SSD1681-D4
 	@make
 
 flash:
