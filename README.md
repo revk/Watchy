@@ -2,11 +2,11 @@
 
 This is planned to be code for the SQFMI Watchy product - it is a work in progress.
 
-- [ ] Base build and flash
-- [ ] OTA
+- [x] Base build and flash
+- [x] OTA
 - [ ] Battery level reading
 - [ ] Buttons
-- [ ] OLED display
+- [x] OLED display
 - [ ] OLED soft/partial updates (e.g. for 7 seg digits)
 - [ ] OLED sleep mode control
 - [ ] Accelerometer
