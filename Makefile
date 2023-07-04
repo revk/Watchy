@@ -9,16 +9,16 @@ SUFFIX := $(shell components/ESP32-RevK/buildsuffix)
 all:
 	@echo Make: build/$(PROJECT_NAME)$(SUFFIX).bin
 	@idf.py build
-	@cp --remove-destination build/$(PROJECT_NAME).bin $(PROJECT_NAME)$(SUFFIX).bin
+	@cp build/$(PROJECT_NAME).bin $(PROJECT_NAME)$(SUFFIX).bin
 	@echo Done: build/$(PROJECT_NAME)$(SUFFIX).bin
 
 issue:  set
-	cp --remove-destination Watchy*.bin release
+	cp Watchy*.bin release
 
 set:	watchy
 
 watchy:
-	components/ESP32-RevK/setbuildsuffix -S1-SOLO
+	components/ESP32-RevK/setbuildsuffix -S1-SOLO-V0
 	@make
 
 flash:
