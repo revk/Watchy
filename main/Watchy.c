@@ -8,7 +8,6 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #include "esp_task_wdt.h"
 #include <driver/gpio.h>
 #include <driver/uart.h>
-#include <hal/spi_types.h>
 #include "gfx.h"
 #include "iec18004.h"
 
@@ -141,11 +140,10 @@ app_main ()
 #undef b
 #undef s
       revk_start ();
-	   ESP_LOGI(TAG,"Watchy start %X %X %X",mosi,dc,sck);
    if (mosi || dc || sck)
    {        
 	   ESP_LOGI(TAG,"Start E-paper");
-    const char *e = gfx_init(port: HSPI_HOST, sck: port_mask(sck), mosi: port_mask(mosi), dc: port_mask(dc), rst: port_mask(res), busy: port_mask(busy), flip:flip);
+    const char *e = gfx_init(sck: port_mask(sck), mosi: port_mask(mosi), dc: port_mask(dc), rst: port_mask(res), busy: port_mask(busy), flip:flip);
       if (e)
       {  
          ESP_LOGE(TAG, "gfx %s", e); 
