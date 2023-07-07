@@ -62,7 +62,7 @@ settings
 #undef b
 #undef s
 const char *
-gfx_qr (uint8_t mode, const char *value)
+gfx_qr (const char *value)
 {
 #ifndef CONFIG_GFX_NONE
    int W = gfx_width ();
@@ -84,7 +84,7 @@ gfx_qr (uint8_t mode, const char *value)
                   for (int dx = 0; dx < s; dx++)
                      gfx_pixel (ox + x * s + dx, oy + y * s + dy, 0xFF);
    }
-   gfx_unlock (mode);
+   gfx_unlock ();
    if (!qr)
       return "QR failed";
    free (qr);
@@ -141,9 +141,14 @@ app_main ()
    if (mosi || dc || sck)
    {
       ESP_LOGI (TAG, "Start E-paper");
-    const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height:200);
+    const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height:200,partial:1,mode2:1,sleep:1);
+   //gfx_lock (); // TODO we need gfx_refresh really
+   //gfx_clear (0);
+   //gfx_unlock ();
+   //gfx_wait();
+   //gfx_refresh();
       if (!e)
-         e = gfx_qr (0, "HTTPS://WATCHY.REVK.UK");
+         e = gfx_qr ("HTTPS://WATCHY.REVK.UK");
       if (e)
       {
          ESP_LOGE (TAG, "gfx %s", e);
@@ -162,7 +167,7 @@ app_main ()
       struct tm t;
       localtime_r (&now, &t);
       strftime (temp, sizeof (temp), "%F %T %Z", &t);
-      gfx_qr (t.tm_min?1:0, temp);
+      gfx_qr (temp);
       sleep (60 - t.tm_sec);
    }
 
