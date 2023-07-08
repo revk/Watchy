@@ -123,7 +123,7 @@ app_main ()
    if (mosi || dc || sck)
    {
       ESP_LOGI (TAG, "Start E-paper");
-    const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: 1); // , norefresh:wakeup);
+    const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: 1 , norefresh:wakeup);
       if (e)
       {
          ESP_LOGE (TAG, "gfx %s", e);
@@ -139,7 +139,7 @@ app_main ()
    gpio_pulldown_en (rx);
 
    ESP_LOGI (TAG, "Wait Time");
-   while (time (0) < 300)
+   while (time (0) < 30)
       sleep (1);                // TODO use RTC
 
    ESP_LOGI (TAG, "Main loop");
