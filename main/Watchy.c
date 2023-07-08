@@ -141,12 +141,12 @@ app_main ()
    if (mosi || dc || sck)
    {
       ESP_LOGI (TAG, "Start E-paper");
-    const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height:200,partial:1,mode2:1,sleep:1);
-   //gfx_lock (); // TODO we need gfx_refresh really
-   //gfx_clear (0);
-   //gfx_unlock ();
-   //gfx_wait();
-   //gfx_refresh();
+    const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep:1);
+      //gfx_lock (); // TODO we need gfx_refresh really
+      //gfx_clear (0);
+      //gfx_unlock ();
+      //gfx_wait();
+      //gfx_refresh();
       if (!e)
          e = gfx_qr ("HTTPS://WATCHY.REVK.UK");
       if (e)
@@ -158,7 +158,7 @@ app_main ()
          revk_error ("gfx", &j);
       }
    }
-   sleep(5);
+   sleep (5);
    // Dummy code
    while (1)
    {
@@ -166,13 +166,19 @@ app_main ()
       time_t now = time (0);
       struct tm t;
       localtime_r (&now, &t);
+      gfx_lock ();
+      gfx_clear (0);
+      gfx_pos (100, 0, GFX_C | GFX_T | GFX_H);
       strftime (temp, sizeof (temp), "%H:%M", &t);
-      gfx_lock();
-      gfx_clear(0);
-      gfx_7seg(5,"%s",temp);
-      gfx_unlock();
-
-      sleep (60 - t.tm_sec);
+      gfx_7seg (8, "%s", temp);
+      strftime (temp, sizeof (temp), "%F", &t);
+      gfx_pos (100, 100, GFX_C | GFX_M | GFX_V);
+      gfx_7seg (3, "%s", temp);
+      strftime (temp, sizeof (temp), "%a", &t);
+      gfx_pos (100, 199, GFX_C | GFX_B );
+      gfx_text (4, "%s", temp);
+      gfx_unlock ();
+      sleep (60-t.tm_sec);
    }
 
 }
