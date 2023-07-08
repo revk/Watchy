@@ -15,8 +15,12 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 - [x] RTC
 - [x] Low power mode
 - [x] Low power with buttons
-- [ ] Watch face design
+- [ ] Finish basic watch face design
+- [ ] Analogue watch face design
+- [ ] At least one other fun watch face design - ideas welcome
 - [ ] Basic menus
 - [ ] Vibration motor
 - [ ] Alarm clock
 - [ ] Time zone select
+- [ ] OTA via menu
+- [ ] Sleep hold off during OTA!
