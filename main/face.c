@@ -49,29 +49,31 @@ face_init (void)
    gfx_unlock ();
 }
 
-typedef void face_t(struct tm*);
+typedef void face_t (struct tm *);
 #define face(name,description)	extern face_t face_##name;
 #include "faces.m"
-face_t* const faces[]={
+face_t *const faces[] = {
 #define face(name,description)	&face_##name,
 #include "faces.m"
 };
 
-extern uint8_t face; // Face number
-void face_show (struct tm *t)
-		{
-			if(face>=sizeof(faces)/sizeof(*faces))face=0;
+extern uint8_t face;            // Face number
+void
+face_show (struct tm *t)
+{
+   if (face >= sizeof (faces) / sizeof (*faces))
+      face = 0;
    gfx_lock ();
    gfx_clear (0);
-   faces[face](t);
+   faces[face] (t);
    gfx_unlock ();
-   gfx_wait();
+   gfx_wait ();
 
-		}
+}
 
 void
 face_basic (struct tm *t)
-{  // Basic face
+{                               // Basic face
    char temp[30];
    gfx_pos (100, 0, GFX_C | GFX_T | GFX_H);
    strftime (temp, sizeof (temp), "%H:%M", t);
