@@ -29,6 +29,8 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 	io(busy,19)	\
 	u8(flip,0)	\
 
+#define	tx	1
+#define	rx	3
 #define	port_mask(x)	((x)&0x7F)
 #define u32(n,d)        uint32_t n;
 #define u32l(n,d)        uint32_t n;
@@ -74,7 +76,7 @@ app_main ()
 {
    revk_boot (&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
-#define ioa(n,a,d)           revk_register(#n,a,sizeof(n),&n,"- "d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
+#define ioa(n,a,d)           revk_register(#n,a,sizeof(*n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
 #define b(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN);
 #define u32(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
 #define u32l(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_LIVE);
@@ -121,18 +123,21 @@ app_main ()
       }
    }
    gfx_wait ();
+   // Buttons
    for (int b = 0; b < 4; b++)
       if (button[b])
       {
-	      ESP_LOGI(TAG,"Button %d: %d",b+1,port_mask(button[b]));
          gpio_reset_pin (port_mask (button[b]));
          gpio_set_direction (port_mask (button[b]), GPIO_MODE_INPUT);
       }
+   // Charging
+   gpio_pullup_dis(rx);	// Used to detect the UART is down, and hence no VBUS and hence not charging.
+   gpio_pulldown_en(rx);
 
    while (1)
    {
       jo_t j = jo_object_alloc ();
-      jo_bool (j, "gpio3", gpio_get_level (3));
+      jo_bool (j, "charging", gpio_get_level (rx));
       jo_bool (j, "btn1", port_mask (button[0]));
       jo_bool (j, "btn2", port_mask (button[1]));
       jo_bool (j, "btn3", port_mask (button[2]));
