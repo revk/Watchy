@@ -176,7 +176,7 @@ app_main ()
       gfx_7seg (3, "%s", temp);
       strftime (temp, sizeof (temp), "%a", &t);
       gfx_pos (100, 199, GFX_C | GFX_B );
-      gfx_text (4, "%s", temp);
+      gfx_text (4, "%s", "Standing");
       gfx_unlock ();
       sleep (60-t.tm_sec);
    }
