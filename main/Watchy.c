@@ -8,6 +8,7 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #include "esp_task_wdt.h"
 #include <driver/gpio.h>
 #include <driver/uart.h>
+#include <driver/rtc_io.h>
 #include "gfx.h"
 #include "face.h"
 
@@ -149,5 +150,10 @@ app_main ()
       face_time (&t);
       sleep (60 - t.tm_sec);
    }
-
+   // Go to sleep... TODO
+  for (int b = 0; b < 4; b++)
+  {
+	 rtc_gpio_wakeup_enable(port_mask (button[b]),GPIO_INTR_ANYEDGE);
+	 rtc_gpio_isolate(port_mask (button[b]));
+  }
 }
