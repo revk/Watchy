@@ -84,6 +84,8 @@ ertc_write (struct tm *t)
 {
    if (!t)
       return ESP_FAIL;
+   time_t now;
+          gmtime_r(t,&now); // Store UTC
    uint8_t S,
      M,
      H,
