@@ -10,7 +10,10 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #include <driver/uart.h>
 #include <driver/rtc_io.h>
 #include "gfx.h"
-#include "face.h"
+
+const char * gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t scale); // QR
+void face_init(void);   // Cold start up watch face
+void face_show(struct tm*);     // Show current time
 
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
@@ -29,6 +32,7 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 	io(accint1,14)	\
 	io(busy,19)	\
 	u8(flip,0)	\
+	u8(face,0)	\
 
 #define	tx	1
 #define	rx	3
@@ -148,7 +152,7 @@ app_main ()
       time_t now = time (0);
       struct tm t;
       localtime_r (&now, &t);
-      face_time (&t);
+      face_show (&t);
       gfx_wait ();
       if (!gpio_get_level (rx))
       {                         // Time to sleep (TODO keep awake for other reasons - menus - etc)
