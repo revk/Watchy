@@ -169,8 +169,8 @@ app_main ()
    struct tm t;
    if (ertc_read (&t))
       ESP_LOGE (TAG, "RTC read fail");
-   else if (wakeup) // && !gpio_get_level (rx))
-   {                            // Fast display - TODO menu
+   else if (wakeup&&t.tm_min) // && !gpio_get_level (rx))
+   {                            // Fast display - TODO menu and other reasons to go on to WiFi
       face_show (&t);
       night (&t);
    }
@@ -178,9 +178,8 @@ app_main ()
    revk_start ();
 
    ESP_LOGI (TAG, "Wait Time");
-   while (time (0) < 120)
-      sleep (1);                // TODO use RTC
-
+   while (time (0) < 30)
+      sleep (1);     
 
    ESP_LOGI (TAG, "Main loop");
    while (1)
