@@ -144,14 +144,6 @@ app_main ()
 
    while (1)
    {
-      jo_t j = jo_object_alloc ();
-      jo_bool (j, "charging", gpio_get_level (rx));
-      jo_bool (j, "btn1", port_mask (button[0]));
-      jo_bool (j, "btn2", port_mask (button[1]));
-      jo_bool (j, "btn3", port_mask (button[2]));
-      jo_bool (j, "btn4", port_mask (button[3]));
-      jo_int (j, "reset", esp_reset_reason ());
-      revk_info ("watchy", &j);
       time_t now = time (0);
       struct tm t;
       localtime_r (&now, &t);
