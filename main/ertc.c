@@ -84,8 +84,9 @@ ertc_write (struct tm *t)
 {
    if (!t)
       return ESP_FAIL;
-   time_t now;
-          gmtime_r(t,&now); // Store UTC
+   time_t now = mktime (t);
+   gmtime_r (&now, t);          // Store UTC
+   ESP_LOGI (TAG, "DST %d %lld", t->tm_isdst, now);
    uint8_t S,
      M,
      H,

@@ -169,7 +169,7 @@ app_main ()
    struct tm t;
    if (ertc_read (&t))
       ESP_LOGE (TAG, "RTC read fail");
-   else if (wakeup && !gpio_get_level (rx))
+   else if (wakeup) // && !gpio_get_level (rx))
    {                            // Fast display - TODO menu
       face_show (&t);
       night (&t);
