@@ -62,14 +62,12 @@ settings
 #undef b
 #undef s
 const char *
-gfx_qr (const char *value)
+gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t scale)
 {
 #ifndef CONFIG_GFX_NONE
    int W = gfx_width ();
    int H = gfx_height ();
    unsigned int width = 0;
-   gfx_lock ();
-   gfx_clear (0);
  uint8_t *qr = qr_encode (strlen (value), value, widthp: &width, noquiet:1);
    if (qr && width <= W && width <= H)
    {
@@ -77,6 +75,12 @@ gfx_qr (const char *value)
       int s = w / width;
       int ox = (W - width * s) / 2;
       int oy = (H - width * s) / 2;
+      if (scale)
+      {
+         ox = posx;
+         oy = posy + 1 - width * scale;
+         s = scale;
+      }
       for (int y = 0; y < width; y++)
          for (int x = 0; x < width; x++)
             if (qr[width * y + x] & QR_TAG_BLACK)
@@ -84,7 +88,6 @@ gfx_qr (const char *value)
                   for (int dx = 0; dx < s; dx++)
                      gfx_pixel (ox + x * s + dx, oy + y * s + dy, 0xFF);
    }
-   gfx_unlock ();
    if (!qr)
       return "QR failed";
    free (qr);
@@ -148,7 +151,12 @@ app_main ()
       //gfx_wait();
       //gfx_refresh();
       if (!e)
-         e = gfx_qr ("HTTPS://WATCHY.REVK.UK");
+      {
+         gfx_lock ();
+         gfx_clear (0);
+         e = gfx_qr ("HTTPS://WATCHY.REVK.UK", 0, 0, 0);
+         gfx_unlock ();
+      }
       if (e)
       {
          ESP_LOGE (TAG, "gfx %s", e);
@@ -172,13 +180,15 @@ app_main ()
       strftime (temp, sizeof (temp), "%H:%M", &t);
       gfx_7seg (8, "%s", temp);
       strftime (temp, sizeof (temp), "%F", &t);
-      gfx_pos (100, 100, GFX_C | GFX_M | GFX_V);
+      gfx_pos (100, 90, GFX_C | GFX_T | GFX_V);
       gfx_7seg (3, "%s", temp);
+      strftime (temp, sizeof (temp), "%FT%H:%M%z", &t);
+      gfx_qr (temp, 0, 199, 2);
       strftime (temp, sizeof (temp), "%a", &t);
-      gfx_pos (100, 199, GFX_C | GFX_B );
-      gfx_text (4, "%s", temp);
+      gfx_pos (199, 199, GFX_R | GFX_B);
+      gfx_text (-4, "%s", temp);
       gfx_unlock ();
-      sleep (60-t.tm_sec);
+      sleep (60 - t.tm_sec);
    }
 
 }
