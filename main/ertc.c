@@ -70,7 +70,7 @@ ertc_read (struct tm *t)
    t->tm_min = ((M & 0x70) >> 4) * 10 + (M & 0xF);
    t->tm_hour = ((H & 0x30) >> 4) * 10 + (H & 0xF);
    t->tm_mday = ((d & 0x70) >> 4) * 10 + (d & 0xF);
-   t->tm_mon = ((m & 0x10) >> 4) * 10 + (m & 0xF);
+   t->tm_mon = ((m & 0x10) >> 4) * 10 + (m & 0xF) - 1;
    t->tm_year = (m >> 7) * 100 + ((y & 0xF0) >> 4) * 10 + (y & 0xF);
    t->tm_isdst = 0;             // UTC in RTC
    mktime (t);
