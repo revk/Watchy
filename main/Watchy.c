@@ -76,7 +76,7 @@ void
 app_main ()
 {
    uint8_t wakeup = esp_reset_reason ();
-   wakeup = ((wakeup == ESP_RST_DEEPSLEEP || wakeup == ESP_RST_SW) ? 1 : 0); // Does not seem to say DEEP SLEEP, FFS
+   wakeup = ((wakeup == ESP_RST_DEEPSLEEP || wakeup == ESP_RST_SW) ? 1 : 0);    // Does not seem to say DEEP SLEEP, FFS
    revk_boot (&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
 #define ioa(n,a,d)           revk_register(#n,a,sizeof(*n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
@@ -118,7 +118,6 @@ app_main ()
          gpio_pullup_dis (port_mask (button[b]));
          // TODO read state
       }
-
    revk_start ();
    ESP_LOGI (TAG, "wakeup=%d reason=%d", wakeup, esp_reset_reason ());
    if (mosi || dc || sck)
