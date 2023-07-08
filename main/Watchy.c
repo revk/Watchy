@@ -161,8 +161,8 @@ app_main ()
          ESP_LOGI (TAG, "Night night");
          for (int b = 0; b < 4; b++)
          {
-            rtc_gpio_wakeup_enable (port_mask (button[b]), GPIO_INTR_ANYEDGE);
             rtc_gpio_isolate (port_mask (button[b]));
+            rtc_gpio_wakeup_enable (port_mask (button[b]), GPIO_INTR_ANYEDGE);
          }
          esp_deep_sleep ((60 - t.tm_sec) * 1000000LL);
       } else
