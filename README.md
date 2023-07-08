@@ -9,8 +9,8 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 - [ ] Battery level reading
 - [ ] Buttons
 - [x] OLED display
-- [ ] OLED soft/partial updates (e.g. for 7 seg digits)
-- [ ] OLED sleep mode control
+- [x] OLED soft/partial updates (e.g. for 7 seg digits)
+- [x] OLED sleep mode control
 - [ ] Accelerometer
 - [ ] RTC
 - [ ] Low power mode (inc work on RevK library to support)
