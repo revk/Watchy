@@ -93,7 +93,7 @@ night (struct tm *t)
    }
    esp_sleep_enable_ext1_wakeup (mask, ESP_EXT1_WAKEUP_ANY_HIGH);
    ESP_LOGE (TAG, "Night night %d", 60 - t->tm_sec);
-   esp_deep_sleep ((60 - t->tm_sec) * 1000000LL);
+   esp_deep_sleep ((60 - t->tm_sec) * 1000000LL);       // Next minute
 }
 
 void
@@ -183,14 +183,25 @@ app_main ()
    while (time (0) < 30)
       sleep (1);
 
+   {                            // Set time
+      struct timeval tv;
+      gettimeofday (&tv, NULL);
+      if (tv.tv_sec > 1000000000)
+      {
+         usleep (1000000 - tv.tv_usec);
+         gettimeofday (&tv, NULL);
+         struct tm t;
+         localtime_r (&tv.tv_sec, &t);
+         ertc_write (&t);
+      }
+   }
+
    while (1)
    {
       time_t now = time (0);
       struct tm t;
       localtime_r (&now, &t);
       face_show (&t);
-      if (now > 1000000000)
-         ertc_write (&t);
       if (!gpio_get_level (rx) || uptime () > 120)
          night (&t);            // Stay up for charging for 2 minutes at least
       else
