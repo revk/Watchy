@@ -13,7 +13,7 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
-	ioa(button,4,"26,25,35,4")	\
+	ioa(button,4,"26 25 35 4")	\
 	io(ss,5)	\
 	io(dc,10)	\
 	io(res,9)	\
@@ -61,7 +61,6 @@ settings
 #undef u8l
 #undef b
 #undef s
-
 const char *
 app_callback (int client, const char *prefix, const char *target, const char *suffix, jo_t j)
 {
@@ -75,7 +74,7 @@ app_main ()
 {
    revk_boot (&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
-#define ioa(n,a,d)           revk_register(#n,a,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
+#define ioa(n,a,d)           revk_register(#n,a,sizeof(n),&n,"- "d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
 #define b(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN);
 #define u32(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
 #define u32l(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_LIVE);
@@ -110,7 +109,8 @@ app_main ()
    {
       ESP_LOGI (TAG, "Start E-paper");
     const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep:1);
-      if (!e) face_init();
+      if (!e)
+         face_init ();
       else
       {
          ESP_LOGE (TAG, "gfx %s", e);
@@ -120,15 +120,28 @@ app_main ()
          revk_error ("gfx", &j);
       }
    }
-   sleep (5);
-   // Dummy code
+   gfx_wait ();
+   for (int b = 0; b < 4; b++)
+      if (button[b])
+      {
+	      ESP_LOGI(TAG,"Button %d: %d",b+1,port_mask(button[b]));
+         gpio_reset_pin (port_mask (button[b]));
+         gpio_set_direction (port_mask (button[b]), GPIO_MODE_INPUT);
+      }
+
    while (1)
    {
-      char temp[30];
+      jo_t j = jo_object_alloc ();
+      jo_bool (j, "gpio3", gpio_get_level (3));
+      jo_bool (j, "btn1", port_mask (button[0]));
+      jo_bool (j, "btn2", port_mask (button[1]));
+      jo_bool (j, "btn3", port_mask (button[2]));
+      jo_bool (j, "btn4", port_mask (button[3]));
+      revk_info ("gpio", &j);
       time_t now = time (0);
       struct tm t;
       localtime_r (&now, &t);
-      face_time(&t);
+      face_time (&t);
       sleep (60 - t.tm_sec);
    }
 
