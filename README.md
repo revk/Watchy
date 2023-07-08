@@ -18,3 +18,5 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 - [ ] Watch face design
 - [ ] Basic menus
 - [ ] Vibration motor
+- [ ] Alarm clock
+- [ ] Time zone select
