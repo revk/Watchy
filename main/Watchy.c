@@ -108,32 +108,39 @@ app_main ()
 #undef b
 #undef s
       revk_start ();
+   int wakeup = (esp_reset_reason () == ESP_RST_DEEPSLEEP);
    if (mosi || dc || sck)
    {
       ESP_LOGI (TAG, "Start E-paper");
     const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep:1);
-      if (!e)
-         face_init ();
-      else
+      if (e)
       {
          ESP_LOGE (TAG, "gfx %s", e);
          jo_t j = jo_object_alloc ();
          jo_string (j, "error", "Failed to start");
          jo_string (j, "description", e);
          revk_error ("gfx", &j);
-      }
+      } else if (!wakeup)
+         face_init ();
    }
-   gfx_wait ();
    // Buttons
    for (int b = 0; b < 4; b++)
       if (button[b])
       {
          gpio_reset_pin (port_mask (button[b]));
          gpio_set_direction (port_mask (button[b]), GPIO_MODE_INPUT);
+         gpio_pullup_dis (port_mask (button[b]));
       }
    // Charging
-   gpio_pullup_dis(rx);	// Used to detect the UART is down, and hence no VBUS and hence not charging.
-   gpio_pulldown_en(rx);
+   gpio_pullup_dis (rx);        // Used to detect the UART is down, and hence no VBUS and hence not charging.
+   gpio_pulldown_en (rx);
+
+   while (1)
+   {                            // Wait clock set
+      if (time (0) > 300)
+         break;
+      sleep (1);
+   }
 
    while (1)
    {
@@ -143,17 +150,22 @@ app_main ()
       jo_bool (j, "btn2", port_mask (button[1]));
       jo_bool (j, "btn3", port_mask (button[2]));
       jo_bool (j, "btn4", port_mask (button[3]));
-      revk_info ("gpio", &j);
+      jo_int (j, "reset", esp_reset_reason ());
+      revk_info ("watchy", &j);
       time_t now = time (0);
       struct tm t;
       localtime_r (&now, &t);
       face_time (&t);
-      sleep (60 - t.tm_sec);
+      if (1 || !gpio_get_level (rx))
+      {                         // Time to sleep (TODO keep awake for other reasons - menus - etc)
+         ESP_LOGI (TAG, "Night night");
+         for (int b = 0; b < 4; b++)
+         {
+            rtc_gpio_wakeup_enable (port_mask (button[b]), GPIO_INTR_ANYEDGE);
+            rtc_gpio_isolate (port_mask (button[b]));
+         }
+         esp_deep_sleep ((60 - t.tm_sec) * 1000000LL);
+      } else
+         sleep (60 - t.tm_sec);
    }
-   // Go to sleep... TODO
-  for (int b = 0; b < 4; b++)
-  {
-	 rtc_gpio_wakeup_enable(port_mask (button[b]),GPIO_INTR_ANYEDGE);
-	 rtc_gpio_isolate(port_mask (button[b]));
-  }
 }
