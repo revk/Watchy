@@ -156,7 +156,8 @@ app_main ()
       struct tm t;
       localtime_r (&now, &t);
       face_time (&t);
-      if (1 || !gpio_get_level (rx))
+      gfx_wait();
+      if (!gpio_get_level (rx))
       {                         // Time to sleep (TODO keep awake for other reasons - menus - etc)
          ESP_LOGI (TAG, "Night night");
          for (int b = 0; b < 4; b++)
