@@ -82,6 +82,7 @@ app_callback (int client, const char *prefix, const char *target, const char *su
 void
 night (struct tm *t)
 {
+   // TODO isolate other pins?
    uint64_t mask = 0;
    for (int b = 0; b < 4; b++)
    {
@@ -90,8 +91,8 @@ night (struct tm *t)
       rtc_gpio_pulldown_dis (port_mask (button[b]));
       mask |= (1ULL << port_mask (button[b]));
    }
-   ESP_LOGI (TAG, "Night night %d", 60 - t->tm_sec);
    esp_sleep_enable_ext1_wakeup (mask, ESP_EXT1_WAKEUP_ANY_HIGH);
+   ESP_LOGE (TAG, "Night night %d", 60 - t->tm_sec);
    esp_deep_sleep ((60 - t->tm_sec) * 1000000LL);
 }
 
@@ -134,7 +135,7 @@ app_main ()
    if (!wakeup && esp_reset_reason () == ESP_RST_SW)
       wakeup = ESP_SLEEP_WAKEUP_ALL;    // It does not seem to say DEEPSLEEP, and does not always set a cause
    if (wakeup)
-      ESP_LOGI (TAG, "Wake up %d", wakeup);
+      ESP_LOGE (TAG, "Wake up %d", wakeup);
 
    // Buttons as soon as we can...
    for (int b = 0; b < 4; b++)
@@ -169,29 +170,29 @@ app_main ()
    struct tm t;
    if (ertc_read (&t))
       ESP_LOGE (TAG, "RTC read fail");
-   else if (wakeup&&t.tm_min) // && !gpio_get_level (rx))
-   {                            // Fast display - TODO menu and other reasons to go on to WiFi
+   else if (wakeup)
+   {
       face_show (&t);
-      night (&t);
+      if (t.tm_min)             // && !gpio_get_level (rx)) // TODO other reasons to stay awake?
+         night (&t);
    }
 
    revk_start ();
 
    ESP_LOGI (TAG, "Wait Time");
    while (time (0) < 30)
-      sleep (1);     
+      sleep (1);
 
-   ESP_LOGI (TAG, "Main loop");
    while (1)
    {
       time_t now = time (0);
       struct tm t;
       localtime_r (&now, &t);
+      face_show (&t);
       if (now > 1000000000)
          ertc_write (&t);
-      face_show (&t);
       if (!gpio_get_level (rx) || uptime () > 120)
-         night (&t);
+         night (&t);            // Stay up for charging for 2 minutes at least
       else
          sleep (5);
    }
