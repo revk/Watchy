@@ -166,8 +166,12 @@ app_main ()
       time_t now = time (0);
       struct tm t;
       localtime_r (&now, &t);
-      strftime (temp, sizeof (temp), "%F %T %Z", &t);
-      gfx_qr (temp);
+      strftime (temp, sizeof (temp), "%H:%M", &t);
+      gfx_lock();
+      gfx_clear(0);
+      gfx_7seg(5,"%s",temp);
+      gfx_unlock();
+
       sleep (60 - t.tm_sec);
    }
 
