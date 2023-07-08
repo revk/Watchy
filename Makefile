@@ -12,8 +12,14 @@ all:
 	@cp build/$(PROJECT_NAME).bin $(PROJECT_NAME)$(SUFFIX).bin
 	@echo Done: build/$(PROJECT_NAME)$(SUFFIX).bin
 
-issue:  set
-	cp Watchy*.bin release
+issue:
+	-git pull
+	-git submodule update --recursive
+	-git commit -a -m checkpoint
+	@make set
+	cp $(PROJECT_NAME)*.bin release
+	git commit -a -m release
+	git push
 
 set:	watchy
 

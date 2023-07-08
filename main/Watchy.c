@@ -8,6 +8,7 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #include "esp_task_wdt.h"
 #include <driver/gpio.h>
 #include <driver/uart.h>
+#include <driver/rtc_io.h>
 #include "gfx.h"
 #include "face.h"
 
@@ -29,6 +30,8 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 	io(busy,19)	\
 	u8(flip,0)	\
 
+#define	tx	1
+#define	rx	3
 #define	port_mask(x)	((x)&0x7F)
 #define u32(n,d)        uint32_t n;
 #define u32l(n,d)        uint32_t n;
@@ -74,7 +77,7 @@ app_main ()
 {
    revk_boot (&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
-#define ioa(n,a,d)           revk_register(#n,a,sizeof(n),&n,"- "d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
+#define ioa(n,a,d)           revk_register(#n,a,sizeof(*n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
 #define b(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN);
 #define u32(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
 #define u32l(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_LIVE);
@@ -105,44 +108,64 @@ app_main ()
 #undef b
 #undef s
       revk_start ();
+   int wakeup = (esp_reset_reason () == ESP_RST_DEEPSLEEP);
    if (mosi || dc || sck)
    {
       ESP_LOGI (TAG, "Start E-paper");
     const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep:1);
-      if (!e)
-         face_init ();
-      else
+      if (e)
       {
          ESP_LOGE (TAG, "gfx %s", e);
          jo_t j = jo_object_alloc ();
          jo_string (j, "error", "Failed to start");
          jo_string (j, "description", e);
          revk_error ("gfx", &j);
-      }
+      } else if (!wakeup)
+         face_init ();
    }
-   gfx_wait ();
+   // Buttons
    for (int b = 0; b < 4; b++)
       if (button[b])
       {
-	      ESP_LOGI(TAG,"Button %d: %d",b+1,port_mask(button[b]));
          gpio_reset_pin (port_mask (button[b]));
          gpio_set_direction (port_mask (button[b]), GPIO_MODE_INPUT);
+         gpio_pullup_dis (port_mask (button[b]));
       }
+   // Charging
+   gpio_pullup_dis (rx);        // Used to detect the UART is down, and hence no VBUS and hence not charging.
+   gpio_pulldown_en (rx);
+
+   while (1)
+   {                            // Wait clock set
+      if (time (0) > 300)
+         break;
+      sleep (1);
+   }
 
    while (1)
    {
       jo_t j = jo_object_alloc ();
-      jo_bool (j, "gpio3", gpio_get_level (3));
+      jo_bool (j, "charging", gpio_get_level (rx));
       jo_bool (j, "btn1", port_mask (button[0]));
       jo_bool (j, "btn2", port_mask (button[1]));
       jo_bool (j, "btn3", port_mask (button[2]));
       jo_bool (j, "btn4", port_mask (button[3]));
-      revk_info ("gpio", &j);
+      jo_int (j, "reset", esp_reset_reason ());
+      revk_info ("watchy", &j);
       time_t now = time (0);
       struct tm t;
       localtime_r (&now, &t);
       face_time (&t);
-      sleep (60 - t.tm_sec);
+      if (1 || !gpio_get_level (rx))
+      {                         // Time to sleep (TODO keep awake for other reasons - menus - etc)
+         ESP_LOGI (TAG, "Night night");
+         for (int b = 0; b < 4; b++)
+         {
+            rtc_gpio_isolate (port_mask (button[b]));
+            rtc_gpio_wakeup_enable (port_mask (button[b]), GPIO_INTR_ANYEDGE);
+         }
+         esp_deep_sleep ((60 - t.tm_sec) * 1000000LL);
+      } else
+         sleep (60 - t.tm_sec);
    }
-
 }
