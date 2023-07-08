@@ -9,11 +9,11 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #include <driver/gpio.h>
 #include <driver/uart.h>
 #include "gfx.h"
-#include "iec18004.h"
+#include "face.h"
 
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
-	ioa(button,4,"26,25,35,4")	\
+	ioa(button,4,"26 25 35 4")	\
 	io(ss,5)	\
 	io(dc,10)	\
 	io(res,9)	\
@@ -62,39 +62,6 @@ settings
 #undef b
 #undef s
 const char *
-gfx_qr (const char *value)
-{
-#ifndef CONFIG_GFX_NONE
-   int W = gfx_width ();
-   int H = gfx_height ();
-   unsigned int width = 0;
-   gfx_lock ();
-   gfx_clear (0);
- uint8_t *qr = qr_encode (strlen (value), value, widthp: &width, noquiet:1);
-   if (qr && width <= W && width <= H)
-   {
-      const int w = W > H ? H : W;
-      int s = w / width;
-      int ox = (W - width * s) / 2;
-      int oy = (H - width * s) / 2;
-      for (int y = 0; y < width; y++)
-         for (int x = 0; x < width; x++)
-            if (qr[width * y + x] & QR_TAG_BLACK)
-               for (int dy = 0; dy < s; dy++)
-                  for (int dx = 0; dx < s; dx++)
-                     gfx_pixel (ox + x * s + dx, oy + y * s + dy, 0xFF);
-   }
-   gfx_unlock ();
-   if (!qr)
-      return "QR failed";
-   free (qr);
-   if (width > W || width > H)
-      return "Too big";
-#endif
-   return NULL;
-}
-
-const char *
 app_callback (int client, const char *prefix, const char *target, const char *suffix, jo_t j)
 {
    if (client || !prefix || target || strcmp (prefix, prefixcommand))
@@ -107,7 +74,7 @@ app_main ()
 {
    revk_boot (&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
-#define ioa(n,a,d)           revk_register(#n,a,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
+#define ioa(n,a,d)           revk_register(#n,a,sizeof(n),&n,"- "d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
 #define b(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN);
 #define u32(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
 #define u32l(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_LIVE);
@@ -141,15 +108,10 @@ app_main ()
    if (mosi || dc || sck)
    {
       ESP_LOGI (TAG, "Start E-paper");
-    const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height:200,partial:1,mode2:1,sleep:1);
-   //gfx_lock (); // TODO we need gfx_refresh really
-   //gfx_clear (0);
-   //gfx_unlock ();
-   //gfx_wait();
-   //gfx_refresh();
+    const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep:1);
       if (!e)
-         e = gfx_qr ("HTTPS://WATCHY.REVK.UK");
-      if (e)
+         face_init ();
+      else
       {
          ESP_LOGE (TAG, "gfx %s", e);
          jo_t j = jo_object_alloc ();
@@ -158,16 +120,28 @@ app_main ()
          revk_error ("gfx", &j);
       }
    }
-   sleep(5);
-   // Dummy code
+   gfx_wait ();
+   for (int b = 0; b < 4; b++)
+      if (button[b])
+      {
+	      ESP_LOGI(TAG,"Button %d: %d",b+1,port_mask(button[b]));
+         gpio_reset_pin (port_mask (button[b]));
+         gpio_set_direction (port_mask (button[b]), GPIO_MODE_INPUT);
+      }
+
    while (1)
    {
-      char temp[30];
+      jo_t j = jo_object_alloc ();
+      jo_bool (j, "gpio3", gpio_get_level (3));
+      jo_bool (j, "btn1", port_mask (button[0]));
+      jo_bool (j, "btn2", port_mask (button[1]));
+      jo_bool (j, "btn3", port_mask (button[2]));
+      jo_bool (j, "btn4", port_mask (button[3]));
+      revk_info ("gpio", &j);
       time_t now = time (0);
       struct tm t;
       localtime_r (&now, &t);
-      strftime (temp, sizeof (temp), "%F %T %Z", &t);
-      gfx_qr (temp);
+      face_time (&t);
       sleep (60 - t.tm_sec);
    }
 
