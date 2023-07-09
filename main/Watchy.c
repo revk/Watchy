@@ -29,8 +29,7 @@ RTC_NOINIT_ATTR uint8_t last_hour;
 RTC_NOINIT_ATTR uint8_t last_min;
 RTC_NOINIT_ATTR int16_t last_adjust;
 RTC_NOINIT_ATTR int battery;
-
-// TODO timezone!!!
+RTC_NOINIT_ATTR char rtctz[30];
 
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
@@ -163,6 +162,12 @@ app_main ()
    uint8_t buttons = btn_read ();
    ESP_LOGE (TAG, "Start up wake=%d buttons=%X menu=%d", wakeup, buttons, rtcmenu);
 
+   if (*rtctz)
+   {
+      setenv ("TZ", rtctz, 1);
+      tzset ();
+   }
+
    void epaper_init (void)
    {
       if (gfx_ok ())
@@ -268,6 +273,10 @@ app_main ()
    rtcadjust = adjust;
    rtcface = face;
    rtcflip = flip;
+   {
+      extern char *tz;
+      strncpy (rtctz, tz, sizeof (rtctz));
+   }
    if (!wakeup)
       rtcmenu = 0;
 
