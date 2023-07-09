@@ -169,19 +169,20 @@ app_main ()
       if (last_min != v)
       {                         // Update display
          {                      // ADC
-            adc_oneshot_unit_handle_t adc1_handle;
-            adc_oneshot_unit_init_cfg_t init_config1 = {
-               .unit_id = ADC_UNIT_1,
-               .ulp_mode = ADC_ULP_MODE_DISABLE,
-            };
-            adc_oneshot_new_unit (&init_config1, &adc1_handle);
-            adc_oneshot_chan_cfg_t config = {
-               .bitwidth = ADC_BITWIDTH_DEFAULT,
-               .atten = ADC_ATTEN_DB_11,
-            };
-            adc_oneshot_config_channel (adc1_handle, ADCCHANNEL, &config);
-            adc_oneshot_del_unit (adc1_handle);
-            adc_oneshot_read (adc1_handle, ADCCHANNEL, &battery);
+		adc_oneshot_unit_handle_t adc1_handle;
+    adc_oneshot_unit_init_cfg_t init_config1 = {
+        .unit_id = ADC_UNIT_1,
+    };
+    adc_oneshot_new_unit(&init_config1, &adc1_handle);		
+      adc_oneshot_chan_cfg_t config = {
+        .bitwidth = ADC_BITWIDTH_DEFAULT,
+        .atten = ADC_ATTEN_DB_11,
+    };
+    adc_oneshot_config_channel(adc1_handle, ADCCHANNEL, &config);
+            adc_oneshot_read(adc1_handle, ADCCHANNEL, &battery);
+	    adc_oneshot_del_unit(adc1_handle);
+
+			
 	    rtcbattery=battery;
             ESP_LOGE (TAG, "ADC %d", battery);
          }
