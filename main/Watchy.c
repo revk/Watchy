@@ -138,6 +138,7 @@ app_main ()
    // Charging
    gpio_pullup_dis (GPIORX);    // Used to detect the UART is down, and hence no VBUS and hence not charging.
    gpio_pulldown_en (GPIORX);
+   charging = gpio_get_level (GPIORX);
 
    uint8_t btn_read (void)
    {
@@ -164,12 +165,10 @@ app_main ()
 
    void epaper_init (void)
    {
-      static uint8_t done = 0;
-      if (done)
+      if (gfx_ok ())
          return;
-      done = 1;
       ESP_LOGI (TAG, "Start E-paper");
-    const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: rtcflip, width: 200, height: 200, partial: 1, mode2: 1, sleep: 1, norefresh:wakeup ? 1 : 0);
+    const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: rtcflip, width: 200, height: 200, partial: 1, mode2: 1, sleep: 1, norefresh: wakeup ? 1 : 0, direct:1);
       if (e)
       {
          ESP_LOGE (TAG, "gfx %s", e);
@@ -225,7 +224,7 @@ app_main ()
             }
             night (now);        // Allow normal start on the hour
          }
-      } else if (wakeup&&!charging)
+      } else if (wakeup && !charging)
          night (now);
    }
 
