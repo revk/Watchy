@@ -25,6 +25,7 @@ uint8_t charging=0;
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
 	u8(face,0)	\
+	u8(flip,5)	\
 	s16(adjust,0)	\
 
 #define	port_mask(x)	((x)&0x7F)
@@ -129,6 +130,15 @@ app_main ()
    if (btn (GPIOBTN4))
       buttons |= 8;
 
+   static RTC_NOINIT_ATTR uint8_t rtcmenu;
+   static RTC_NOINIT_ATTR uint8_t rtcflip;
+   static RTC_NOINIT_ATTR uint8_t rtcface;
+   static RTC_NOINIT_ATTR int16_t rtcadjust;
+   static RTC_NOINIT_ATTR uint8_t last_hour;
+   static RTC_NOINIT_ATTR uint8_t last_min;
+   static RTC_NOINIT_ATTR int16_t last_adjust;
+   static RTC_NOINIT_ATTR int rtcbattery;
+   battery=rtcbattery;
    void epaper_init (void)
    {
       static uint8_t done = 0;
@@ -136,7 +146,7 @@ app_main ()
          return;
       done = 1;
       ESP_LOGI (TAG, "Start E-paper");
-    const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: FLIP, width: 200, height: 200, partial: 1, mode2: 1, sleep: 1, norefresh:wakeup ? 1 : 0);
+    const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: rtcflip, width: 200, height: 200, partial: 1, mode2: 1, sleep: 1, norefresh:wakeup ? 1 : 0);
       if (e)
       {
          ESP_LOGE (TAG, "gfx %s", e);
@@ -147,15 +157,6 @@ app_main ()
       } else if (!wakeup)
          face_init ();
    }
-
-   static RTC_NOINIT_ATTR uint8_t rtcmenu;
-   static RTC_NOINIT_ATTR uint8_t rtcface;
-   static RTC_NOINIT_ATTR int16_t rtcadjust;
-   static RTC_NOINIT_ATTR uint8_t last_hour;
-   static RTC_NOINIT_ATTR uint8_t last_min;
-   static RTC_NOINIT_ATTR int16_t last_adjust;
-   static RTC_NOINIT_ATTR int rtcbattery;
-   battery=rtcbattery;
 
    time_t now = 0;
    if (ertc_init ())
@@ -255,6 +256,7 @@ app_main ()
    // RTC cached values
    rtcadjust = adjust;
    rtcface = face;
+   rtcflip = flip;
    if (!wakeup)
       rtcmenu = 0;
 

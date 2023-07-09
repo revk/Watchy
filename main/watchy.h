@@ -24,7 +24,6 @@
 // Other fixed values
 #define	I2CPORT	0
 #define	RTCADDRESS	0x51
-#define	FLIP	5
 #define	ADCCHANNEL	ADC_CHANNEL_6
 
 extern int battery;
