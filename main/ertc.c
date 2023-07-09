@@ -63,7 +63,7 @@ ertc_read (void)
    t.tm_mon = ((m & 0x10) >> 4) * 10 + (m & 0xF) - 1;
    t.tm_year = (m >> 7) * 100 + ((y & 0xF0) >> 4) * 10 + (y & 0xF);
    //time_t now=timegm (&t);
-   time_t now = mktime (&t);     // TODO needs to be timegm for non UK timezones
+   time_t now = mktime (&t);    // TODO needs to be timegm for non UK timezones
    if (S & 0x80)
       return 0;                 // time reported but not set in RTC chip
    return now;
@@ -105,5 +105,5 @@ ertc_write (time_t now)
    i2c_master_stop (txn);
    i2c_master_cmd_begin (I2CPORT, txn, 10 / portTICK_PERIOD_MS);
    i2c_cmd_link_delete (txn);
-   return ;
+   return;
 }

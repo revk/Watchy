@@ -28,4 +28,3 @@
 
 extern int battery;
 extern uint8_t charging;
-

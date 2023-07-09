@@ -139,22 +139,27 @@ app_main ()
    gpio_pulldown_en (GPIORX);
    charging = gpio_get_level (GPIORX);
 
-   uint8_t btn (int gpio)
+   uint8_t btn_read (void)
    {
-      gpio_reset_pin (gpio);
-      gpio_set_direction (gpio, GPIO_MODE_INPUT);
-      gpio_pullup_dis (gpio);
-      return gpio_get_level (gpio);
+      uint8_t btn (int gpio)
+      {
+         gpio_reset_pin (gpio);
+         gpio_set_direction (gpio, GPIO_MODE_INPUT);
+         gpio_pullup_dis (gpio);
+         return gpio_get_level (gpio);
+      }
+      uint8_t buttons = 0;
+      if (btn (GPIOBTN1))
+         buttons |= 1;
+      if (btn (GPIOBTN2))
+         buttons |= 2;
+      if (btn (GPIOBTN3))
+         buttons |= 4;
+      if (btn (GPIOBTN4))
+         buttons |= 8;
+      return buttons;
    }
-   uint8_t buttons = 0;
-   if (btn (GPIOBTN1))
-      buttons |= 1;
-   if (btn (GPIOBTN2))
-      buttons |= 2;
-   if (btn (GPIOBTN3))
-      buttons |= 4;
-   if (btn (GPIOBTN4))
-      buttons |= 8;
+   uint8_t buttons = btn_read ();
 
    void epaper_init (void)
    {
@@ -189,7 +194,7 @@ app_main ()
             read_battery ();
          last_min = v;
          epaper_init ();
-         if (rtcmenu)
+         if (rtcmenu || buttons)
             rtcmenu = menu_show (rtcmenu, buttons);
          if (!rtcmenu)
             face_show (rtcface, now);
@@ -286,6 +291,7 @@ app_main ()
 
    while (1)
    {
+      buttons = btn_read ();
       read_battery ();
       now = time (0);
       if (rtcmenu)
