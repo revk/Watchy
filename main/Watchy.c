@@ -16,7 +16,7 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 
 const char *gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t scale);  // QR
 void face_init (void);          // Cold start up watch face
-void face_show (uint8_t, struct tm *);  // Show current time
+void face_show (uint8_t, time_t);       // Show current time
 
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
@@ -66,7 +66,7 @@ app_callback (int client, const char *prefix, const char *target, const char *su
 }
 
 void
-night (struct tm *t)
+night (time_t now)
 {
    // TODO isolate other pins?
    uint64_t mask = 0;
@@ -82,8 +82,9 @@ night (struct tm *t)
    btn (GPIOBTN3);
    btn (GPIOBTN4);
    esp_sleep_enable_ext1_wakeup (mask, ESP_EXT1_WAKEUP_ANY_HIGH);
-   ESP_LOGE (TAG, "Night night %d", 60 - t->tm_sec);
-   esp_deep_sleep ((60 - t->tm_sec) * 1000000LL);       // Next minute
+   uint8_t secs = 60 - now % 60;
+   ESP_LOGE (TAG, "Night night %d", secs);
+   esp_deep_sleep (1000000LL * secs);   // Next minute
 }
 
 int
@@ -145,50 +146,52 @@ app_main ()
    static RTC_NOINIT_ATTR uint8_t rtcface;
    static RTC_NOINIT_ATTR int16_t rtcadjust;
    static RTC_NOINIT_ATTR uint8_t last_hour;
+   static RTC_NOINIT_ATTR uint8_t last_min;
    static RTC_NOINIT_ATTR int16_t last_adjust;
 
-   struct tm t;
+   time_t now = 0;
    if (ertc_init ())
       ESP_LOGE (TAG, "RTC init fail");
-   else if (ertc_read (&t))
+   else if (!(now = ertc_read ()))
       ESP_LOGE (TAG, "RTC read fail");
    else
    {
-      if (t.tm_sec < 5)
-      {
+      uint8_t v = now / 60 % 60;
+      if (last_min != v)
+      {                         // Update display
+         last_min = v;
          epaper_init ();
          if (rtcmenu)
             rtcmenu = menu_show (rtcmenu, buttons);
-         else
-            face_show (rtcface, &t);
+         if (!rtcmenu)
+            face_show (rtcface, now);
       }
       if (wakeup == ESP_SLEEP_WAKEUP_TIMER)
       {                         // Per minute wake up
-         if (last_hour != t.tm_hour)
+         v = now / 3600 % 24;
+         if (last_hour != v)
          {                      // Normal start and attempt local clock sync
-            last_hour = t.tm_hour;
+            ESP_LOGI (TAG, "Hourly wake %d/%d",last_hour,v);
+            last_hour = v;
             last_adjust = 0;
-            ESP_LOGE (TAG, "Hourly wake");
          } else
          {
-		 ESP_LOGE(TAG,"rtcadjust=%d",rtcadjust);
             if (rtcadjust)
             {                   // Not totally clean, but avoids the sleep wake up early at end of minute doing an adjust as well
-               int16_t a = ((int) rtcadjust * (t.tm_min + 1) / 60);
+               int16_t a = ((int) rtcadjust * (last_min + 1) / 60);
                if (a != last_adjust)
                {
-                  ESP_LOGE (TAG, "Adjust %d", (a - last_adjust));
-                  t.tm_sec += (a - last_adjust);
-                  ertc_write (&t);
+                  ESP_LOGI (TAG, "Adjust %d", (a - last_adjust));
+                  ertc_write (now + a - last_adjust);
                   last_adjust = a;
                }
             }
-            night (&t);         // Allow normal start on the hour
+            night (now);        // Allow normal start on the hour
          }
       }
    }
 
-
+ // Full startup
    revk_boot (&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
 #define ioa(n,a,d)           revk_register(#n,a,sizeof(*n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
@@ -224,6 +227,7 @@ app_main ()
 #undef b
 #undef s
       revk_start ();
+   // RTC cached values
    rtcadjust = adjust;
    rtcface = face;
    if (!wakeup)
@@ -244,23 +248,22 @@ app_main ()
          gettimeofday (&tv, NULL);
          struct tm t;
          localtime_r (&tv.tv_sec, &t);
-         last_hour = t.tm_hour;
-         last_adjust = rtcadjust * t.tm_min / 60;
-         ertc_write (&t);
+         last_hour = tv.tv_sec / 3600 % 24;
+         last_min = tv.tv_sec / 60 % 60;
+         last_adjust = rtcadjust * last_min / 60;
+         ertc_write (now);
       }
    }
 
    while (1)
    {
-      time_t now = time (0);
-      struct tm t;
-      localtime_r (&now, &t);
+      now = time (0);
       if (rtcmenu)
          rtcmenu = menu_show (rtcmenu, buttons);
-      else
-         face_show (rtcface, &t);
-      if (!awake () || uptime () > 120)
-         night (&t);            // Stay up in charging for 2 minutes at least
+      if (!rtcmenu)
+         face_show (rtcface, now);
+      if (!awake () || uptime () > 60)
+         night (now);           // Stay up in charging for 1 minute at least
       else
          sleep (1);
    }
