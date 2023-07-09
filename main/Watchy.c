@@ -295,8 +295,6 @@ app_main ()
       {
          usleep (1000000 - tv.tv_usec);
          gettimeofday (&tv, NULL);
-         struct tm t;
-         localtime_r (&tv.tv_sec, &t);
          last_hour = tv.tv_sec / 3600 % 24;
          last_min = tv.tv_sec / 60 % 60;
          last_adjust = rtcadjust * last_min / 60;
