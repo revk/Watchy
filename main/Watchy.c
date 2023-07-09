@@ -21,14 +21,14 @@ void face_show (uint8_t, time_t);       // Show current time
 
 uint8_t charging = 0;
 
-RTC_NOINIT_ATTR uint8_t rtcmenu;
+RTC_NOINIT_ATTR int battery;
+RTC_NOINIT_ATTR uint32_t rtcmenu;
+RTC_NOINIT_ATTR int16_t last_adjust;
+RTC_NOINIT_ATTR int16_t rtcadjust;
 RTC_NOINIT_ATTR uint8_t rtcflip;
 RTC_NOINIT_ATTR uint8_t rtcface;
-RTC_NOINIT_ATTR int16_t rtcadjust;
 RTC_NOINIT_ATTR uint8_t last_hour;
 RTC_NOINIT_ATTR uint8_t last_min;
-RTC_NOINIT_ATTR int16_t last_adjust;
-RTC_NOINIT_ATTR int battery;
 RTC_NOINIT_ATTR char rtctz[30];
 
 // Settings (RevK library used by MQTT setting command)
@@ -100,16 +100,6 @@ night (time_t now)
    esp_deep_sleep (1000000LL * secs);   // Next minute
 }
 
-int
-awake (void)
-{                               // Reasons to be awake
-   if (charging)
-      return 1;                 // Charging
-   if (revk_shutting_down (NULL))
-      return 2;                 // Deliberate shutdown sequence (usually means OTA in progress)
-   return 0;
-}
-
 void
 read_battery (void)
 {                               // ADC
@@ -160,12 +150,17 @@ app_main ()
       return buttons;
    }
    uint8_t buttons = btn_read ();
-   ESP_LOGE (TAG, "Start up wake=%d buttons=%X menu=%d", wakeup, buttons, rtcmenu);
+   ESP_LOGE (TAG, "Start up wake=%d buttons=%X menu=%lX", wakeup, buttons, rtcmenu);
 
    if (*rtctz)
    {
-      setenv ("TZ", rtctz, 1);
-      tzset ();
+      int l;
+      for (l = 0; l < sizeof (rtctz) && rtctz[l]; l++);
+      if (l < sizeof (rtctz))
+      {
+         setenv ("TZ", rtctz, 1);
+         tzset ();
+      }
    }
 
    void epaper_init (void)
@@ -201,8 +196,6 @@ app_main ()
          if (wakeup)
          {
             epaper_init ();
-            if (rtcmenu || buttons)
-               rtcmenu = menu_show (rtcmenu, buttons);
             if (!rtcmenu)
                face_show (rtcface, now);
          }
@@ -215,6 +208,7 @@ app_main ()
             ESP_LOGI (TAG, "Hourly wake %d/%d", last_hour, v);
             last_hour = v;
             last_adjust = 0;
+            wakeup = 0;         // Stay awake
          } else
          {
             if (rtcadjust)
@@ -222,16 +216,17 @@ app_main ()
                int16_t a = ((int) rtcadjust * (last_min + 1) / 60);
                if (a != last_adjust)
                {
-                  ESP_LOGI (TAG, "Adjust %d", (a - last_adjust));
+                  ESP_LOGE (TAG, "Adjust %d", (a - last_adjust));
                   ertc_write (now + a - last_adjust);
                   last_adjust = a;
                }
             }
-            night (now);        // Allow normal start on the hour
          }
-      } else if (wakeup && !charging)
-         night (now);
+      }
    }
+
+   if (wakeup && (wakeup == ESP_SLEEP_WAKEUP_TIMER || !charging) && !buttons && !rtcmenu)
+      night (now);
 
    // Full startup
    revk_boot (&app_callback);
@@ -311,11 +306,9 @@ app_main ()
          rtcmenu = menu_show (rtcmenu, buttons);
       if (!rtcmenu)
          face_show (rtcface, now);
-      if (!awake () || uptime () > 60)
-      {
-         sleep (2);
+      if (!revk_shutting_down (NULL) && ((!charging && !buttons) || uptime () > 60))
          night (now);           // Stay up in charging for 1 minute at least
-      } else
+      else
          sleep (1);
    }
 }
