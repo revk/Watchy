@@ -6,7 +6,7 @@
 PROJECT_NAME := Watchy
 SUFFIX := $(shell components/ESP32-RevK/buildsuffix)
 
-all:
+all:	main/icons.h main/icons.c
 	@echo Make: build/$(PROJECT_NAME)$(SUFFIX).bin
 	@idf.py build
 	@cp build/$(PROJECT_NAME).bin $(PROJECT_NAME)$(SUFFIX).bin
@@ -20,6 +20,23 @@ issue:
 	cp $(PROJECT_NAME)*.bin release
 	git commit -a -m release
 	git push
+
+main/icons.h: $(patsubst %.svg,%.h,$(wildcard icons/*.svg))
+	grep const icons/*.h | sed -e 's/const/extern const/' -e 's/={/;/' > main/icons.h
+
+main/icons.c: $(patsubst %.svg,%.h,$(wildcard icons/*.svg))
+	cat icons/*.h > main/icons.c
+
+icons/%.png:    icons/%.svg
+	inkscape --export-background=WHITE --export-type=png --export-filename=$@ $<
+
+icons/%.mono:   icons/%.png
+	convert $< -resize 32x32 -monochrome $@
+
+icons/%.h:      icons/%.mono
+	echo "const unsigned char icon_$(patsubst icons/%.h,%,$@)[]={" > $@
+	od -Anone -tx1 -v -w64 $< | sed 's/ \(..\)/0x\1,/g' >> $@
+	echo "};" >> $@
 
 set:	watchy
 

@@ -12,3 +12,6 @@ sdkconfig
 *.BAK
 makering
 *.dSYM
+main/icons.c
+main/icons.h
+icons/*.h

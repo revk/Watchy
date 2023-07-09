@@ -309,7 +309,7 @@ app_main ()
       buttons = btn_read ();
       read_battery ();
       now = time (0);
-      if (rtcmenu)
+      if (rtcmenu || buttons)
          rtcmenu = menu_show (rtcmenu, buttons);
       if (!rtcmenu)
          face_show (rtcface, now);
