@@ -27,3 +27,4 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 - [ ] OTA via menu
 - [x] Sleep hold off during OTA!
 - [x] RTC adjust
+- [ ] Icons
