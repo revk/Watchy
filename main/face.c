@@ -79,6 +79,7 @@ face_basic (struct tm *t)
    char temp[30];
    gfx_pos (100, 0, GFX_C | GFX_T | GFX_H);
    strftime (temp, sizeof (temp), "%H:%M", t);
+   ESP_LOGE("Face","%s",temp); // TODO
    gfx_7seg (8, "%s", temp);
    strftime (temp, sizeof (temp), "%F", t);
    gfx_pos (100, 90, GFX_C | GFX_T | GFX_V);
@@ -86,8 +87,8 @@ face_basic (struct tm *t)
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
    gfx_pos (199, 160, GFX_R | GFX_B);
    gfx_7seg (2, "%d", charging ? -battery : battery);
-   gfx_qr (temp, 0, 199, 2);
    strftime (temp, sizeof (temp), "%a", t);
    gfx_pos (199, 199, GFX_R | GFX_B);
    gfx_text (-4, "%s", temp);
+   gfx_qr (temp, 0, 199, 2);
 }

@@ -30,6 +30,8 @@ RTC_NOINIT_ATTR uint8_t last_min;
 RTC_NOINIT_ATTR int16_t last_adjust;
 RTC_NOINIT_ATTR int battery;
 
+// TODO timezone!!!
+
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
 	u8(face,0)	\
@@ -81,7 +83,6 @@ app_callback (int client, const char *prefix, const char *target, const char *su
 void
 night (time_t now)
 {
-   // TODO isolate other pins?
    uint64_t mask = 0;
    void btn (uint8_t gpio)
    {
@@ -113,6 +114,7 @@ awake (void)
 void
 read_battery (void)
 {                               // ADC
+   charging = gpio_get_level (GPIORX);
    adc_oneshot_unit_handle_t adc1_handle;
    adc_oneshot_unit_init_cfg_t init_config1 = {
       .unit_id = ADC_UNIT_1,
@@ -125,19 +127,17 @@ read_battery (void)
    adc_oneshot_config_channel (adc1_handle, ADCCHANNEL, &config);
    adc_oneshot_read (adc1_handle, ADCCHANNEL, &battery);
    adc_oneshot_del_unit (adc1_handle);
-   ESP_LOGI (TAG, "ADC %d", battery);
+   ESP_LOGI (TAG, "ADC %d%s", battery, charging ? " charging" : "");
 }
 
 void
 app_main ()
 {
    uint8_t wakeup = esp_sleep_get_wakeup_cause ();
-   ESP_LOGE (TAG, "Start up %d", wakeup);
 
    // Charging
    gpio_pullup_dis (GPIORX);    // Used to detect the UART is down, and hence no VBUS and hence not charging.
    gpio_pulldown_en (GPIORX);
-   charging = gpio_get_level (GPIORX);
 
    uint8_t btn_read (void)
    {
@@ -160,6 +160,7 @@ app_main ()
       return buttons;
    }
    uint8_t buttons = btn_read ();
+   ESP_LOGE (TAG, "Start up wake=%d buttons=%X menu=%d", wakeup, buttons, rtcmenu);
 
    void epaper_init (void)
    {
@@ -193,11 +194,14 @@ app_main ()
          if (!(v % 5))
             read_battery ();
          last_min = v;
-         epaper_init ();
-         if (rtcmenu || buttons)
-            rtcmenu = menu_show (rtcmenu, buttons);
-         if (!rtcmenu)
-            face_show (rtcface, now);
+         if (wakeup)
+         {
+            epaper_init ();
+            if (rtcmenu || buttons)
+               rtcmenu = menu_show (rtcmenu, buttons);
+            if (!rtcmenu)
+               face_show (rtcface, now);
+         }
       }
       if (wakeup == ESP_SLEEP_WAKEUP_TIMER)
       {                         // Per minute wake up
@@ -221,7 +225,8 @@ app_main ()
             }
             night (now);        // Allow normal start on the hour
          }
-      }
+      } else if (wakeup&&!charging)
+         night (now);
    }
 
    // Full startup
