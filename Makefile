@@ -6,7 +6,7 @@
 PROJECT_NAME := Watchy
 SUFFIX := $(shell components/ESP32-RevK/buildsuffix)
 
-all:	main/icons.h main/icons.c
+all:
 	@echo Make: build/$(PROJECT_NAME)$(SUFFIX).bin
 	@idf.py build
 	@cp build/$(PROJECT_NAME).bin $(PROJECT_NAME)$(SUFFIX).bin
@@ -38,7 +38,7 @@ icons/%.h:      icons/%.mono
 	od -Anone -tx1 -v -w64 $< | sed 's/ \(..\)/0x\1,/g' >> $@
 	echo "};" >> $@
 
-set:	watchy
+set:	watchy main/icons.h main/icons.c
 
 watchy:
 	components/ESP32-RevK/setbuildsuffix -S1-V0-SSD1681-D4
