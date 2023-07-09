@@ -59,13 +59,15 @@ face_t *const faces[] = {
 
 extern uint8_t face;            // Face number
 void
-face_show (struct tm *t)
+face_show (uint8_t face, time_t now)
 {
+   struct tm t;
+   localtime_r (&now, &t);
    if (face >= sizeof (faces) / sizeof (*faces))
       face = 0;
    gfx_lock ();
    gfx_clear (0);
-   faces[face] (t);
+   faces[face] (&t);
    gfx_unlock ();
    gfx_wait ();
 
