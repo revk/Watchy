@@ -220,7 +220,7 @@ app_main ()
          {
             if (rtcadjust)
             {                   // Not totally clean, but avoids the sleep wake up early at end of minute doing an adjust as well
-               int16_t a = ((int) rtcadjust * (last_min + 1) / 60);
+               int16_t a = ((int) rtcadjust * ((int)last_min + 1) / 60);
                if (a != last_adjust)
                {
                   ESP_LOGE (TAG, "Adjust %d", (a - last_adjust));

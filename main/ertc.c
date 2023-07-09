@@ -29,13 +29,13 @@ ertc_init (void)
 time_t
 ertc_read (void)
 {
-   uint8_t S,
-     M,
-     H,
-     d,
-     w,
-     m,
-     y;
+   uint8_t S=0,
+     M=0,
+     H=0,
+     d=0,
+     w=0,
+     m=0,
+     y=0;
    i2c_cmd_handle_t txn = i2c_cmd_link_create ();
    i2c_master_start (txn);
    i2c_master_write_byte (txn, (RTCADDRESS << 1) | I2C_MASTER_WRITE, true);
@@ -74,20 +74,13 @@ ertc_write (time_t now)
 {
    struct tm t = { 0 };
    gmtime_r (&now, &t);         // Store UTC
-   uint8_t S,
-     M,
-     H,
-     d,
-     w,
-     m,
-     y;
-   S = ((t.tm_sec / 10) << 4) + (t.tm_sec % 10);
-   M = ((t.tm_min / 10) << 4) + (t.tm_min % 10);
-   H = ((t.tm_hour / 10) << 4) + (t.tm_hour % 10);
-   d = ((t.tm_mday / 10) << 4) + (t.tm_mday % 10);
-   w = t.tm_wday;
-   m = (((t.tm_mon + 1) / 10) << 4) + ((t.tm_mon + 1) % 10) + ((t.tm_year / 100) << 7);
-   y = (((t.tm_year / 10) % 10) << 4) + (t.tm_year % 10);
+   uint8_t S = ((t.tm_sec / 10) << 4) + (t.tm_sec % 10);
+   uint8_t M = ((t.tm_min / 10) << 4) + (t.tm_min % 10);
+   uint8_t H = ((t.tm_hour / 10) << 4) + (t.tm_hour % 10);
+   uint8_t d = ((t.tm_mday / 10) << 4) + (t.tm_mday % 10);
+   uint8_t w = t.tm_wday;
+   uint8_t m = (((t.tm_mon + 1) / 10) << 4) + ((t.tm_mon + 1) % 10) + ((t.tm_year / 100) << 7);
+   uint8_t y = (((t.tm_year / 10) % 10) << 4) + (t.tm_year % 10);
    ESP_LOGI (TAG, "Tx %02X %02X %02X %02X %02X %02X %02X", S, M, H, d, w, m, y);
    i2c_cmd_handle_t txn = i2c_cmd_link_create ();
    i2c_master_start (txn);
