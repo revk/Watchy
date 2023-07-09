@@ -25,6 +25,8 @@
 #define	I2CPORT	0
 #define	RTCADDRESS	0x51
 #define	ADCCHANNEL	ADC_CHANNEL_6
+#define	BATHIGH		2400
+#define	BATLOW		2000
 
-extern int battery;
+extern uint8_t battery;
 extern uint8_t charging;

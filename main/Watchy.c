@@ -21,7 +21,6 @@ void face_show (uint8_t, time_t);       // Show current time
 
 uint8_t charging = 0;
 
-RTC_NOINIT_ATTR int battery;
 RTC_NOINIT_ATTR uint32_t rtcmenu;
 RTC_NOINIT_ATTR int16_t last_adjust;
 RTC_NOINIT_ATTR int16_t rtcadjust;
@@ -29,6 +28,7 @@ RTC_NOINIT_ATTR uint8_t rtcflip;
 RTC_NOINIT_ATTR uint8_t rtcface;
 RTC_NOINIT_ATTR uint8_t last_hour;
 RTC_NOINIT_ATTR uint8_t last_min;
+RTC_NOINIT_ATTR uint8_t battery;
 RTC_NOINIT_ATTR char rtctz[30];
 
 // Settings (RevK library used by MQTT setting command)
@@ -114,8 +114,15 @@ read_battery (void)
       .atten = ADC_ATTEN_DB_11,
    };
    adc_oneshot_config_channel (adc1_handle, ADCCHANNEL, &config);
-   adc_oneshot_read (adc1_handle, ADCCHANNEL, &battery);
+   int value;
+   adc_oneshot_read (adc1_handle, ADCCHANNEL, &value);
    adc_oneshot_del_unit (adc1_handle);
+   value = (value - BATLOW) * 100 / (BATHIGH - BATLOW);
+   if (value < 0)
+      value = 0;
+   if (value > 100)
+      value = 100;
+   battery = value;
    ESP_LOGI (TAG, "ADC %d%s", battery, charging ? " charging" : "");
 }
 
