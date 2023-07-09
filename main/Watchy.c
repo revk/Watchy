@@ -19,8 +19,16 @@ const char *gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t s
 void face_init (void);          // Cold start up watch face
 void face_show (uint8_t, time_t);       // Show current time
 
-int battery=0;
-uint8_t charging=0;
+uint8_t charging = 0;
+
+RTC_NOINIT_ATTR uint8_t rtcmenu;
+RTC_NOINIT_ATTR uint8_t rtcflip;
+RTC_NOINIT_ATTR uint8_t rtcface;
+RTC_NOINIT_ATTR int16_t rtcadjust;
+RTC_NOINIT_ATTR uint8_t last_hour;
+RTC_NOINIT_ATTR uint8_t last_min;
+RTC_NOINIT_ATTR int16_t last_adjust;
+RTC_NOINIT_ATTR int battery;
 
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
@@ -103,6 +111,24 @@ awake (void)
 }
 
 void
+read_battery (void)
+{                               // ADC
+   adc_oneshot_unit_handle_t adc1_handle;
+   adc_oneshot_unit_init_cfg_t init_config1 = {
+      .unit_id = ADC_UNIT_1,
+   };
+   adc_oneshot_new_unit (&init_config1, &adc1_handle);
+   adc_oneshot_chan_cfg_t config = {
+      .bitwidth = ADC_BITWIDTH_DEFAULT,
+      .atten = ADC_ATTEN_DB_11,
+   };
+   adc_oneshot_config_channel (adc1_handle, ADCCHANNEL, &config);
+   adc_oneshot_read (adc1_handle, ADCCHANNEL, &battery);
+   adc_oneshot_del_unit (adc1_handle);
+   ESP_LOGI (TAG, "ADC %d", battery);
+}
+
+void
 app_main ()
 {
    uint8_t wakeup = esp_sleep_get_wakeup_cause ();
@@ -111,7 +137,7 @@ app_main ()
    // Charging
    gpio_pullup_dis (GPIORX);    // Used to detect the UART is down, and hence no VBUS and hence not charging.
    gpio_pulldown_en (GPIORX);
-   charging=gpio_get_level (GPIORX);
+   charging = gpio_get_level (GPIORX);
 
    uint8_t btn (int gpio)
    {
@@ -130,15 +156,6 @@ app_main ()
    if (btn (GPIOBTN4))
       buttons |= 8;
 
-   static RTC_NOINIT_ATTR uint8_t rtcmenu;
-   static RTC_NOINIT_ATTR uint8_t rtcflip;
-   static RTC_NOINIT_ATTR uint8_t rtcface;
-   static RTC_NOINIT_ATTR int16_t rtcadjust;
-   static RTC_NOINIT_ATTR uint8_t last_hour;
-   static RTC_NOINIT_ATTR uint8_t last_min;
-   static RTC_NOINIT_ATTR int16_t last_adjust;
-   static RTC_NOINIT_ATTR int rtcbattery;
-   battery=rtcbattery;
    void epaper_init (void)
    {
       static uint8_t done = 0;
@@ -168,24 +185,8 @@ app_main ()
       uint8_t v = now / 60 % 60;
       if (last_min != v)
       {                         // Update display
-         {                      // ADC
-		adc_oneshot_unit_handle_t adc1_handle;
-    adc_oneshot_unit_init_cfg_t init_config1 = {
-        .unit_id = ADC_UNIT_1,
-    };
-    adc_oneshot_new_unit(&init_config1, &adc1_handle);		
-      adc_oneshot_chan_cfg_t config = {
-        .bitwidth = ADC_BITWIDTH_DEFAULT,
-        .atten = ADC_ATTEN_DB_11,
-    };
-    adc_oneshot_config_channel(adc1_handle, ADCCHANNEL, &config);
-            adc_oneshot_read(adc1_handle, ADCCHANNEL, &battery);
-	    adc_oneshot_del_unit(adc1_handle);
-
-			
-	    rtcbattery=battery;
-            ESP_LOGE (TAG, "ADC %d", battery);
-         }
+         if (!(v % 5))
+            read_battery ();
          last_min = v;
          epaper_init ();
          if (rtcmenu)
@@ -285,6 +286,7 @@ app_main ()
 
    while (1)
    {
+      read_battery ();
       now = time (0);
       if (rtcmenu)
          rtcmenu = menu_show (rtcmenu, buttons);

@@ -84,6 +84,8 @@ face_basic (struct tm *t)
    gfx_pos (100, 90, GFX_C | GFX_T | GFX_V);
    gfx_7seg (3, "%s", temp);
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
+   gfx_pos (199, 160, GFX_R | GFX_B);
+   gfx_7seg (2, "%d", battery);
    gfx_qr (temp, 0, 199, 2);
    strftime (temp, sizeof (temp), "%a", t);
    gfx_pos (199, 199, GFX_R | GFX_B);
