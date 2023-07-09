@@ -83,6 +83,9 @@ face_basic (struct tm *t)
    gfx_7seg (3, "%s", temp);
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
    gfx_pos (199, 160, GFX_R | GFX_B);
+   extern char *rtctz;
+   gfx_text(1,"%s",rtctz);
+   gfx_pos (199, 170, GFX_R | GFX_B);
    gfx_7seg (2, "%d", charging ? -battery : battery);
    strftime (temp, sizeof (temp), "%a", t);
    gfx_pos (199, 199, GFX_R | GFX_B);
