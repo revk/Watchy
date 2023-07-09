@@ -72,8 +72,8 @@ ertc_read (struct tm *t)
    t->tm_mday = ((d & 0x70) >> 4) * 10 + (d & 0xF);
    t->tm_mon = ((m & 0x10) >> 4) * 10 + (m & 0xF) - 1;
    t->tm_year = (m >> 7) * 100 + ((y & 0xF0) >> 4) * 10 + (y & 0xF);
-   t->tm_isdst = 0;             // UTC in RTC
-   mktime (t);
+   //timegm (t);
+   mktime(t); // TODO needs to be timegm for non UK timezones
    if (S & 0x80)
       return ESP_FAIL;          // time reported but not set in RTC chip
    return ESP_OK;

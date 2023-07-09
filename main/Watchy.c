@@ -96,6 +96,16 @@ night (struct tm *t)
    esp_deep_sleep ((60 - t->tm_sec) * 1000000LL);       // Next minute
 }
 
+int
+awake (void)
+{                               // Reasons to be awake
+   if (gpio_get_level (rx))
+      return 1;                 // Charging
+   if (revk_shutting_down (NULL))
+      return 2;                 // Deliberate shutdown sequence (usually means OTA in progress)
+   return 0;
+}
+
 void
 app_main ()
 {
@@ -132,8 +142,7 @@ app_main ()
 #undef b
 #undef s
       uint8_t wakeup = esp_sleep_get_wakeup_cause ();
-   if (!wakeup && esp_reset_reason () == ESP_RST_SW)
-      wakeup = ESP_SLEEP_WAKEUP_ALL;    // It does not seem to say DEEPSLEEP, and does not always set a cause
+   //if (!wakeup && esp_reset_reason () == ESP_RST_SW) wakeup = ESP_SLEEP_WAKEUP_ALL;    // It does not seem to say DEEPSLEEP, and does not always set a cause
    if (wakeup)
       ESP_LOGE (TAG, "Wake up %d", wakeup);
 
@@ -165,15 +174,15 @@ app_main ()
    gpio_pullup_dis (rx);        // Used to detect the UART is down, and hence no VBUS and hence not charging.
    gpio_pulldown_en (rx);
 
+   struct tm t;
    if (ertc_init ())
       ESP_LOGE (TAG, "RTC init fail");
-   struct tm t;
-   if (ertc_read (&t))
+   else if (ertc_read (&t))
       ESP_LOGE (TAG, "RTC read fail");
    else if (wakeup)
    {
       face_show (&t);
-      if (t.tm_min)             // && !gpio_get_level (rx)) // TODO other reasons to stay awake?
+      if (t.tm_min) // Hourly time sync
          night (&t);
    }
 
@@ -191,7 +200,7 @@ app_main ()
          usleep (1000000 - tv.tv_usec);
          gettimeofday (&tv, NULL);
          struct tm t;
-         localtime_r (&tv.tv_sec, &t);
+         gmtime_r (&tv.tv_sec, &t);
          ertc_write (&t);
       }
    }
@@ -202,9 +211,9 @@ app_main ()
       struct tm t;
       localtime_r (&now, &t);
       face_show (&t);
-      if (!gpio_get_level (rx) || uptime () > 120)
-         night (&t);            // Stay up for charging for 2 minutes at least
+      if (!awake () || uptime () > 120)
+         night (&t);            // Stay up in charging for 2 minutes at least
       else
-         sleep (5);
+         sleep (1);
    }
 }
