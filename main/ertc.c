@@ -3,34 +3,26 @@
 
 static const char __attribute__((unused)) TAG[] = "RTC";
 
-
 #include "revk.h"
+#include "watchy.h"
 #include <driver/i2c.h>
-#define port_mask(x)    ((x)&0x7F)
-
-extern uint8_t sda,
-  scl,
-  i2cport,
-  rtcaddress;
 
 esp_err_t
 ertc_init (void)
 {
-   if (!sda || !scl)
-      return ESP_FAIL;
    i2c_config_t config = {
       .mode = I2C_MODE_MASTER,
-      .sda_io_num = port_mask (sda),
-      .scl_io_num = port_mask (scl),
+      .sda_io_num = GPIOSDA,
+      .scl_io_num = GPIOSCL,
       .sda_pullup_en = true,
       .scl_pullup_en = true,
       .master.clk_speed = 100000,
    };
-   esp_err_t e = i2c_driver_install (i2cport, I2C_MODE_MASTER, 0, 0, 0);
+   esp_err_t e = i2c_driver_install (I2CPORT, I2C_MODE_MASTER, 0, 0, 0);
    if (!e)
-      e = i2c_param_config (i2cport, &config);
+      e = i2c_param_config (I2CPORT, &config);
    if (!e)
-      e = i2c_set_timeout (i2cport, 80000 * 5);
+      e = i2c_set_timeout (I2CPORT, 80000 * 5);
    return e;
 }
 
@@ -49,10 +41,10 @@ ertc_read (struct tm *t)
      y;
    i2c_cmd_handle_t txn = i2c_cmd_link_create ();
    i2c_master_start (txn);
-   i2c_master_write_byte (txn, (rtcaddress << 1) | I2C_MASTER_WRITE, true);
+   i2c_master_write_byte (txn, (RTCADDRESS << 1) | I2C_MASTER_WRITE, true);
    i2c_master_write_byte (txn, 0x02, true);
    i2c_master_start (txn);
-   i2c_master_write_byte (txn, (rtcaddress << 1) | I2C_MASTER_READ, true);
+   i2c_master_write_byte (txn, (RTCADDRESS << 1) | I2C_MASTER_READ, true);
    i2c_master_read_byte (txn, &S, I2C_MASTER_ACK);
    i2c_master_read_byte (txn, &M, I2C_MASTER_ACK);
    i2c_master_read_byte (txn, &H, I2C_MASTER_ACK);
@@ -61,7 +53,7 @@ ertc_read (struct tm *t)
    i2c_master_read_byte (txn, &m, I2C_MASTER_ACK);
    i2c_master_read_byte (txn, &y, I2C_MASTER_LAST_NACK);
    i2c_master_stop (txn);
-   esp_err_t e = i2c_master_cmd_begin (i2cport, txn, 10 / portTICK_PERIOD_MS);
+   esp_err_t e = i2c_master_cmd_begin (I2CPORT, txn, 10 / portTICK_PERIOD_MS);
    i2c_cmd_link_delete (txn);
    if (e)
       return e;
@@ -103,7 +95,7 @@ ertc_write (struct tm *t)
    ESP_LOGI (TAG, "Tx %02X %02X %02X %02X %02X %02X %02X", S, M, H, d, w, m, y);
    i2c_cmd_handle_t txn = i2c_cmd_link_create ();
    i2c_master_start (txn);
-   i2c_master_write_byte (txn, (rtcaddress << 1) | I2C_MASTER_WRITE, true);
+   i2c_master_write_byte (txn, (RTCADDRESS << 1) | I2C_MASTER_WRITE, true);
    i2c_master_write_byte (txn, 0x00, true);     // Address
    i2c_master_write_byte (txn, 0x00, true);     // Control 1
    i2c_master_write_byte (txn, 0x00, true);     // Control 2
@@ -115,7 +107,7 @@ ertc_write (struct tm *t)
    i2c_master_write_byte (txn, m, true);
    i2c_master_write_byte (txn, y, true);
    i2c_master_stop (txn);
-   esp_err_t e = i2c_master_cmd_begin (i2cport, txn, 10 / portTICK_PERIOD_MS);
+   esp_err_t e = i2c_master_cmd_begin (I2CPORT, txn, 10 / portTICK_PERIOD_MS);
    i2c_cmd_link_delete (txn);
    if (e)
       return e;

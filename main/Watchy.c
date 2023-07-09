@@ -4,6 +4,7 @@
 static const char __attribute__((unused)) TAG[] = "Watchy";
 
 #include "revk.h"
+#include "watchy.h"
 #include "esp_sleep.h"
 #include "esp_task_wdt.h"
 #include <driver/gpio.h>
@@ -11,34 +12,17 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #include <driver/rtc_io.h>
 #include "gfx.h"
 #include "ertc.h"
+#include "menu.h"
 
 const char *gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t scale);  // QR
 void face_init (void);          // Cold start up watch face
-void face_show (struct tm *);   // Show current time
+void face_show (uint8_t, struct tm *);  // Show current time
 
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
-	ioa(button,4,"26 25 35 4")	\
-	io(ss,5)	\
-	io(dc,10)	\
-	io(res,9)	\
-	io(sck,18)	\
-	io(sda,21)	\
-	io(scl,22)	\
-	io(mosi,23)	\
-	io(rtcint,27)	\
-	io(adc,34)	\
-	io(vib,13)	\
-	io(accint2,12)	\
-	io(accint1,14)	\
-	io(busy,19)	\
-	u8(flip,0)	\
 	u8(face,0)	\
-	u8(i2cport,0)	\
-	u8(rtcaddress,0x51)	\
+	s16(adjust,0)	\
 
-#define	tx	1
-#define	rx	3
 #define	port_mask(x)	((x)&0x7F)
 #define u32(n,d)        uint32_t n;
 #define u32l(n,d)        uint32_t n;
@@ -47,6 +31,7 @@ void face_show (struct tm *);   // Show current time
 #define u8(n,d) uint8_t n;
 #define u8r(n,d) uint8_t n,ring##n;
 #define u16(n,d) uint16_t n;
+#define s16(n,d) int16_t n;
 #define u16r(n,d) uint16_t n,ring##n;
 #define s8r(n,d) int8_t n,ring##n;
 #define s16r(n,d) int16_t n,ring##n;
@@ -65,6 +50,7 @@ settings
 #undef u8
 #undef u8r
 #undef u16
+#undef s16
 #undef u16r
 #undef s8r
 #undef s16r
@@ -84,13 +70,17 @@ night (struct tm *t)
 {
    // TODO isolate other pins?
    uint64_t mask = 0;
-   for (int b = 0; b < 4; b++)
+   void btn (uint8_t gpio)
    {
-      rtc_gpio_set_direction_in_sleep (port_mask (button[b]), RTC_GPIO_MODE_INPUT_ONLY);
-      rtc_gpio_pullup_dis (port_mask (button[b]));
-      rtc_gpio_pulldown_dis (port_mask (button[b]));
-      mask |= (1ULL << port_mask (button[b]));
+      rtc_gpio_set_direction_in_sleep (gpio, RTC_GPIO_MODE_INPUT_ONLY);
+      rtc_gpio_pullup_dis (gpio);
+      rtc_gpio_pulldown_dis (gpio);
+      mask |= (1ULL << gpio);
    }
+   btn (GPIOBTN1);
+   btn (GPIOBTN2);
+   btn (GPIOBTN3);
+   btn (GPIOBTN4);
    esp_sleep_enable_ext1_wakeup (mask, ESP_EXT1_WAKEUP_ANY_HIGH);
    ESP_LOGE (TAG, "Night night %d", 60 - t->tm_sec);
    esp_deep_sleep ((60 - t->tm_sec) * 1000000LL);       // Next minute
@@ -99,7 +89,7 @@ night (struct tm *t)
 int
 awake (void)
 {                               // Reasons to be awake
-   if (gpio_get_level (rx))
+   if (gpio_get_level (GPIORX))
       return 1;                 // Charging
    if (revk_shutting_down (NULL))
       return 2;                 // Deliberate shutdown sequence (usually means OTA in progress)
@@ -109,6 +99,96 @@ awake (void)
 void
 app_main ()
 {
+   uint8_t wakeup = esp_sleep_get_wakeup_cause ();
+   ESP_LOGE (TAG, "Start up %d", wakeup);
+
+   // Charging
+   gpio_pullup_dis (GPIORX);    // Used to detect the UART is down, and hence no VBUS and hence not charging.
+   gpio_pulldown_en (GPIORX);
+   uint8_t btn (int gpio)
+   {
+      gpio_reset_pin (gpio);
+      gpio_set_direction (gpio, GPIO_MODE_INPUT);
+      gpio_pullup_dis (gpio);
+      return gpio_get_level (gpio);
+   }
+   uint8_t buttons = 0;
+   if (btn (GPIOBTN1))
+      buttons |= 1;
+   if (btn (GPIOBTN2))
+      buttons |= 2;
+   if (btn (GPIOBTN3))
+      buttons |= 4;
+   if (btn (GPIOBTN4))
+      buttons |= 8;
+
+   void epaper_init (void)
+   {
+      static uint8_t done = 0;
+      if (done)
+         return;
+      done = 1;
+      ESP_LOGI (TAG, "Start E-paper");
+    const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: FLIP, width: 200, height: 200, partial: 1, mode2: 1, sleep: 1, norefresh:wakeup ? 1 : 0);
+      if (e)
+      {
+         ESP_LOGE (TAG, "gfx %s", e);
+         jo_t j = jo_object_alloc ();
+         jo_string (j, "error", "Failed to start");
+         jo_string (j, "description", e);
+         revk_error ("gfx", &j);
+      } else if (!wakeup)
+         face_init ();
+   }
+
+   static RTC_NOINIT_ATTR uint8_t rtcmenu;
+   static RTC_NOINIT_ATTR uint8_t rtcface;
+   static RTC_NOINIT_ATTR int16_t rtcadjust;
+   static RTC_NOINIT_ATTR uint8_t last_hour;
+   static RTC_NOINIT_ATTR int16_t last_adjust;
+
+   struct tm t;
+   if (ertc_init ())
+      ESP_LOGE (TAG, "RTC init fail");
+   else if (ertc_read (&t))
+      ESP_LOGE (TAG, "RTC read fail");
+   else
+   {
+      if (t.tm_sec < 5)
+      {
+         epaper_init ();
+         if (rtcmenu)
+            rtcmenu = menu_show (rtcmenu, buttons);
+         else
+            face_show (rtcface, &t);
+      }
+      if (wakeup == ESP_SLEEP_WAKEUP_TIMER)
+      {                         // Per minute wake up
+         if (last_hour != t.tm_hour)
+         {                      // Normal start and attempt local clock sync
+            last_hour = t.tm_hour;
+            last_adjust = 0;
+            ESP_LOGE (TAG, "Hourly wake");
+         } else
+         {
+		 ESP_LOGE(TAG,"rtcadjust=%d",rtcadjust);
+            if (rtcadjust)
+            {                   // Not totally clean, but avoids the sleep wake up early at end of minute doing an adjust as well
+               int16_t a = ((int) rtcadjust * (t.tm_min + 1) / 60);
+               if (a != last_adjust)
+               {
+                  ESP_LOGE (TAG, "Adjust %d", (a - last_adjust));
+                  t.tm_sec += (a - last_adjust);
+                  ertc_write (&t);
+                  last_adjust = a;
+               }
+            }
+            night (&t);         // Allow normal start on the hour
+         }
+      }
+   }
+
+
    revk_boot (&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
 #define ioa(n,a,d)           revk_register(#n,a,sizeof(*n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
@@ -120,6 +200,7 @@ app_main ()
 #define u8(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
 #define u8r(n,d) revk_register(#n,0,sizeof(n),&n,#d,0); revk_register("ring"#n,0,sizeof(ring##n),&ring##n,#d,0);
 #define u16(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
+#define s16(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_SIGNED);
 #define u16r(n,d) revk_register(#n,0,sizeof(n),&n,#d,0); revk_register("ring"#n,0,sizeof(ring##n),&ring##n,#d,0);
 #define s8r(n,d) revk_register(#n,0,sizeof(n),&n,#d,0); revk_register("ring"#n,0,sizeof(ring##n),&ring##n,#d,SETTING_SIGNED);
 #define s16r(n,d) revk_register(#n,0,sizeof(n),&n,#d,0); revk_register("ring"#n,0,sizeof(ring##n),&ring##n,#d,SETTING_SIGNED);
@@ -135,58 +216,20 @@ app_main ()
 #undef u8
 #undef u8r
 #undef u16
+#undef s16
 #undef u16r
 #undef s8r
 #undef s16r
 #undef u8l
 #undef b
 #undef s
-      uint8_t wakeup = esp_sleep_get_wakeup_cause ();
-   //if (!wakeup && esp_reset_reason () == ESP_RST_SW) wakeup = ESP_SLEEP_WAKEUP_ALL;    // It does not seem to say DEEPSLEEP, and does not always set a cause
-   if (wakeup)
-      ESP_LOGE (TAG, "Wake up %d", wakeup);
+      revk_start ();
+   rtcadjust = adjust;
+   rtcface = face;
+   if (!wakeup)
+      rtcmenu = 0;
 
-   // Buttons as soon as we can...
-   for (int b = 0; b < 4; b++)
-      if (button[b])
-      {
-         gpio_reset_pin (port_mask (button[b]));
-         gpio_set_direction (port_mask (button[b]), GPIO_MODE_INPUT);
-         gpio_pullup_dis (port_mask (button[b]));
-         // TODO read state
-      }
-
-   if (mosi || dc || sck)
-   {
-      ESP_LOGI (TAG, "Start E-paper");
-    const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: 1, norefresh:wakeup);
-      if (e)
-      {
-         ESP_LOGE (TAG, "gfx %s", e);
-         jo_t j = jo_object_alloc ();
-         jo_string (j, "error", "Failed to start");
-         jo_string (j, "description", e);
-         revk_error ("gfx", &j);
-      } else if (!wakeup)
-         face_init ();
-   }
-   // Charging
-   gpio_pullup_dis (rx);        // Used to detect the UART is down, and hence no VBUS and hence not charging.
-   gpio_pulldown_en (rx);
-
-   struct tm t;
-   if (ertc_init ())
-      ESP_LOGE (TAG, "RTC init fail");
-   else if (ertc_read (&t))
-      ESP_LOGE (TAG, "RTC read fail");
-   else if (wakeup)
-   {
-      face_show (&t);
-      if (t.tm_min) // Hourly time sync
-         night (&t);
-   }
-
-   revk_start ();
+   epaper_init ();
 
    ESP_LOGI (TAG, "Wait Time");
    while (time (0) < 30)
@@ -200,7 +243,9 @@ app_main ()
          usleep (1000000 - tv.tv_usec);
          gettimeofday (&tv, NULL);
          struct tm t;
-         gmtime_r (&tv.tv_sec, &t);
+         localtime_r (&tv.tv_sec, &t);
+         last_hour = t.tm_hour;
+         last_adjust = rtcadjust * t.tm_min / 60;
          ertc_write (&t);
       }
    }
@@ -210,7 +255,10 @@ app_main ()
       time_t now = time (0);
       struct tm t;
       localtime_r (&now, &t);
-      face_show (&t);
+      if (rtcmenu)
+         rtcmenu = menu_show (rtcmenu, buttons);
+      else
+         face_show (rtcface, &t);
       if (!awake () || uptime () > 120)
          night (&t);            // Stay up in charging for 2 minutes at least
       else

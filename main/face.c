@@ -59,7 +59,7 @@ face_t *const faces[] = {
 
 extern uint8_t face;            // Face number
 void
-face_show (struct tm *t)
+face_show (uint8_t face,struct tm *t)
 {
    if (face >= sizeof (faces) / sizeof (*faces))
       face = 0;
