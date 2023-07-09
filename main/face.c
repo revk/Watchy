@@ -85,7 +85,7 @@ face_basic (struct tm *t)
       const char *r;
       if (revk_shutting_down (&r))
       {
-         gfx_pos (50, 130, GFX_C | GFX_B);
+         gfx_pos (100, 130, GFX_C | GFX_B);
          gfx_text (-1, "%s", r);
       }
    }
