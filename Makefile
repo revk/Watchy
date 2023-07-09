@@ -22,7 +22,7 @@ issue:
 	git push
 
 main/icons.h: $(patsubst %.svg,%.h,$(wildcard icons/*.svg))
-	grep const icons/*.h | sed -e 's/const/extern const/' -e 's/={/;/' > main/icons.h
+	grep -h const icons/*.h | sed -e 's/const/extern const/' -e 's/={/;/' > main/icons.h
 
 main/icons.c: $(patsubst %.svg,%.h,$(wildcard icons/*.svg))
 	cat icons/*.h > main/icons.c

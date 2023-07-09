@@ -85,15 +85,18 @@ face_basic (struct tm *t)
       const char *r;
       if (revk_shutting_down (&r))
       {
-         gfx_pos (199, 140, GFX_R | GFX_B);
-         gfx_text (1, "%s", r);
+         gfx_pos (50, 130, GFX_C | GFX_B);
+         gfx_text (-1, "%s", r);
       }
    }
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
-   gfx_pos (199, 165, GFX_R | GFX_B);
-   gfx_7seg (2, "%d", charging ? -battery : battery);
-   strftime (temp, sizeof (temp), "%a", t);
-   gfx_pos (199, 199, GFX_R | GFX_B);
-   gfx_text (4, "%s%s%s", revk_link_down ()? " " : "^", lwmqtt_connected (revk_mqtt (0)) ? "*" : " ", temp);
    gfx_qr (temp, 0, 199, 2);
+   gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
+   gfx_7seg (2, "%d", battery);
+   strftime (temp, sizeof (temp), "%a", t);
+   gfx_icon2 (32, 32, charging ? icon_power : NULL);
+   gfx_icon2 (32, 32, !revk_link_down ()? icon_wifi : NULL);
+   gfx_icon2 (32, 32, lwmqtt_connected (revk_mqtt (0)) ? icon_mqtt : NULL);
+   gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
+   gfx_text (4, "%s", temp);
 }
