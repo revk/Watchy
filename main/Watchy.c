@@ -15,6 +15,10 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #include "ertc.h"
 #include "menu.h"
 
+#ifdef	CONFIG_SECURE_SIGNED_ON_BOOT_NO_SECURE_BOOT
+#warning Lower battery life if CONFIG_SECURE_SIGNED_ON_BOOT_NO_SECURE_BOOT
+#endif
+
 const char *gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t scale);  // QR
 void face_init (void);          // Cold start up watch face
 void face_show (uint8_t, time_t);       // Show current time

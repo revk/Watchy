@@ -92,7 +92,7 @@ face_basic (struct tm *t)
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
    gfx_qr (temp, 0, 199, 2);
    gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
-   gfx_7seg (2, "%d", battery);
+   gfx_7seg (2, "%3d", battery);
    strftime (temp, sizeof (temp), "%a", t);
    gfx_icon2 (32, 32, charging ? icon_power : NULL);
    gfx_icon2 (32, 32, !revk_link_down ()? icon_wifi : NULL);
