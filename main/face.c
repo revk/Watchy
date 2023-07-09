@@ -79,7 +79,6 @@ face_basic (struct tm *t)
    char temp[30];
    gfx_pos (100, 0, GFX_C | GFX_T | GFX_H);
    strftime (temp, sizeof (temp), "%H:%M", t);
-   ESP_LOGE ("Face", "%s", temp);       // TODO
    gfx_7seg (8, "%s", temp);
    strftime (temp, sizeof (temp), "%F", t);
    gfx_pos (100, 90, GFX_C | GFX_T | GFX_V);
