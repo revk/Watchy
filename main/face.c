@@ -1,7 +1,6 @@
 // Watch faces
 
-#include "revk.h"
-#include "gfx.h"
+#include "face.h"
 #include "iec18004.h"
 
 const char *
@@ -50,13 +49,32 @@ face_init (void)
    gfx_unlock ();
 }
 
+typedef void face_t (struct tm *);
+#define face(name,description)	extern face_t face_##name;
+#include "faces.m"
+face_t *const faces[] = {
+#define face(name,description)	&face_##name,
+#include "faces.m"
+};
+
+extern uint8_t face;            // Face number
 void
-face_time (struct tm *t)
-{                               // Current time
-   // TODO this is a generic face
-   char temp[30];
+face_show (struct tm *t)
+{
+   if (face >= sizeof (faces) / sizeof (*faces))
+      face = 0;
    gfx_lock ();
    gfx_clear (0);
+   faces[face] (t);
+   gfx_unlock ();
+   gfx_wait ();
+
+}
+
+void
+face_basic (struct tm *t)
+{                               // Basic face
+   char temp[30];
    gfx_pos (100, 0, GFX_C | GFX_T | GFX_H);
    strftime (temp, sizeof (temp), "%H:%M", t);
    gfx_7seg (8, "%s", temp);
@@ -68,5 +86,4 @@ face_time (struct tm *t)
    strftime (temp, sizeof (temp), "%a", t);
    gfx_pos (199, 199, GFX_R | GFX_B);
    gfx_text (-4, "%s", temp);
-   gfx_unlock ();
 }

@@ -7,14 +7,20 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 - [x] Base build and flash
 - [x] OTA
 - [ ] Battery level reading
-- [ ] Buttons
+- [x] Buttons
 - [x] OLED display
 - [x] OLED soft/partial updates (e.g. for 7 seg digits)
 - [x] OLED sleep mode control
 - [ ] Accelerometer
-- [ ] RTC
-- [ ] Low power mode (inc work on RevK library to support)
-- [ ] Low power with buttons
-- [ ] Watch face design
+- [x] RTC
+- [x] Low power mode
+- [x] Low power with buttons
+- [ ] Finish basic watch face design
+- [ ] Analogue watch face design
+- [ ] At least one other fun watch face design - ideas welcome
 - [ ] Basic menus
 - [ ] Vibration motor
+- [ ] Alarm clock
+- [ ] Time zone select
+- [ ] OTA via menu
+- [ ] Sleep hold off during OTA!

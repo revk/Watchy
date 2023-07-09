@@ -10,7 +10,11 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #include <driver/uart.h>
 #include <driver/rtc_io.h>
 #include "gfx.h"
-#include "face.h"
+#include "ertc.h"
+
+const char *gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t scale);  // QR
+void face_init (void);          // Cold start up watch face
+void face_show (struct tm *);   // Show current time
 
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
@@ -29,6 +33,9 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 	io(accint1,14)	\
 	io(busy,19)	\
 	u8(flip,0)	\
+	u8(face,0)	\
+	u8(i2cport,0)	\
+	u8(rtcaddress,0x51)	\
 
 #define	tx	1
 #define	rx	3
@@ -73,6 +80,23 @@ app_callback (int client, const char *prefix, const char *target, const char *su
 }
 
 void
+night (struct tm *t)
+{
+   // TODO isolate other pins?
+   uint64_t mask = 0;
+   for (int b = 0; b < 4; b++)
+   {
+      rtc_gpio_set_direction_in_sleep (port_mask (button[b]), RTC_GPIO_MODE_INPUT_ONLY);
+      rtc_gpio_pullup_dis (port_mask (button[b]));
+      rtc_gpio_pulldown_dis (port_mask (button[b]));
+      mask |= (1ULL << port_mask (button[b]));
+   }
+   esp_sleep_enable_ext1_wakeup (mask, ESP_EXT1_WAKEUP_ANY_HIGH);
+   ESP_LOGE (TAG, "Night night %d", 60 - t->tm_sec);
+   esp_deep_sleep ((60 - t->tm_sec) * 1000000LL);       // Next minute
+}
+
+void
 app_main ()
 {
    revk_boot (&app_callback);
@@ -107,12 +131,26 @@ app_main ()
 #undef u8l
 #undef b
 #undef s
-      revk_start ();
-   int wakeup = (esp_reset_reason () == ESP_RST_DEEPSLEEP);
+      uint8_t wakeup = esp_sleep_get_wakeup_cause ();
+   if (!wakeup && esp_reset_reason () == ESP_RST_SW)
+      wakeup = ESP_SLEEP_WAKEUP_ALL;    // It does not seem to say DEEPSLEEP, and does not always set a cause
+   if (wakeup)
+      ESP_LOGE (TAG, "Wake up %d", wakeup);
+
+   // Buttons as soon as we can...
+   for (int b = 0; b < 4; b++)
+      if (button[b])
+      {
+         gpio_reset_pin (port_mask (button[b]));
+         gpio_set_direction (port_mask (button[b]), GPIO_MODE_INPUT);
+         gpio_pullup_dis (port_mask (button[b]));
+         // TODO read state
+      }
+
    if (mosi || dc || sck)
    {
       ESP_LOGI (TAG, "Start E-paper");
-    const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep:1);
+    const char *e = gfx_init (sck: port_mask (sck), cs: port_mask (ss), mosi: port_mask (mosi), dc: port_mask (dc), rst: port_mask (res), busy: port_mask (busy), flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: 1, norefresh:wakeup);
       if (e)
       {
          ESP_LOGE (TAG, "gfx %s", e);
@@ -123,50 +161,50 @@ app_main ()
       } else if (!wakeup)
          face_init ();
    }
-   // Buttons
-   for (int b = 0; b < 4; b++)
-      if (button[b])
-      {
-         gpio_reset_pin (port_mask (button[b]));
-         gpio_set_direction (port_mask (button[b]), GPIO_MODE_INPUT);
-         gpio_pullup_dis (port_mask (button[b]));
-      }
    // Charging
    gpio_pullup_dis (rx);        // Used to detect the UART is down, and hence no VBUS and hence not charging.
    gpio_pulldown_en (rx);
 
-   while (1)
-   {                            // Wait clock set
-      if (time (0) > 300)
-         break;
+   if (ertc_init ())
+      ESP_LOGE (TAG, "RTC init fail");
+   struct tm t;
+   if (ertc_read (&t))
+      ESP_LOGE (TAG, "RTC read fail");
+   else if (wakeup)
+   {
+      face_show (&t);
+      if (t.tm_min)             // && !gpio_get_level (rx)) // TODO other reasons to stay awake?
+         night (&t);
+   }
+
+   revk_start ();
+
+   ESP_LOGI (TAG, "Wait Time");
+   while (time (0) < 30)
       sleep (1);
+
+   {                            // Set time
+      struct timeval tv;
+      gettimeofday (&tv, NULL);
+      if (tv.tv_sec > 1000000000)
+      {
+         usleep (1000000 - tv.tv_usec);
+         gettimeofday (&tv, NULL);
+         struct tm t;
+         localtime_r (&tv.tv_sec, &t);
+         ertc_write (&t);
+      }
    }
 
    while (1)
    {
-      jo_t j = jo_object_alloc ();
-      jo_bool (j, "charging", gpio_get_level (rx));
-      jo_bool (j, "btn1", port_mask (button[0]));
-      jo_bool (j, "btn2", port_mask (button[1]));
-      jo_bool (j, "btn3", port_mask (button[2]));
-      jo_bool (j, "btn4", port_mask (button[3]));
-      jo_int (j, "reset", esp_reset_reason ());
-      revk_info ("watchy", &j);
       time_t now = time (0);
       struct tm t;
       localtime_r (&now, &t);
-      face_time (&t);
-      gfx_wait();
-      if (!gpio_get_level (rx))
-      {                         // Time to sleep (TODO keep awake for other reasons - menus - etc)
-         ESP_LOGI (TAG, "Night night");
-         for (int b = 0; b < 4; b++)
-         {
-            rtc_gpio_isolate (port_mask (button[b]));
-            rtc_gpio_wakeup_enable (port_mask (button[b]), GPIO_INTR_ANYEDGE);
-         }
-         esp_deep_sleep ((60 - t.tm_sec) * 1000000LL);
-      } else
-         sleep (60 - t.tm_sec);
+      face_show (&t);
+      if (!gpio_get_level (rx) || uptime () > 120)
+         night (&t);            // Stay up for charging for 2 minutes at least
+      else
+         sleep (5);
    }
 }
