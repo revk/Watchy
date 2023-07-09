@@ -38,9 +38,9 @@ icons/%.h:      icons/%.mono
 	od -Anone -tx1 -v -w64 $< | sed 's/ \(..\)/0x\1,/g' >> $@
 	echo "};" >> $@
 
-set:	watchy main/icons.h main/icons.c
+set:	watchy
 
-watchy:
+watchy: main/icons.h main/icons.c
 	components/ESP32-RevK/setbuildsuffix -S1-V0-SSD1681-D4
 	@make
 
