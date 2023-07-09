@@ -10,6 +10,7 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #include <driver/gpio.h>
 #include <driver/uart.h>
 #include <driver/rtc_io.h>
+#include "esp_adc/adc_oneshot.h"
 #include "gfx.h"
 #include "ertc.h"
 #include "menu.h"
@@ -17,6 +18,9 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 const char *gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t scale);  // QR
 void face_init (void);          // Cold start up watch face
 void face_show (uint8_t, time_t);       // Show current time
+
+int battery=0;
+uint8_t charging=0;
 
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
@@ -90,7 +94,7 @@ night (time_t now)
 int
 awake (void)
 {                               // Reasons to be awake
-   if (gpio_get_level (GPIORX))
+   if (charging)
       return 1;                 // Charging
    if (revk_shutting_down (NULL))
       return 2;                 // Deliberate shutdown sequence (usually means OTA in progress)
@@ -106,6 +110,8 @@ app_main ()
    // Charging
    gpio_pullup_dis (GPIORX);    // Used to detect the UART is down, and hence no VBUS and hence not charging.
    gpio_pulldown_en (GPIORX);
+   charging=gpio_get_level (GPIORX);
+
    uint8_t btn (int gpio)
    {
       gpio_reset_pin (gpio);
@@ -148,6 +154,8 @@ app_main ()
    static RTC_NOINIT_ATTR uint8_t last_hour;
    static RTC_NOINIT_ATTR uint8_t last_min;
    static RTC_NOINIT_ATTR int16_t last_adjust;
+   static RTC_NOINIT_ATTR int rtcbattery;
+   battery=rtcbattery;
 
    time_t now = 0;
    if (ertc_init ())
@@ -159,6 +167,23 @@ app_main ()
       uint8_t v = now / 60 % 60;
       if (last_min != v)
       {                         // Update display
+         {                      // ADC
+            adc_oneshot_unit_handle_t adc1_handle;
+            adc_oneshot_unit_init_cfg_t init_config1 = {
+               .unit_id = ADC_UNIT_1,
+               .ulp_mode = ADC_ULP_MODE_DISABLE,
+            };
+            adc_oneshot_new_unit (&init_config1, &adc1_handle);
+            adc_oneshot_chan_cfg_t config = {
+               .bitwidth = ADC_BITWIDTH_DEFAULT,
+               .atten = ADC_ATTEN_DB_11,
+            };
+            adc_oneshot_config_channel (adc1_handle, ADCCHANNEL, &config);
+            adc_oneshot_del_unit (adc1_handle);
+            adc_oneshot_read (adc1_handle, ADCCHANNEL, &battery);
+	    rtcbattery=battery;
+            ESP_LOGE (TAG, "ADC %d", battery);
+         }
          last_min = v;
          epaper_init ();
          if (rtcmenu)
@@ -171,7 +196,7 @@ app_main ()
          v = now / 3600 % 24;
          if (last_hour != v)
          {                      // Normal start and attempt local clock sync
-            ESP_LOGI (TAG, "Hourly wake %d/%d",last_hour,v);
+            ESP_LOGI (TAG, "Hourly wake %d/%d", last_hour, v);
             last_hour = v;
             last_adjust = 0;
          } else
@@ -191,7 +216,7 @@ app_main ()
       }
    }
 
- // Full startup
+   // Full startup
    revk_boot (&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
 #define ioa(n,a,d)           revk_register(#n,a,sizeof(*n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
