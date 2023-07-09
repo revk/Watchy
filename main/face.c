@@ -69,8 +69,6 @@ face_show (uint8_t face, time_t now)
    gfx_clear (0);
    faces[face] (&t);
    gfx_unlock ();
-   gfx_wait ();
-
 }
 
 void

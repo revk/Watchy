@@ -298,7 +298,7 @@ app_main ()
          last_hour = tv.tv_sec / 3600 % 24;
          last_min = tv.tv_sec / 60 % 60;
          last_adjust = rtcadjust * last_min / 60;
-         ertc_write (now);
+         ertc_write (tv.tv_sec);
       }
    }
 
@@ -312,8 +312,10 @@ app_main ()
       if (!rtcmenu)
          face_show (rtcface, now);
       if (!awake () || uptime () > 60)
+      {
+         sleep (2);
          night (now);           // Stay up in charging for 1 minute at least
-      else
+      } else
          sleep (1);
    }
 }
