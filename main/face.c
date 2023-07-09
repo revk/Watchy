@@ -81,14 +81,19 @@ face_basic (struct tm *t)
    strftime (temp, sizeof (temp), "%F", t);
    gfx_pos (100, 90, GFX_C | GFX_T | GFX_V);
    gfx_7seg (3, "%s", temp);
+   {
+      const char *r;
+      if (revk_shutting_down (&r))
+      {
+         gfx_pos (199, 140, GFX_R | GFX_B);
+         gfx_text (1, "%s", r);
+      }
+   }
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
-   gfx_pos (199, 140, GFX_R | GFX_B);
-   extern char rtctz[];
-   gfx_text(1,"%.30s",rtctz);
    gfx_pos (199, 165, GFX_R | GFX_B);
    gfx_7seg (2, "%d", charging ? -battery : battery);
    strftime (temp, sizeof (temp), "%a", t);
    gfx_pos (199, 199, GFX_R | GFX_B);
-   gfx_text (4, "%s", temp);
+   gfx_text (4, "%s%s%s", revk_link_down ()? " " : "^", lwmqtt_connected (revk_mqtt (0)) ? "*" : " ", temp);
    gfx_qr (temp, 0, 199, 2);
 }

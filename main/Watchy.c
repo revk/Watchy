@@ -159,7 +159,6 @@ app_main ()
    uint8_t buttons = btn_read ();
    ESP_LOGE (TAG, "Start up wake=%d buttons=%X menu=%lX", wakeup, buttons, rtcmenu);
 
-   if (*rtctz)
    {
       int l;
       for (l = 0; l < sizeof (rtctz) && rtctz[l]; l++);
@@ -167,7 +166,7 @@ app_main ()
       {
          setenv ("TZ", rtctz, 1);
          tzset ();
-      }
+      } else ESP_LOGE(TAG,"TZ not set");
    }
 
    void epaper_init (void)
@@ -312,7 +311,7 @@ app_main ()
       if (!rtcmenu)
          face_show (rtcface, now);
       if (!revk_shutting_down (NULL) && ((!charging && !buttons) || uptime () > 60))
-         night (now);           // Stay up in charging for 1 minute at least
+         night (59);           // Stay up in charging for 1 minute at least
       else
          sleep (1);
    }
