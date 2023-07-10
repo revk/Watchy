@@ -29,14 +29,19 @@
 #define	BATLOW		2000
 
 extern uint8_t battery;
+extern uint8_t menu1;
+extern uint8_t menu2;
+extern uint8_t menu3;
 
 typedef struct bits
 {                               // Struct to just save a bit of RAM
-	uint8_t button:4;	// Buttons
-   uint8_t charging:1;	// We are charging
-   uint8_t holdoff:1;	// We want to stay on
-   uint8_t wifi:1;	// We want wifi
-   uint8_t revkstarted:1;	// Main revk library started so all settings loaded
-   uint8_t wifistarted:1;	// WiFi started
+   uint8_t buttons:4;           // Buttons
+   uint8_t charging:1;          // We are charging
+   uint8_t holdoff:1;           // We want to stay on
+   uint8_t wifi:1;              // We want wifi
+   uint8_t revkstarted:1;       // Main revk library started so all settings loaded
+   uint8_t wifistarted:1;       // WiFi started
+   uint8_t newmin:1;            // This is start of new minute
+   uint8_t newhour:1;           // This is start of new hour
 } bits_t;
 extern bits_t bits;

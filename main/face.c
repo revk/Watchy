@@ -1,6 +1,7 @@
 // Watch faces
 
 #include "face.h"
+#include "menu.h"
 #include "iec18004.h"
 
 const char *
@@ -57,16 +58,20 @@ face_t *const faces[] = {
 
 extern uint8_t face;            // Face number
 void
-face_show (uint8_t face, time_t now)
+face_show (time_t now)
 {
    struct tm t;
    localtime_r (&now, &t);
+   if(menu1)menu_show(&t);
+   else
+   {
    if (face >= sizeof (faces) / sizeof (*faces))
       face = 0;
    gfx_lock ();
    gfx_clear (0);
    faces[face] (&t);
    gfx_unlock ();
+   }
 }
 
 void

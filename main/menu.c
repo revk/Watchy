@@ -5,10 +5,9 @@
 #include "gfx.h"
 #include "icons.h"
 
-uint32_t
-menu_show (uint32_t menu, uint8_t buttons)
+void menu_show (struct tm*t)
 {
-   if (buttons == 9)
+   if (bits.buttons == 9)
    {                            // TODO force upgrade
       bits.holdoff = 1;
       bits.wifi = 1;
@@ -16,5 +15,4 @@ menu_show (uint32_t menu, uint8_t buttons)
          revk_command ("upgrade", NULL);
    } else
       bits.holdoff = 0;
-   return 0;
 }
