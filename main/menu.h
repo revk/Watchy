@@ -1,3 +1,7 @@
 // menu
 
-uint32_t menu_show (uint32_t menu, uint8_t button);
+void menu_show (struct tm *t);
+#define	BTNUP		2
+#define	BTNDOWN		1
+#define	BTNSELECT	4
+#define	BTNCANCEL	8

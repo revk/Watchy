@@ -21,25 +21,24 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 
 const char *gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t scale);  // QR
 void face_init (void);          // Cold start up watch face
-void face_show (uint8_t, time_t);       // Show current time
+void face_show (time_t);        // Show current time
 
 bits_t bits = { 0 };
 
-RTC_NOINIT_ATTR uint32_t rtcmenu;
 RTC_NOINIT_ATTR int16_t last_adjust;
-RTC_NOINIT_ATTR int16_t rtcadjust;
-RTC_NOINIT_ATTR uint8_t rtcflip;
-RTC_NOINIT_ATTR uint8_t rtcface;
 RTC_NOINIT_ATTR uint8_t last_hour;
 RTC_NOINIT_ATTR uint8_t last_min;
 RTC_NOINIT_ATTR uint8_t battery;
+RTC_NOINIT_ATTR uint8_t menu1;
+RTC_NOINIT_ATTR uint8_t menu2;
+RTC_NOINIT_ATTR uint8_t menu3;
 RTC_NOINIT_ATTR char rtctz[30];
 
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
-	u8l(face,0)	\
-	u8l(flip,5)	\
-	s16(adjust,0)	\
+	u8lr(face,0)	\
+	u8lr(flip,5)	\
+	s16lr(adjust,0)	\
 
 #define	port_mask(x)	((x)&0x7F)
 #define u32(n,d)        uint32_t n;
@@ -47,13 +46,15 @@ RTC_NOINIT_ATTR char rtctz[30];
 #define s8(n,d) int8_t n;
 #define s8n(n,d) int8_t n[d];
 #define u8(n,d) uint8_t n;
-#define u8r(n,d) uint8_t n,ring##n;
+#define u8r(n,d) RTC_NOINIT_ATTR uint8_t n,ring##n;
 #define u16(n,d) uint16_t n;
 #define s16(n,d) int16_t n;
+#define s16lr(n,d) RTC_NOINIT_ATTR int16_t n;
 #define u16r(n,d) uint16_t n,ring##n;
 #define s8r(n,d) int8_t n,ring##n;
 #define s16r(n,d) int16_t n,ring##n;
 #define u8l(n,d) uint8_t n;
+#define u8lr(n,d) uint8_t n;
 #define b(n) uint8_t n;
 #define s(n,d) char * n;
 #define io(n,d)           uint8_t n;
@@ -69,10 +70,12 @@ settings
 #undef u8r
 #undef u16
 #undef s16
+#undef s16lr
 #undef u16r
 #undef s8r
 #undef s16r
 #undef u8l
+#undef u8lr
 #undef b
 #undef s
 const char *
@@ -86,6 +89,7 @@ app_callback (int client, const char *prefix, const char *target, const char *su
 void
 night (time_t now)
 {
+   gfx_sleep ();
    uint64_t mask = 0;
    void btn (uint8_t gpio)
    {
@@ -127,42 +131,41 @@ read_battery (void)
    if (value > 100)
       value = 100;
    battery = value;
-   ESP_LOGI (TAG, "ADC %d%s", battery, bits.charging ? " charging" : "");
 }
 
 void
 app_main ()
 {
    uint8_t wakeup = esp_sleep_get_wakeup_cause ();
+   if (!wakeup)
+      menu1 = menu2 = menu3 = 0;
 
    // Charging
    gpio_pullup_dis (GPIORX);    // Used to detect the UART is down, and hence no VBUS and hence not charging.
    gpio_pulldown_en (GPIORX);
    bits.charging = gpio_get_level (GPIORX) ? 1 : 0;
+   {
+      gpio_config_t config = {
+         .pin_bit_mask = (1LL << GPIOBTN1) | (1LL << GPIOBTN2) | (1LL << GPIOBTN3) | (1LL << GPIOBTN4),
+         .mode = GPIO_MODE_INPUT,
+      };
+      gpio_config (&config);
+   }
 
    uint8_t btn_read (void)
    {
-      uint8_t btn (int gpio)
-      {
-         gpio_reset_pin (gpio);
-         gpio_set_direction (gpio, GPIO_MODE_INPUT);
-         gpio_pullup_dis (gpio);
-         return gpio_get_level (gpio);
-      }
       uint8_t buttons = 0;
-      if (btn (GPIOBTN1))
+      if (gpio_get_level (GPIOBTN1))
          buttons |= 1;
-      if (btn (GPIOBTN2))
+      if (gpio_get_level (GPIOBTN2))
          buttons |= 2;
-      if (btn (GPIOBTN3))
+      if (gpio_get_level (GPIOBTN3))
          buttons |= 4;
-      if (btn (GPIOBTN4))
+      if (gpio_get_level (GPIOBTN4))
          buttons |= 8;
       return buttons;
    }
-   uint8_t buttons = btn_read ();
-   ESP_LOGE (TAG, "Start up wake=%d buttons=%X menu=%lX", wakeup, buttons, rtcmenu);
-
+   bits.buttons = btn_read ();
    {
       int l;
       for (l = 0; l < sizeof (rtctz) && rtctz[l]; l++);
@@ -179,7 +182,7 @@ app_main ()
       if (gfx_ok ())
          return;
       ESP_LOGI (TAG, "Start E-paper");
-    const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: rtcflip, width: 200, height: 200, partial: 1, mode2: 1, sleep: 1, norefresh: wakeup ? 1 : 0, direct:1);
+    const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: wakeup ? 1 : 0, norefresh: wakeup ? 1 : 0, direct:1);
       if (e)
       {
          ESP_LOGE (TAG, "gfx %s", e);
@@ -201,16 +204,14 @@ app_main ()
       uint8_t v = now / 60 % 60;
       if (last_min != v)
       {                         // Update display
+         bits.newmin = 1;
          if (!(v % 5))
             read_battery ();
          last_min = v;
          if (wakeup)
          {
             epaper_init ();
-            if (rtcmenu || buttons)
-               rtcmenu = menu_show (rtcmenu, buttons);  // Not all menus an show without system started up, but give them a chance
-            if (!rtcmenu)
-               face_show (rtcface, now);
+            face_show (now);
          }
       }
       if (wakeup == ESP_SLEEP_WAKEUP_TIMER)
@@ -218,18 +219,17 @@ app_main ()
          v = now / 3600 % 24;
          if (last_hour != v)
          {                      // Normal start and attempt local clock sync
-            ESP_LOGI (TAG, "Hourly wake %d/%d", last_hour, v);
+            bits.newhour = 1;
             last_hour = v;
             last_adjust = 0;
             bits.wifi = 1;
          } else
          {
-            if (rtcadjust)
+            if (adjust)
             {                   // Not totally clean, but avoids the sleep wake up early at end of minute doing an adjust as well
-               int16_t a = ((int) rtcadjust * ((int) last_min + 1) / 60);
+               int16_t a = ((int) adjust * ((int) last_min + 1) / 60);
                if (a != last_adjust)
                {
-                  ESP_LOGE (TAG, "Adjust %d", (a - last_adjust));
                   ertc_write (now + a - last_adjust);
                   last_adjust = a;
                }
@@ -238,7 +238,7 @@ app_main ()
       }
    }
 
-   if (wakeup && (wakeup == ESP_SLEEP_WAKEUP_TIMER || !bits.charging) && !buttons && !rtcmenu && !bits.wifi)
+   if (wakeup && (wakeup == ESP_SLEEP_WAKEUP_TIMER || !bits.charging) && !bits.buttons && !bits.wifi)
       night (now);
 
    // Full startup
@@ -255,10 +255,12 @@ app_main ()
 #define u8r(n,d) revk_register(#n,0,sizeof(n),&n,#d,0); revk_register("ring"#n,0,sizeof(ring##n),&ring##n,#d,0);
 #define u16(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
 #define s16(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_SIGNED);
+#define s16lr(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_SIGNED);
 #define u16r(n,d) revk_register(#n,0,sizeof(n),&n,#d,0); revk_register("ring"#n,0,sizeof(ring##n),&ring##n,#d,0);
 #define s8r(n,d) revk_register(#n,0,sizeof(n),&n,#d,0); revk_register("ring"#n,0,sizeof(ring##n),&ring##n,#d,SETTING_SIGNED);
 #define s16r(n,d) revk_register(#n,0,sizeof(n),&n,#d,0); revk_register("ring"#n,0,sizeof(ring##n),&ring##n,#d,SETTING_SIGNED);
 #define u8l(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_LIVE);
+#define u8lr(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_LIVE);
 #define s(n,d) revk_register(#n,0,0,&n,#d,0);
    settings
 #undef io
@@ -271,22 +273,18 @@ app_main ()
 #undef u8r
 #undef u16
 #undef s16
+#undef s16lr
 #undef u16r
 #undef s8r
 #undef s16r
 #undef u8l
+#undef u8lr
 #undef b
 #undef s
-      // RTC cached values
-      rtcadjust = adjust;
-   rtcface = face;
-   rtcflip = flip;
-   {
+   {                            // RTC cached
       extern char *tz;
       strncpy (rtctz, tz, sizeof (rtctz));
    }
-   if (!wakeup)
-      rtcmenu = 0;
 
    epaper_init ();
 
@@ -308,7 +306,7 @@ app_main ()
             gettimeofday (&tv, NULL);
             last_hour = tv.tv_sec / 3600 % 24;
             last_min = tv.tv_sec / 60 % 60;
-            last_adjust = rtcadjust * last_min / 60;
+            last_adjust = adjust * last_min / 60;
             ertc_write (tv.tv_sec);
          }
       }
@@ -316,23 +314,23 @@ app_main ()
 
    while (1)
    {
-      buttons = btn_read ();
+      bits.buttons = btn_read ();
       read_battery ();
       now = time (0);
-      if (rtcmenu || buttons)
-         rtcmenu = menu_show (rtcmenu, buttons);
-      if (!rtcmenu)
-         face_show (rtcface, now);
+      face_show (now);
       if (bits.wifi && !bits.wifistarted)
       {                         // Start WiFi
          bits.wifistarted = 1;
          revk_start ();
       }
-      if (!bits.holdoff && !revk_shutting_down (NULL) && ((!bits.charging && !buttons) || uptime () > 60))
+      if (!revk_shutting_down (NULL) && ((!bits.charging && !bits.buttons && !bits.holdoff) || uptime () > 60))
       {
          revk_pre_shutdown ();
-         night (59);            // Stay up in charging for 1 minute at least
-      } else
+         bits.revkstarted = 0;
+         bits.wifistarted = 0;
+         face_show (now);
          sleep (1);
+         night (59);            // Stay up in charging for 1 minute at least
+      }
    }
 }
