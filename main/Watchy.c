@@ -21,7 +21,7 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 
 const char *gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t scale);  // QR
 void face_init (void);          // Cold start up watch face
-void face_show (time_t);       // Show current time
+void face_show (time_t);        // Show current time
 
 bits_t bits = { 0 };
 
@@ -89,7 +89,7 @@ app_callback (int client, const char *prefix, const char *target, const char *su
 void
 night (time_t now)
 {
-	gfx_sleep();
+   gfx_sleep ();
    uint64_t mask = 0;
    void btn (uint8_t gpio)
    {
@@ -131,37 +131,37 @@ read_battery (void)
    if (value > 100)
       value = 100;
    battery = value;
-   ESP_LOGI (TAG, "ADC %d%s", battery, bits.charging ? " charging" : "");
 }
 
 void
 app_main ()
 {
    uint8_t wakeup = esp_sleep_get_wakeup_cause ();
-   if(wakeup)menu1=menu2=menu3=0;
+   if (!wakeup)
+      menu1 = menu2 = menu3 = 0;
 
    // Charging
    gpio_pullup_dis (GPIORX);    // Used to detect the UART is down, and hence no VBUS and hence not charging.
    gpio_pulldown_en (GPIORX);
    bits.charging = gpio_get_level (GPIORX) ? 1 : 0;
+   {
+      gpio_config_t config = {
+         .pin_bit_mask = (1LL << GPIOBTN1) | (1LL << GPIOBTN2) | (1LL << GPIOBTN3) | (1LL << GPIOBTN4),
+         .mode = GPIO_MODE_INPUT,
+      };
+      gpio_config (&config);
+   }
 
    uint8_t btn_read (void)
    {
-      uint8_t btn (int gpio)
-      {
-         gpio_reset_pin (gpio);
-         gpio_set_direction (gpio, GPIO_MODE_INPUT);
-         gpio_pullup_dis (gpio);
-         return gpio_get_level (gpio);
-      }
       uint8_t buttons = 0;
-      if (btn (GPIOBTN1))
+      if (gpio_get_level (GPIOBTN1))
          buttons |= 1;
-      if (btn (GPIOBTN2))
+      if (gpio_get_level (GPIOBTN2))
          buttons |= 2;
-      if (btn (GPIOBTN3))
+      if (gpio_get_level (GPIOBTN3))
          buttons |= 4;
-      if (btn (GPIOBTN4))
+      if (gpio_get_level (GPIOBTN4))
          buttons |= 8;
       return buttons;
    }
@@ -182,7 +182,7 @@ app_main ()
       if (gfx_ok ())
          return;
       ESP_LOGI (TAG, "Start E-paper");
-    const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: 1, norefresh: wakeup ? 1 : 0, direct:1);
+    const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: wakeup ? 1 : 0, norefresh: wakeup ? 1 : 0, direct:1);
       if (e)
       {
          ESP_LOGE (TAG, "gfx %s", e);
@@ -204,14 +204,14 @@ app_main ()
       uint8_t v = now / 60 % 60;
       if (last_min != v)
       {                         // Update display
-	      bits.newmin=1;
+         bits.newmin = 1;
          if (!(v % 5))
             read_battery ();
          last_min = v;
          if (wakeup)
          {
             epaper_init ();
-               face_show ( now);
+            face_show (now);
          }
       }
       if (wakeup == ESP_SLEEP_WAKEUP_TIMER)
@@ -219,7 +219,7 @@ app_main ()
          v = now / 3600 % 24;
          if (last_hour != v)
          {                      // Normal start and attempt local clock sync
-	      bits.newhour=1;
+            bits.newhour = 1;
             last_hour = v;
             last_adjust = 0;
             bits.wifi = 1;
@@ -281,7 +281,7 @@ app_main ()
 #undef u8lr
 #undef b
 #undef s
-   { // RTC cached
+   {                            // RTC cached
       extern char *tz;
       strncpy (rtctz, tz, sizeof (rtctz));
    }
@@ -317,7 +317,7 @@ app_main ()
       bits.buttons = btn_read ();
       read_battery ();
       now = time (0);
-         face_show (now);
+      face_show (now);
       if (bits.wifi && !bits.wifistarted)
       {                         // Start WiFi
          bits.wifistarted = 1;

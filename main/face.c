@@ -62,15 +62,16 @@ face_show (time_t now)
 {
    struct tm t;
    localtime_r (&now, &t);
-   if(menu1)menu_show(&t);
-   else
+   if (menu1 || bits.buttons)
+      menu_show (&t);
+   if (!menu1)
    {
-   if (face >= sizeof (faces) / sizeof (*faces))
-      face = 0;
-   gfx_lock ();
-   gfx_clear (0);
-   faces[face] (&t);
-   gfx_unlock ();
+      if (face >= sizeof (faces) / sizeof (*faces))
+         face = 0;
+      gfx_lock ();
+      gfx_clear (0);
+      faces[face] (&t);
+      gfx_unlock ();
    }
 }
 

@@ -29,13 +29,13 @@ ertc_init (void)
 time_t
 ertc_read (void)
 {
-   uint8_t S=0,
-     M=0,
-     H=0,
-     d=0,
-     w=0,
-     m=0,
-     y=0;
+   uint8_t S = 0,
+      M = 0,
+      H = 0,
+      d = 0,
+      w = 0,
+      m = 0,
+      y = 0;
    i2c_cmd_handle_t txn = i2c_cmd_link_create ();
    i2c_master_start (txn);
    i2c_master_write_byte (txn, (RTCADDRESS << 1) | I2C_MASTER_WRITE, true);
@@ -63,7 +63,7 @@ ertc_read (void)
    t.tm_year = (m >> 7) * 100 + ((y & 0xF0) >> 4) * 10 + (y & 0xF);
    //time_t now=timegm (&t);
    time_t now = mktime (&t);    // TODO needs to be timegm for non UK timezones
-   ESP_LOGI (TAG, "Rx %02X %02X %02X %02X %02X %02X %02X %lld", S, M, H, d, w, m, y,now);
+   ESP_LOGI (TAG, "Rx %02X %02X %02X %02X %02X %02X %02X %lld", S, M, H, d, w, m, y, now);
    if (S & 0x80)
       return 0;                 // time reported but not set in RTC chip
    return now;
@@ -81,7 +81,7 @@ ertc_write (time_t now)
    uint8_t w = t.tm_wday;
    uint8_t m = (((t.tm_mon + 1) / 10) << 4) + ((t.tm_mon + 1) % 10) + ((t.tm_year / 100) << 7);
    uint8_t y = (((t.tm_year / 10) % 10) << 4) + (t.tm_year % 10);
-   ESP_LOGI (TAG, "Tx %02X %02X %02X %02X %02X %02X %02X %lld", S, M, H, d, w, m, y,now);
+   ESP_LOGI (TAG, "Tx %02X %02X %02X %02X %02X %02X %02X %lld", S, M, H, d, w, m, y, now);
    i2c_cmd_handle_t txn = i2c_cmd_link_create ();
    i2c_master_start (txn);
    i2c_master_write_byte (txn, (RTCADDRESS << 1) | I2C_MASTER_WRITE, true);
