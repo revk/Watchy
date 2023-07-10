@@ -328,9 +328,13 @@ app_main ()
          bits.wifistarted = 1;
          revk_start ();
       }
-      if (!bits.holdoff && !revk_shutting_down (NULL) && ((!bits.charging && !buttons) || uptime () > 60))
+      if (!revk_shutting_down (NULL) && ((!bits.charging && !buttons && !bits.holdoff) || uptime () > 60))
       {
          revk_pre_shutdown ();
+         bits.revkstarted = 0;
+         bits.wifistarted = 0;
+         face_show (rtcface, now);
+         sleep (1);
          night (59);            // Stay up in charging for 1 minute at least
       } else
          sleep (1);

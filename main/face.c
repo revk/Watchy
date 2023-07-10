@@ -10,7 +10,7 @@ gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t scale)
    int W = gfx_width ();
    int H = gfx_height ();
    unsigned int width = 0;
- uint8_t *qr = qr_encode (strlen (value), value, widthp: &width, noquiet:scale?0:1);
+ uint8_t *qr = qr_encode (strlen (value), value, widthp: &width, noquiet:scale ? 0 : 1);
    if (qr && width <= W && width <= H)
    {
       const int w = W > H ? H : W;
@@ -93,9 +93,12 @@ face_basic (struct tm *t)
    gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
    gfx_7seg (2, "%3d", battery);
    strftime (temp, sizeof (temp), "%a", t);
-   gfx_icon2 (32, 32, bits.charging ? icon_power : NULL);
-   gfx_icon2 (32, 32, !revk_link_down ()? icon_wifi : NULL);
-   gfx_icon2 (32, 32, lwmqtt_connected (revk_mqtt (0)) ? icon_mqtt : NULL);
+   if (bits.revkstarted)
+   {
+      gfx_icon2 (32, 32, bits.charging ? icon_power : NULL);
+      gfx_icon2 (32, 32, !revk_link_down ()? icon_wifi : NULL);
+      gfx_icon2 (32, 32, lwmqtt_connected (revk_mqtt (0)) ? icon_mqtt : NULL);
+   }
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_text (4, "%s", temp);
 }
