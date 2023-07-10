@@ -89,6 +89,7 @@ app_callback (int client, const char *prefix, const char *target, const char *su
 void
 night (time_t now)
 {
+	gfx_sleep();
    uint64_t mask = 0;
    void btn (uint8_t gpio)
    {
