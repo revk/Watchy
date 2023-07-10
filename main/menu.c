@@ -42,13 +42,13 @@ gfx_menu (struct tm *t)
    gfx_pos (100, 199, GFX_C | GFX_B);
    gfx_text (2, temp);
    gfx_pos (0, 0, GFX_L | GFX_T);
-   gfx_icon2 (32, 32, icon_power);
+   gfx_icon2 (32, 32, icon_up);
    gfx_pos (199, 0, GFX_R | GFX_T);
-   gfx_icon2 (32, 32, icon_power);
+   gfx_icon2 (32, 32, icon_right);
    gfx_pos (0, 199, GFX_L | GFX_B);
-   gfx_icon2 (32, 32, icon_power);
+   gfx_icon2 (32, 32, icon_down);
    gfx_pos (199, 199, GFX_R | GFX_B);
-   gfx_icon2 (32, 32, icon_power);
+   gfx_icon2 (32, 32, icon_left);
 }
 
 void
