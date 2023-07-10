@@ -331,7 +331,6 @@ app_main ()
          face_show (now);
          sleep (1);
          night (59);            // Stay up in charging for 1 minute at least
-      } else
-         sleep (1);
+      }
    }
 }
