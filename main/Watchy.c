@@ -318,7 +318,10 @@ app_main ()
       if (!rtcmenu)
          face_show (rtcface, now);
       if (!revk_shutting_down (NULL) && ((!charging && !buttons) || uptime () > 60))
+      {
+	      revk_pre_shutdown();
          night (59);            // Stay up in charging for 1 minute at least
+      }
       else
          sleep (1);
    }
