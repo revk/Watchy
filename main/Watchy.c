@@ -23,7 +23,7 @@ const char *gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t s
 void face_init (void);          // Cold start up watch face
 void face_show (uint8_t, time_t);       // Show current time
 
-uint8_t charging = 0;
+bits_t bits = { 0 };
 
 RTC_NOINIT_ATTR uint32_t rtcmenu;
 RTC_NOINIT_ATTR int16_t last_adjust;
@@ -37,8 +37,8 @@ RTC_NOINIT_ATTR char rtctz[30];
 
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
-	u8(face,0)	\
-	u8(flip,5)	\
+	u8l(face,0)	\
+	u8l(flip,5)	\
 	s16(adjust,0)	\
 
 #define	port_mask(x)	((x)&0x7F)
@@ -107,7 +107,7 @@ night (time_t now)
 void
 read_battery (void)
 {                               // ADC
-   charging = gpio_get_level (GPIORX);
+   bits.charging = gpio_get_level (GPIORX) ? 1 : 0;
    adc_oneshot_unit_handle_t adc1_handle;
    adc_oneshot_unit_init_cfg_t init_config1 = {
       .unit_id = ADC_UNIT_1,
@@ -127,7 +127,7 @@ read_battery (void)
    if (value > 100)
       value = 100;
    battery = value;
-   ESP_LOGI (TAG, "ADC %d%s", battery, charging ? " charging" : "");
+   ESP_LOGI (TAG, "ADC %d%s", battery, bits.charging ? " charging" : "");
 }
 
 void
@@ -138,7 +138,7 @@ app_main ()
    // Charging
    gpio_pullup_dis (GPIORX);    // Used to detect the UART is down, and hence no VBUS and hence not charging.
    gpio_pulldown_en (GPIORX);
-   charging = gpio_get_level (GPIORX);
+   bits.charging = gpio_get_level (GPIORX) ? 1 : 0;
 
    uint8_t btn_read (void)
    {
@@ -221,7 +221,7 @@ app_main ()
             ESP_LOGI (TAG, "Hourly wake %d/%d", last_hour, v);
             last_hour = v;
             last_adjust = 0;
-            wakeup = 0;         // Stay awake
+            bits.wifi = 1;
          } else
          {
             if (rtcadjust)
@@ -238,10 +238,11 @@ app_main ()
       }
    }
 
-   if (wakeup && (wakeup == ESP_SLEEP_WAKEUP_TIMER || !charging) && !buttons && !rtcmenu)
+   if (wakeup && (wakeup == ESP_SLEEP_WAKEUP_TIMER || !bits.charging) && !buttons && !rtcmenu && !bits.wifi)
       night (now);
 
    // Full startup
+   bits.revkstarted = 1;
    revk_boot (&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
 #define ioa(n,a,d)           revk_register(#n,a,sizeof(*n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
@@ -276,9 +277,8 @@ app_main ()
 #undef u8l
 #undef b
 #undef s
-      revk_start ();
-   // RTC cached values
-   rtcadjust = adjust;
+      // RTC cached values
+      rtcadjust = adjust;
    rtcface = face;
    rtcflip = flip;
    {
@@ -290,21 +290,27 @@ app_main ()
 
    epaper_init ();
 
-   ESP_LOGI (TAG, "Wait Time");
-   while (time (0) < 30)
-      sleep (1);
+   if (bits.wifi || bits.charging)
+   {
+      bits.wifistarted = 1;
+      revk_start ();            // Start WiFi
 
-   {                            // Set time
-      struct timeval tv;
-      gettimeofday (&tv, NULL);
-      if (tv.tv_sec > 1000000000)
-      {
-         usleep (1000000 - tv.tv_usec);
+      ESP_LOGI (TAG, "Wait Time");
+      while (time (0) < 30)
+         sleep (1);
+
+      {                         // Set time
+         struct timeval tv;
          gettimeofday (&tv, NULL);
-         last_hour = tv.tv_sec / 3600 % 24;
-         last_min = tv.tv_sec / 60 % 60;
-         last_adjust = rtcadjust * last_min / 60;
-         ertc_write (tv.tv_sec);
+         if (tv.tv_sec > 1000000000LL)
+         {
+            usleep (1000000LL - tv.tv_usec);
+            gettimeofday (&tv, NULL);
+            last_hour = tv.tv_sec / 3600 % 24;
+            last_min = tv.tv_sec / 60 % 60;
+            last_adjust = rtcadjust * last_min / 60;
+            ertc_write (tv.tv_sec);
+         }
       }
    }
 
@@ -317,12 +323,16 @@ app_main ()
          rtcmenu = menu_show (rtcmenu, buttons);
       if (!rtcmenu)
          face_show (rtcface, now);
-      if (!revk_shutting_down (NULL) && ((!charging && !buttons) || uptime () > 60))
-      {
-	      revk_pre_shutdown();
-         night (59);            // Stay up in charging for 1 minute at least
+      if (bits.wifi && !bits.wifistarted)
+      {                         // Start WiFi
+         bits.wifistarted = 1;
+         revk_start ();
       }
-      else
+      if (!bits.holdoff && !revk_shutting_down (NULL) && ((!bits.charging && !buttons) || uptime () > 60))
+      {
+         revk_pre_shutdown ();
+         night (59);            // Stay up in charging for 1 minute at least
+      } else
          sleep (1);
    }
 }

@@ -10,24 +10,21 @@ gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t scale)
    int W = gfx_width ();
    int H = gfx_height ();
    unsigned int width = 0;
- uint8_t *qr = qr_encode (strlen (value), value, widthp: &width, noquiet:1);
+ uint8_t *qr = qr_encode (strlen (value), value, widthp: &width, noquiet:scale?0:1);
    if (qr && width <= W && width <= H)
    {
       const int w = W > H ? H : W;
       int s = w / width;
-      int ox = (W - width * s) / 2;
-      int oy = (H - width * s) / 2;
       if (scale)
-      {
-         ox = posx;
-         oy = posy + 1 - width * scale;
          s = scale;
-      }
-      for (int y = 0; y < width; y++)
-         for (int x = 0; x < width; x++)
+      gfx_pos_t ox,
+        oy;
+      gfx_draw (width * s, width * s, 0, 0, &ox, &oy);
+      for (gfx_pos_t y = 0; y < width; y++)
+         for (gfx_pos_t x = 0; x < width; x++)
             if (qr[width * y + x] & QR_TAG_BLACK)
-               for (int dy = 0; dy < s; dy++)
-                  for (int dx = 0; dx < s; dx++)
+               for (gfx_pos_t dy = 0; dy < s; dy++)
+                  for (gfx_pos_t dx = 0; dx < s; dx++)
                      gfx_pixel (ox + x * s + dx, oy + y * s + dy, 0xFF);
    }
    if (!qr)
@@ -45,6 +42,7 @@ face_init (void)
    gfx_lock ();
    gfx_refresh ();
    gfx_clear (0);
+   gfx_pos (100, 100, GFX_C | GFX_M);
    gfx_qr ("HTTPS://WATCHY.REVK.UK", 0, 0, 0);
    gfx_unlock ();
 }
@@ -89,12 +87,13 @@ face_basic (struct tm *t)
          gfx_text (-1, "%s", r);
       }
    }
+   gfx_pos (0, 199, GFX_L | GFX_B);
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
    gfx_qr (temp, 0, 199, 2);
    gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
    gfx_7seg (2, "%3d", battery);
    strftime (temp, sizeof (temp), "%a", t);
-   gfx_icon2 (32, 32, charging ? icon_power : NULL);
+   gfx_icon2 (32, 32, bits.charging ? icon_power : NULL);
    gfx_icon2 (32, 32, !revk_link_down ()? icon_wifi : NULL);
    gfx_icon2 (32, 32, lwmqtt_connected (revk_mqtt (0)) ? icon_mqtt : NULL);
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
