@@ -32,6 +32,8 @@ extern uint8_t battery;
 extern uint8_t menu1;
 extern uint8_t menu2;
 extern uint8_t menu3;
+extern uint8_t face;
+extern uint8_t flip;
 
 typedef struct bits
 {                               // Struct to just save a bit of RAM

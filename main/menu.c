@@ -60,42 +60,120 @@ menu_list (struct tm *t, uint8_t pos, uint8_t len, menulist_t * m, const char *t
       return pos;
    }
    gfx_menu (t, title);
+   const int margin = 24;
+   const int left = 24;
+   const int line = 22;
+   const int lines = (200 - margin - margin) / line;
+   int8_t base = pos - lines / 2;
+   if (base + lines > len)
+      base = len - lines;
+   if (base < 1)
+      base = 1;
+   uint8_t y = margin;
+   while (base <= len && y < 199 - margin)
+   {
+      if (base == pos)
+      {
+         gfx_pos (18 - 32, y, GFX_L | GFX_T);
+         gfx_icon2 (32, 32, icon_right);
+      }
+      gfx_pos (left, y + 1, GFX_L | GFX_T);
+      gfx_text (-2, m[base - 1].name);
+      y += line;
+      base++;
+   }
    return pos;
 }
 
 void
 menu_wifi (struct tm *t, char key)
 {                               //  WiFi settings and AP mode
+   if (key == 'L')
+   {
+      menu2 = 0;
+      bits.holdoff = 0;
+      return;
+   }
+   bits.wifi = 1;
+   bits.holdoff = 1;
+   gfx_menu (t, "WiFi");
 }
 
 void
 menu_timezone (struct tm *t, char key)
 {                               //  Timezone
+   if (key == 'L')
+   {
+      menu2 = 0;
+      return;
+   }
+   gfx_menu (t, "Timezone");
 }
 
 void
 menu_upgrade (struct tm *t, char key)
 {                               //  Upgrade
+   if (key == 'L')
+   {
+      menu2 = 0;
+      bits.holdoff = 0;
+      return;
+   }
+   bits.wifi = 1;
+   bits.holdoff = 1;
+   gfx_menu (t, "Upgrade");
 }
 
 void
 menu_face (struct tm *t, char key)
 {                               //  Face select
+   if (key == 'L')
+   {
+      menu2 = 0;
+      return;
+   }
+   gfx_menu (t, "Face");
 }
 
 void
 menu_flip (struct tm *t, char key)
 {                               //  Flip display
+   bits.holdoff = 1;
+   if (!bits.revkstarted)
+      return;
+   flip ^= 3;
+   jo_t j = jo_object_alloc ();
+   jo_int (j, "flip", flip);
+   revk_setting (j);
+   jo_free (&j);
+   gfx_flip (flip);
+   menu1 = 0;
 }
 
 void
 menu_turn (struct tm *t, char key)
 {                               //  Turn display
+   bits.holdoff = 1;
+   if (!bits.revkstarted)
+      return;
+   flip ^= 4;
+   jo_t j = jo_object_alloc ();
+   jo_int (j, "flip", flip);
+   revk_setting (j);
+   jo_free (&j);
+   gfx_flip (flip);
+   menu1 = 0;
 }
 
 void
 menu_info (struct tm *t, char key)
 {                               //  Info
+   if (key == 'L')
+   {
+      menu2 = 0;
+      return;
+   }
+   gfx_menu (t, "Info");
 }
 
 menulist_t list_main[] = {
@@ -112,8 +190,8 @@ menulist_t list_main[] = {
 void
 menu_main (struct tm *t, char key)
 {
-   if (key == 'L')
-      menu1 = 0;
+   if (key == 'R')
+      menu2 = 1;                // Selected
    else
       menu1 = menu_list (t, menu1, sizeof (list_main) / sizeof (*list_main), list_main, NULL, key);
 }
@@ -121,7 +199,13 @@ menu_main (struct tm *t, char key)
 void
 menu_show (struct tm *t, char key)
 {
-	if(key&&!menu1)menu1=1; // Enter menu
+   if (key && !menu1)
+   {
+      menu1 = 1;                // Enter menu
+      menu2 = 0;
+      menu3 = 0;
+      key = 0;                  // used the key top enter menu
+   }
    ESP_LOGI (TAG, "Menu %d %d %d key %c", menu1, menu2, menu3, key);
    // Menu functions called with key set to update state and then called (after state change) with no key to display
    if (!menu1)
@@ -131,11 +215,11 @@ menu_show (struct tm *t, char key)
       if (!menu2)
          menu_main (t, key);
       else if (!menu3 && menu1 && menu1 <= sizeof (list_main) / sizeof (*list_main))
-         list_main[menu1 - 1].fun(t, key);
+         list_main[menu1 - 1].fun (t, key);
    }
    if (!menu2)
       menu_main (t, 0);
    else if (!menu3 && menu1 && menu1 <= sizeof (list_main) / sizeof (*list_main))
-      list_main[menu1 - 1].fun(t, 0);
+      list_main[menu1 - 1].fun (t, 0);
    gfx_unlock ();               // Always safe to extra unlock
 }
