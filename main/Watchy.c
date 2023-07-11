@@ -21,13 +21,18 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 
 const char *gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t scale);  // QR
 void face_init (void);          // Cold start up watch face
-void face_show (time_t);        // Show current time
+void face_show (time_t, char);  // Show current time
 
 bits_t bits = { 0 };
+
+const uint8_t btn[] = { GPIOBTN1, GPIOBTN2, GPIOBTN3, GPIOBTN4 };
+
+#define	BTNMASK	((1LL<<GPIOBTN1)|(1LL<<GPIOBTN2)|(1LL<<GPIOBTN3)|(1LL<<GPIOBTN4))
 
 RTC_NOINIT_ATTR int16_t last_adjust;
 RTC_NOINIT_ATTR uint8_t last_hour;
 RTC_NOINIT_ATTR uint8_t last_min;
+RTC_NOINIT_ATTR uint8_t last_btn;
 RTC_NOINIT_ATTR uint8_t battery;
 RTC_NOINIT_ATTR uint8_t menu1;
 RTC_NOINIT_ATTR uint8_t menu2;
@@ -90,21 +95,26 @@ void
 night (time_t now)
 {
    gfx_sleep ();
-   uint64_t mask = 0;
-   void btn (uint8_t gpio)
+   for (uint8_t b = 0; b < 4; b++)
    {
-      rtc_gpio_set_direction_in_sleep (gpio, RTC_GPIO_MODE_INPUT_ONLY);
-      rtc_gpio_pullup_dis (gpio);
-      rtc_gpio_pulldown_dis (gpio);
-      mask |= (1ULL << gpio);
+      rtc_gpio_set_direction_in_sleep (btn[b], RTC_GPIO_MODE_INPUT_ONLY);
+      rtc_gpio_pullup_dis (btn[b]);
+      rtc_gpio_pulldown_dis (btn[b]);
    }
-   btn (GPIOBTN1);
-   btn (GPIOBTN2);
-   btn (GPIOBTN3);
-   btn (GPIOBTN4);
-   esp_sleep_enable_ext1_wakeup (mask, ESP_EXT1_WAKEUP_ANY_HIGH);
    uint8_t secs = 60 - now % 60;
-   ESP_LOGE (TAG, "Night night %d", secs);
+   if (last_btn)
+   {                            // Wait release
+      uint64_t mask = 0;
+      for (uint8_t b = 0; b < 4; b++)
+         if (last_btn & (1 << b))
+            mask |= 1LL << btn[b];
+      esp_sleep_enable_ext1_wakeup (mask, ESP_EXT1_WAKEUP_ALL_LOW);
+      ESP_LOGE (TAG, "Wait key release %X, %d", last_btn, secs);
+   } else
+   {
+      esp_sleep_enable_ext1_wakeup (BTNMASK, ESP_EXT1_WAKEUP_ANY_HIGH); // Wait press
+      ESP_LOGE (TAG, "Wait key press, %d", secs);
+   }
    esp_deep_sleep (1000000LL * secs);   // Next minute
 }
 
@@ -136,6 +146,7 @@ read_battery (void)
 void
 app_main ()
 {
+   ESP_LOGE (TAG, "Wake");
    uint8_t wakeup = esp_sleep_get_wakeup_cause ();
    if (!wakeup)
       menu1 = menu2 = menu3 = 0;
@@ -146,26 +157,28 @@ app_main ()
    bits.charging = gpio_get_level (GPIORX) ? 1 : 0;
    {
       gpio_config_t config = {
-         .pin_bit_mask = (1LL << GPIOBTN1) | (1LL << GPIOBTN2) | (1LL << GPIOBTN3) | (1LL << GPIOBTN4),
+         .pin_bit_mask = BTNMASK,
          .mode = GPIO_MODE_INPUT,
       };
       gpio_config (&config);
    }
-
-   uint8_t btn_read (void)
+   char btn_read (void)
    {
-      uint8_t buttons = 0;
-      if (gpio_get_level (GPIOBTN1))
-         buttons |= 1;
-      if (gpio_get_level (GPIOBTN2))
-         buttons |= 2;
-      if (gpio_get_level (GPIOBTN3))
-         buttons |= 4;
-      if (gpio_get_level (GPIOBTN4))
-         buttons |= 8;
-      return buttons;
+      uint8_t btns = 0;
+      for (uint8_t b = 0; b < 4; b++)
+         if (gpio_get_level (btn[b]))
+            btns |= (1 << b);
+      last_btn &= btns;
+      for (uint8_t b = 0; b < 4; b++)
+         if ((btns & (1 << b)) && !(last_btn & (1 << b)))
+         {
+            last_btn |= (1 << b);
+            ESP_LOGE (TAG, "Key %d", b);
+            return "DURL"[b];   // TODO allow for flip
+         }
+      return 0;
    }
-   bits.buttons = btn_read ();
+   char key = btn_read ();
    {
       int l;
       for (l = 0; l < sizeof (rtctz) && rtctz[l]; l++);
@@ -211,7 +224,8 @@ app_main ()
          if (wakeup)
          {
             epaper_init ();
-            face_show (now);
+            face_show (now, key);
+            key = 0;
          }
       }
       if (wakeup == ESP_SLEEP_WAKEUP_TIMER)
@@ -238,7 +252,7 @@ app_main ()
       }
    }
 
-   if (wakeup && (wakeup == ESP_SLEEP_WAKEUP_TIMER || !bits.charging) && !bits.buttons && !bits.wifi)
+   if (wakeup && (wakeup == ESP_SLEEP_WAKEUP_TIMER || !bits.charging) && !bits.wifi)
       night (now);
 
    // Full startup
@@ -287,6 +301,7 @@ app_main ()
    }
 
    epaper_init ();
+   time_t last = now;
 
    if (bits.wifi || bits.charging)
    {
@@ -294,43 +309,38 @@ app_main ()
       revk_start ();            // Start WiFi
 
       ESP_LOGI (TAG, "Wait Time");
-      while (time (0) < 30)
+      while ((now = time (0)) < 30)
          sleep (1);
-
-      {                         // Set time
-         struct timeval tv;
-         gettimeofday (&tv, NULL);
-         if (tv.tv_sec > 1000000000LL)
-         {
-            usleep (1000000LL - tv.tv_usec);
-            gettimeofday (&tv, NULL);
-            last_hour = tv.tv_sec / 3600 % 24;
-            last_min = tv.tv_sec / 60 % 60;
-            last_adjust = adjust * last_min / 60;
-            ertc_write (tv.tv_sec);
-         }
+      if (now > 1000000000)
+      {
+         last_hour = now / 3600 % 24;
+         last_min = now / 60 % 60;
+         last_adjust = adjust * last_min / 60;
+         ertc_write (now);
       }
    }
 
    while (1)
    {
-      bits.buttons = btn_read ();
+      key = btn_read ();
       read_battery ();
-      now = time (0);
-      face_show (now);
+      now = ertc_read ();
+      if (key || now != last)
+         face_show (now, key);
+      last = now;
       if (bits.wifi && !bits.wifistarted)
       {                         // Start WiFi
          bits.wifistarted = 1;
          revk_start ();
       }
-      if (!revk_shutting_down (NULL) && ((!bits.charging && !bits.buttons && !bits.holdoff) || uptime () > 60))
+      if (!revk_shutting_down (NULL) && ((!bits.charging && !bits.holdoff) || uptime () > 60))
       {
          revk_pre_shutdown ();
          bits.revkstarted = 0;
          bits.wifistarted = 0;
-         face_show (now);
-         sleep (1);
+         face_show (now, key);
          night (59);            // Stay up in charging for 1 minute at least
       }
+      usleep (10000);
    }
 }

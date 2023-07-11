@@ -58,12 +58,12 @@ face_t *const faces[] = {
 
 extern uint8_t face;            // Face number
 void
-face_show (time_t now)
+face_show (time_t now, char key)
 {
    struct tm t;
    localtime_r (&now, &t);
-   if (menu1 || bits.buttons)
-      menu_show (&t);
+   if (menu1 || key)
+      menu_show (&t, key);
    if (!menu1)
    {
       if (face >= sizeof (faces) / sizeof (*faces))

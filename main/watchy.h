@@ -35,7 +35,6 @@ extern uint8_t menu3;
 
 typedef struct bits
 {                               // Struct to just save a bit of RAM
-   uint8_t buttons:4;           // Buttons
    uint8_t charging:1;          // We are charging
    uint8_t holdoff:1;           // We want to stay on
    uint8_t wifi:1;              // We want wifi
