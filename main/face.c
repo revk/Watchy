@@ -131,8 +131,19 @@ face_basic (struct tm *t)
 void
 face_analogue (struct tm *t)
 {
+   inline gfx_pos_t ax (gfx_pos_t a, gfx_pos_t l)
+   {
+      return 100 + l * (gfx_cos[a] - 128) / 127;
+   }
+   inline gfx_pos_t ay (gfx_pos_t a, gfx_pos_t l)
+   {
+      return ax ((a + 64) & 255, l);
+   }
    for (int a = 0; a < 256; a++)
-      gfx_pixel (199 * gfx_cos[a] / 255, 199 * gfx_cos[(a + 64) & 255] / 255, 255);
+      gfx_pixel (ax (a, 99), ay (a, 99), 255);
+   for (int h = 0; h < 12; h++)
+      gfx_line (ax (h * 255 / 12, 99), ay (h * 255 / 12, 99), ax (h * 255 / 12, (h % 3) ? 90 : 80),
+                ay (h * 255 / 12, (h % 3) ? 90 : 80), 255);
    gfx_pos (100, 100, GFX_C | GFX_M);
    gfx_text (5, "TODO");
 }
