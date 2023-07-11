@@ -140,7 +140,7 @@ face_analogue (struct tm *t)
       return 100 - l * ((int) gfx_cos[(a) & 255] - 128) / 127;
    }
    for (int a = 0; a < 256; a++)
-      gfx_line (ax (a, 99), ay (a, 99), ax (a + 1, 99), ay (a + 1, 99),255);
+      gfx_line (ax (a, 99), ay (a, 99), ax (a + 1, 99), ay (a + 1, 99), 255);
    for (int h = 0; h < 12; h++)
       gfx_line (ax (h * 256 / 12, 99), ay (h * 256 / 12, 99), ax (h * 256 / 12, (h % 3) ? 90 : 80),
                 ay (h * 256 / 12, (h % 3) ? 90 : 80), 255);
@@ -157,4 +157,6 @@ face_analogue (struct tm *t)
    gfx_line (150 - 13, 100 + 10, 150 + 14, 100 + 10, 255);
    gfx_pos (100, 150, GFX_C | GFX_M);
    gfx_7seg (2, "%6d", steps_read ());
+   gfx_pos (100, 50, GFX_C | GFX_M);
+   gfx_qr ("HTTPS://WATCHY.REVK.UK", 1);
 }
