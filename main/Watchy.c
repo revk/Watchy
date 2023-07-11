@@ -10,22 +10,20 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #include <driver/gpio.h>
 #include <driver/uart.h>
 #include <driver/rtc_io.h>
+#include <driver/i2c.h>
 #include "esp_adc/adc_oneshot.h"
 #include "gfx.h"
 #include "ertc.h"
+#include "accelerometer.h"
 #include "menu.h"
 
 #ifdef	CONFIG_SECURE_SIGNED_ON_BOOT_NO_SECURE_BOOT
 #warning Lower battery life if CONFIG_SECURE_SIGNED_ON_BOOT_NO_SECURE_BOOT
 #endif
 
-const char *gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t scale);  // QR
-void face_init (void);          // Cold start up watch face
-void face_show (time_t, char);  // Show current time
-
 bits_t bits = { 0 };
 
-const uint8_t btn[] = { GPIOBTN1, GPIOBTN2, GPIOBTN3, GPIOBTN4 };
+const uint8_t btn[] = { GPIOBTN2, GPIOBTN3, GPIOBTN1, GPIOBTN4 };
 
 #define	BTNMASK	((1LL<<GPIOBTN1)|(1LL<<GPIOBTN2)|(1LL<<GPIOBTN3)|(1LL<<GPIOBTN4))
 
@@ -33,6 +31,7 @@ RTC_NOINIT_ATTR int16_t last_adjust;
 RTC_NOINIT_ATTR uint8_t last_hour;
 RTC_NOINIT_ATTR uint8_t last_min;
 RTC_NOINIT_ATTR uint8_t last_btn;
+RTC_NOINIT_ATTR uint8_t epaper_refresh;
 RTC_NOINIT_ATTR uint8_t battery;
 RTC_NOINIT_ATTR uint8_t menu1;
 RTC_NOINIT_ATTR uint8_t menu2;
@@ -59,7 +58,7 @@ RTC_NOINIT_ATTR char rtctz[30];
 #define s8r(n,d) int8_t n,ring##n;
 #define s16r(n,d) int16_t n,ring##n;
 #define u8l(n,d) uint8_t n;
-#define u8lr(n,d) uint8_t n;
+#define u8lr(n,d) RTC_NOINIT_ATTR uint8_t n;
 #define b(n) uint8_t n;
 #define s(n,d) char * n;
 #define io(n,d)           uint8_t n;
@@ -102,6 +101,11 @@ night (time_t now)
       rtc_gpio_pulldown_dis (btn[b]);
    }
    uint8_t secs = 60 - now % 60;
+   if (epaper_refresh)
+   {
+      epaper_refresh--;
+      secs = 0;
+   }
    if (last_btn)
    {                            // Wait release
       uint64_t mask = 0;
@@ -109,13 +113,13 @@ night (time_t now)
          if (last_btn & (1 << b))
             mask |= 1LL << btn[b];
       esp_sleep_enable_ext1_wakeup (mask, ESP_EXT1_WAKEUP_ALL_LOW);
-      ESP_LOGE (TAG, "Wait key release %X, %d", last_btn, secs);
+      ESP_LOGI (TAG, "Wait key release %X, or %d seconds", last_btn, secs);
    } else
    {
       esp_sleep_enable_ext1_wakeup (BTNMASK, ESP_EXT1_WAKEUP_ANY_HIGH); // Wait press
-      ESP_LOGE (TAG, "Wait key press, %d", secs);
+      ESP_LOGI (TAG, "Wait key press, or %d seconds", secs);
    }
-   esp_deep_sleep (1000000LL * secs);   // Next minute
+   esp_deep_sleep (1000000LL * secs ? : 500000LL);      // Next minute - or fast
 }
 
 void
@@ -143,11 +147,31 @@ read_battery (void)
    battery = value;
 }
 
+esp_err_t
+i2c_init (void)
+{
+   i2c_config_t config = {
+      .mode = I2C_MODE_MASTER,
+      .sda_io_num = GPIOSDA,
+      .scl_io_num = GPIOSCL,
+      .sda_pullup_en = true,
+      .scl_pullup_en = true,
+      .master.clk_speed = 100000,
+   };
+   esp_err_t e = i2c_driver_install (I2CPORT, I2C_MODE_MASTER, 0, 0, 0);
+   if (!e)
+      e = i2c_param_config (I2CPORT, &config);
+   if (!e)
+      e = i2c_set_timeout (I2CPORT, 80000 * 5);
+   return e;
+}
+
 void
 app_main ()
 {
-   ESP_LOGE (TAG, "Wake");
    uint8_t wakeup = esp_sleep_get_wakeup_cause ();
+   uint8_t reset = esp_reset_reason ();
+   ESP_LOGI (TAG, "Wake %d/%d", reset, wakeup);
    if (!wakeup)
       menu1 = menu2 = menu3 = 0;
 
@@ -173,13 +197,15 @@ app_main ()
          if ((btns & (1 << b)) && !(last_btn & (1 << b)))
          {
             last_btn |= (1 << b);
-            ESP_LOGE (TAG, "Key %d", b);
-            return "DURL"[b];   // TODO allow for flip
+            char key = "RLUDRULD"[(b ^ flip) & 7];      // Mapped for display flipping
+            ESP_LOGI (TAG, "Key %d=%c (flip %X)", b, key, flip);
+            epaper_refresh = 5; // handle keys pressing too fast for display updates
+            return key;
          }
       return 0;
    }
    char key = btn_read ();
-   {
+   {                            // Time zone
       int l;
       for (l = 0; l < sizeof (rtctz) && rtctz[l]; l++);
       if (l < sizeof (rtctz))
@@ -194,7 +220,7 @@ app_main ()
    {
       if (gfx_ok ())
          return;
-      ESP_LOGI (TAG, "Start E-paper");
+      ESP_LOGI (TAG, "Start E-paper flip=%d", flip);
     const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: wakeup ? 1 : 0, norefresh: wakeup ? 1 : 0, direct:1);
       if (e)
       {
@@ -208,9 +234,14 @@ app_main ()
    }
 
    time_t now = 0;
-   if (ertc_init ())
+   if (i2c_init ())
       ESP_LOGE (TAG, "RTC init fail");
-   else if (!(now = ertc_read ()))
+   if (reset == ESP_RST_POWERON || reset == ESP_RST_EXT || reset == ESP_RST_BROWNOUT)
+   {                            // Some h/w init
+      ertc_init ();
+      acc_init ();
+   }
+   if (!(now = ertc_read ()))
       ESP_LOGE (TAG, "RTC read fail");
    else
    {
@@ -227,6 +258,10 @@ app_main ()
             face_show (now, key);
             key = 0;
          }
+      } else if (epaper_refresh && !key)
+      {                         // Forced refresh
+         epaper_init ();
+         face_show (now, key);
       }
       if (wakeup == ESP_SLEEP_WAKEUP_TIMER)
       {                         // Per minute wake up
@@ -252,10 +287,11 @@ app_main ()
       }
    }
 
-   if (wakeup && (wakeup == ESP_SLEEP_WAKEUP_TIMER || !bits.charging) && !bits.wifi)
+   if (wakeup && !bits.wifi && !bits.holdoff && !key && !bits.startup)
       night (now);
 
    // Full startup
+   ESP_LOGI (TAG, "Revk boot wakeup=%d wifi=%d holdoff=%d key=%c", wakeup, bits.wifi, bits.holdoff, key);
    bits.revkstarted = 1;
    revk_boot (&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
@@ -320,11 +356,23 @@ app_main ()
       }
    }
 
+   if (key || !wakeup)
+   {                            // Delayed
+      now = ertc_read ();
+      face_show (now, key);
+   }
+
+   if (!bits.holdoff)
+   {
+      revk_pre_shutdown ();
+      night (now);
+   }
+
    while (1)
    {
-      key = btn_read ();
       read_battery ();
       now = ertc_read ();
+      key = btn_read ();
       if (key || now != last)
          face_show (now, key);
       last = now;
@@ -333,12 +381,9 @@ app_main ()
          bits.wifistarted = 1;
          revk_start ();
       }
-      if (!revk_shutting_down (NULL) && ((!bits.charging && !bits.holdoff) || uptime () > 60))
+      if (!revk_shutting_down (NULL) && (!bits.holdoff || uptime () > 120))
       {
          revk_pre_shutdown ();
-         bits.revkstarted = 0;
-         bits.wifistarted = 0;
-         face_show (now, key);
          night (59);            // Stay up in charging for 1 minute at least
       }
       usleep (10000);
