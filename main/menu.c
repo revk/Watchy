@@ -120,16 +120,9 @@ menu_timezone (struct tm *t, char key)
 void
 menu_upgrade (struct tm *t, char key)
 {                               //  Upgrade
-   if (key == 'L')
+   if (key == 'L' || key == 'R')
    {
       menu2 = 0;
-      bits.wifi = 0;
-      bits.holdoff = 0;
-      return;
-   }
-   if (uptime () > 120 || key == 'R')
-   {
-      menu1 = 0;
       bits.wifi = 0;
       bits.holdoff = 0;
       return;
@@ -155,6 +148,13 @@ menu_upgrade (struct tm *t, char key)
       gfx_text (5, "Done");
    else if (percent >= 0 && percent <= 100)
       gfx_text (5, "%3d%%", percent);
+   if (percent < 0 && uptime () > 120)
+   {
+      menu1 = 0;
+      bits.wifi = 0;
+      bits.holdoff = 0;
+      return;
+   }
    const char *r;
    if (revk_shutting_down (&r))
    {
@@ -258,6 +258,11 @@ menu_show (struct tm *t, char key)
       menu1 = 1;                // Enter menu
       menu2 = 0;
       menu3 = 0;
+      if (key == 'R')
+      {                         // Quick upgrade
+         menu1 = 6;
+         menu2 = 1;
+      }
       key = 0;                  // used the key top enter menu
    }
    // Menu functions called with key set to update state and then called (after state change) with no key to display
