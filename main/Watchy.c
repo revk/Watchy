@@ -105,11 +105,11 @@ night (time_t now)
          if (last_btn & (1 << b))
             mask |= 1LL << btn[b];
       esp_sleep_enable_ext1_wakeup (mask, ESP_EXT1_WAKEUP_ALL_LOW);
-      ESP_LOGE (TAG, "Wait key release %X, or %d seconds", last_btn, secs);
+      ESP_LOGI (TAG, "Wait key release %X, or %d seconds", last_btn, secs);
    } else
    {
       esp_sleep_enable_ext1_wakeup (BTNMASK, ESP_EXT1_WAKEUP_ANY_HIGH); // Wait press
-      ESP_LOGE (TAG, "Wait key press, or %d seconds", secs);
+      ESP_LOGI (TAG, "Wait key press, or %d seconds", secs);
    }
    esp_deep_sleep (1000000LL * secs);   // Next minute
 }
@@ -142,7 +142,7 @@ read_battery (void)
 void
 app_main ()
 {
-   ESP_LOGE (TAG, "Wake");
+   ESP_LOGI (TAG, "Wake");
    uint8_t wakeup = esp_sleep_get_wakeup_cause ();
    if (!wakeup)
       menu1 = menu2 = menu3 = 0;
@@ -170,7 +170,7 @@ app_main ()
          {
             last_btn |= (1 << b);
             char key = "RLUDRULD"[(b ^ flip) & 7];      // Mapped for display flipping
-            ESP_LOGE (TAG, "Key %d=%c (flip %X)", b, key, flip);
+            ESP_LOGI (TAG, "Key %d=%c (flip %X)", b, key, flip);
             return key;
          }
       return 0;
@@ -191,7 +191,7 @@ app_main ()
    {
       if (gfx_ok ())
          return;
-      ESP_LOGE (TAG, "Start E-paper flip=%d", flip);
+      ESP_LOGI (TAG, "Start E-paper flip=%d", flip);
     const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: wakeup ? 1 : 0, norefresh: wakeup ? 1 : 0, direct:1);
       if (e)
       {
@@ -253,7 +253,7 @@ app_main ()
       night (now);
 
    // Full startup
-   ESP_LOGE (TAG, "Revk boot wakeup=%d wifi=%d holdoff=%d key=%c", wakeup, bits.wifi, bits.holdoff, key);
+   ESP_LOGI (TAG, "Revk boot wakeup=%d wifi=%d holdoff=%d key=%c", wakeup, bits.wifi, bits.holdoff, key);
    bits.revkstarted = 1;
    revk_boot (&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
@@ -346,9 +346,6 @@ app_main ()
       if (!revk_shutting_down (NULL) && (!bits.holdoff || uptime () > 120))
       {
          revk_pre_shutdown ();
-         bits.revkstarted = 0;
-         bits.wifistarted = 0;
-         face_show (now, key);
          night (59);            // Stay up in charging for 1 minute at least
       }
       usleep (10000);
