@@ -139,8 +139,8 @@ face_analogue (struct tm *t)
    {
       return 100 - l * ((int) gfx_cos[(a) & 255] - 128) / 127;
    }
-   for (int a = 0; a < 256; a++)
-      gfx_line (ax (a, 99), ay (a, 99), ax (a + 1, 99), ay (a + 1, 99), 255);
+   for (int a = 0; a < 256; a+=4)
+      gfx_line (ax (a, 99), ay (a, 99), ax (a + 4, 99), ay (a + 4, 99), 255);
    for (int h = 0; h < 12; h++)
       gfx_line (ax (h * 256 / 12, 99), ay (h * 256 / 12, 99), ax (h * 256 / 12, (h % 3) ? 90 : 80),
                 ay (h * 256 / 12, (h % 3) ? 90 : 80), 255);
