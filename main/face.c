@@ -133,11 +133,11 @@ face_analogue (struct tm *t)
 {
    inline gfx_pos_t ax (gfx_pos_t a, gfx_pos_t l)
    {
-      return 100 + l * ((int)gfx_cos[(a+192) & 255] - 128) / 127;
+      return 100 + l * ((int) gfx_cos[(a + 192) & 255] - 128) / 127;
    }
    inline gfx_pos_t ay (gfx_pos_t a, gfx_pos_t l)
    {
-      return 100 - l * ((int)gfx_cos[(a) & 255] - 128) / 127;
+      return 100 - l * ((int) gfx_cos[(a) & 255] - 128) / 127;
    }
    for (int a = 0; a < 256; a++)
       gfx_pixel (ax (a, 99), ay (a, 99), 255);
@@ -146,11 +146,12 @@ face_analogue (struct tm *t)
                 ay (h * 256 / 12, (h % 3) ? 90 : 80), 255);
    gfx_line (100, 100, ax (t->tm_min * 256 / 60, 95), ay (t->tm_min * 256 / 60, 95), 255);
    gfx_line (100, 100, ax (t->tm_hour * 256 / 12, 60), ay (t->tm_hour * 256 / 12, 60), 255);
+   int h = ((int) t->tm_hour * 60 + t->tm_min) * 256 / 12 / 60;
    for (int dx = -1; dx < 1; dx++)
       for (int dy = -1; dy < 1; dy++)
-         gfx_line (100 + dx, 100 + dy, ax (t->tm_hour * 256 / 12, 60) + dx, ay (t->tm_hour * 256 / 12, 60) + dy, 255);
+         gfx_line (100 + dx, 100 + dy, ax (h, 60) + dx, ay (h, 60) + dy, 255);
    gfx_pos (150, 100, GFX_C | GFX_M);
    gfx_text (2, "%2d", t->tm_mday);
-   gfx_pos(100,150,GFX_C | GFX_M);
-   gfx_7seg (2, "%6d",steps_read ()); 
+   gfx_pos (100, 150, GFX_C | GFX_M);
+   gfx_7seg (2, "%6d", steps_read ());
 }

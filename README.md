@@ -17,8 +17,8 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 - [x] RTC
 - [x] Low power mode
 - [x] Low power with buttons
-- [ ] Finish basic watch face design
-- [ ] Analogue watch face design
+- [x] Finish basic watch face design
+- [x] Analogue watch face design
 - [ ] At least one other fun watch face design - ideas welcome
 - [x] Basic menus
 - [ ] Vibration motor
