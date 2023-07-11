@@ -123,7 +123,14 @@ menu_upgrade (struct tm *t, char key)
    if (key == 'L')
    {
       menu2 = 0;
-      bits.wifi=0;
+      bits.wifi = 0;
+      bits.holdoff = 0;
+      return;
+   }
+   if (uptime () > 120 || key == 'R')
+   {
+      menu1 = 0;
+      bits.wifi = 0;
       bits.holdoff = 0;
       return;
    }
@@ -140,22 +147,25 @@ menu_upgrade (struct tm *t, char key)
       gfx_text (-2, "Waiting");
       return;
    }
-      gfx_gap (5);
-      int8_t percent=revk_ota_progress();
-      if(percent==-2)gfx_text(-2,"Up to date");
-      else if(percent==101)gfx_text(-2,"Done");
-      else if(percent>=0&&percent<=100)gfx_text(5,"%3d%%",percent);
+   gfx_gap (5);
+   int8_t percent = revk_ota_progress ();
+   if (percent == -2)
+      gfx_text (-2, "Up to date");
+   else if (percent == 101)
+      gfx_text (5, "Done");
+   else if (percent >= 0 && percent <= 100)
+      gfx_text (5, "%3d%%", percent);
    const char *r;
    if (revk_shutting_down (&r))
    {
-      ESP_LOGE (TAG, "Shutting down %s", r);
       gfx_gap (5);
       gfx_text (-2, "Upgrading");
       gfx_gap (5);
       gfx_text (-1, r);
       return;
    }
-   ESP_LOGE (TAG, "Start upgrade");
+   if (percent >= 0)
+      return;
    r = revk_command ("upgrade", NULL);
    if (r)
    {
@@ -163,13 +173,6 @@ menu_upgrade (struct tm *t, char key)
       gfx_text (-2, "Trying");
       gfx_gap (5);
       gfx_text (-1, r);
-      return;
-   }
-   if (uptime () > 120 || key == 'R')
-   {
-      menu1 = 0;
-      bits.wifi=0;
-      bits.holdoff = 0;
       return;
    }
 }
