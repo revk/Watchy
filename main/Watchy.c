@@ -25,7 +25,7 @@ void face_show (time_t, char);  // Show current time
 
 bits_t bits = { 0 };
 
-const uint8_t btn[] = { GPIOBTN1, GPIOBTN2, GPIOBTN3, GPIOBTN4 };
+const uint8_t btn[] = { GPIOBTN2, GPIOBTN3, GPIOBTN1, GPIOBTN4 };
 
 #define	BTNMASK	((1LL<<GPIOBTN1)|(1LL<<GPIOBTN2)|(1LL<<GPIOBTN3)|(1LL<<GPIOBTN4))
 
@@ -173,8 +173,9 @@ app_main ()
          if ((btns & (1 << b)) && !(last_btn & (1 << b)))
          {
             last_btn |= (1 << b);
-            ESP_LOGE (TAG, "Key %d", b);
-            return "DURL"[b];   // TODO allow for flip
+	    char key="RLUDRULD"[(b ^ flip) & 7]; // Mapped for display flipping
+            ESP_LOGE (TAG, "Key %c", key);
+	    return key;
          }
       return 0;
    }
@@ -322,11 +323,11 @@ app_main ()
 
    while (1)
    {
-      key = btn_read ();
       read_battery ();
       now = ertc_read ();
       if (key || now != last)
          face_show (now, key);
+      key = btn_read ();
       last = now;
       if (bits.wifi && !bits.wifistarted)
       {                         // Start WiFi

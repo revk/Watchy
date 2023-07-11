@@ -156,7 +156,7 @@ menu_turn (struct tm *t, char key)
    bits.holdoff = 1;
    if (!bits.revkstarted)
       return;
-   flip ^= 4;
+   flip ^= 5;
    jo_t j = jo_object_alloc ();
    jo_int (j, "flip", flip);
    revk_setting (j);
@@ -206,20 +206,19 @@ menu_show (struct tm *t, char key)
       menu3 = 0;
       key = 0;                  // used the key top enter menu
    }
-   ESP_LOGI (TAG, "Menu %d %d %d key %c", menu1, menu2, menu3, key);
+   ESP_LOGE (TAG, "Menu %d %d %d key %c", menu1, menu2, menu3, key);
    // Menu functions called with key set to update state and then called (after state change) with no key to display
-   if (!menu1)
-      return;
-   if (key)
+   void process (char key)
    {
+      if (!menu1)
+         return;
       if (!menu2)
          menu_main (t, key);
       else if (!menu3 && menu1 && menu1 <= sizeof (list_main) / sizeof (*list_main))
          list_main[menu1 - 1].fun (t, key);
    }
-   if (!menu2)
-      menu_main (t, 0);
-   else if (!menu3 && menu1 && menu1 <= sizeof (list_main) / sizeof (*list_main))
-      list_main[menu1 - 1].fun (t, 0);
+   if (key)
+      process (key);
+   process (0);
    gfx_unlock ();               // Always safe to extra unlock
 }
