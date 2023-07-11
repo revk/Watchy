@@ -144,6 +144,5 @@ face_analogue (struct tm *t)
    for (int h = 0; h < 12; h++)
       gfx_line (ax (h * 255 / 12, 99), ay (h * 255 / 12, 99), ax (h * 255 / 12, (h % 3) ? 90 : 80),
                 ay (h * 255 / 12, (h % 3) ? 90 : 80), 255);
-   gfx_pos (100, 100, GFX_C | GFX_M);
-   gfx_text (5, "TODO");
+
 }
