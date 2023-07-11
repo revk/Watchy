@@ -21,6 +21,11 @@ typedef struct
    const char *name;
 } menulist_t;
 
+menulist_t list_face[] = {
+#define face(n,d) {NULL,#d},
+#include "faces.m"
+};
+
 void
 gfx_gap (uint8_t g)
 {
@@ -183,12 +188,20 @@ menu_upgrade (struct tm *t, char key)
 void
 menu_face (struct tm *t, char key)
 {                               //  Face select
-   if (key == 'L')
-   {
-      menu2 = 0;
+   if (menu2 == 0xFF)
+      menu2 = face + 1;
+   if (key == 'R')
+      menu3 = 1;                // Selected
+   else
+      menu2 = menu_list (t, menu2, sizeof (list_face) / sizeof (*list_face), list_face, "Face", key);
+   bits.startup = 1;
+   if (!bits.revkstarted)
       return;
+   if (menu3)
+   {                            // Selected
+      menu1 = 0;
+      face = menu2 - 1;
    }
-   gfx_menu (t, "Face");
 }
 
 void
@@ -261,12 +274,11 @@ menulist_t list_main[] = {
    {menu_info, "Info"},
 };
 
-
 void
 menu_main (struct tm *t, char key)
 {
    if (key == 'R')
-      menu2 = 1;                // Selected
+      menu2 = 0xFF;             // Selected
    else
       menu1 = menu_list (t, menu1, sizeof (list_main) / sizeof (*list_main), list_main, NULL, key);
 }
@@ -299,7 +311,7 @@ menu_show (struct tm *t, char key)
          return;
       if (!menu2)
          menu_main (t, key);
-      else if (!menu3 && menu1 && menu1 <= sizeof (list_main) / sizeof (*list_main))
+      else if (menu1 && menu1 <= sizeof (list_main) / sizeof (*list_main))
          list_main[menu1 - 1].fun (t, key);
    }
    if (key)

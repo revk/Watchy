@@ -110,3 +110,10 @@ face_basic (struct tm *t)
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_text (4, "%s", temp);
 }
+
+void
+face_analogue (struct tm *t)
+{
+   gfx_pos (100, 100, GFX_C | GFX_M);
+   gfx_text (5, "TODO");
+}
