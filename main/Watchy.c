@@ -117,7 +117,7 @@ night (time_t now)
       esp_sleep_enable_ext1_wakeup (BTNMASK, ESP_EXT1_WAKEUP_ANY_HIGH); // Wait press
       ESP_LOGI (TAG, "Wait key press, or %d seconds", secs);
    }
-   esp_deep_sleep (1000000LL * secs ? : 500000LL);      // Next minute
+   esp_deep_sleep (1000000LL * secs ? : 500000LL);      // Next minute - or fast
 }
 
 void
