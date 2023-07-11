@@ -6,7 +6,7 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 
 - [x] Base build and flash
 - [x] OTA
-- [ ] Battery level reading
+- [x] Battery level reading
 - [x] Buttons
 - [x] OLED display
 - [x] OLED soft/partial updates (e.g. for 7 seg digits)
@@ -20,11 +20,14 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 - [ ] Finish basic watch face design
 - [ ] Analogue watch face design
 - [ ] At least one other fun watch face design - ideas welcome
-- [ ] Basic menus
+- [x] Basic menus
 - [ ] Vibration motor
 - [ ] Alarm clock
 - [ ] Time zone select
-- [ ] OTA via menu
+- [x] OTA via menu
 - [x] Sleep hold off during OTA!
 - [x] RTC adjust
-- [ ] Icons
+- [x] Icons
+- [ ] Better icons
+- [ ] WiFi menu
+- [ ] Info meni
