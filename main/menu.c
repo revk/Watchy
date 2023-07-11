@@ -123,6 +123,7 @@ menu_upgrade (struct tm *t, char key)
    if (key == 'L')
    {
       menu2 = 0;
+      bits.wifi=0;
       bits.holdoff = 0;
       return;
    }
@@ -167,6 +168,7 @@ menu_upgrade (struct tm *t, char key)
    if (uptime () > 120 || key == 'R')
    {
       menu1 = 0;
+      bits.wifi=0;
       bits.holdoff = 0;
       return;
    }
