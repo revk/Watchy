@@ -25,6 +25,7 @@
 #define	I2CPORT	0
 #define	RTCADDRESS	0x51
 #define	ADCCHANNEL	ADC_CHANNEL_6
+#define	ACCADDRESS	0x18
 #define	BATHIGH		2400
 #define	BATLOW		2000
 
@@ -38,7 +39,7 @@ extern uint8_t flip;
 typedef struct bits
 {                               // Struct to just save a bit of RAM
    uint8_t charging:1;          // We are charging
-   uint8_t startup:1;		// We want startup
+   uint8_t startup:1;           // We want startup
    uint8_t wifi:1;              // We want wifi connected
    uint8_t holdoff:1;           // We want to stay on line (e.g. access internet, etc)
    uint8_t revkstarted:1;       // Main revk library started so all settings loaded

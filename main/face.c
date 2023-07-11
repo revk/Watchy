@@ -96,6 +96,9 @@ face_basic (struct tm *t)
    gfx_pos (0, 199, GFX_L | GFX_B);
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
    gfx_qr (temp, 2);
+   gfx_pos (199, 140, GFX_R | GFX_B | GFX_H);
+   gfx_7seg (2, "%d", steps_read ());
+   // TODO walk/run icons?
    gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
    gfx_7seg (2, "%3d", battery);
    strftime (temp, sizeof (temp), "%a", t);

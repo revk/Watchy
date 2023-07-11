@@ -274,7 +274,7 @@ menu_main (struct tm *t, char key)
 void
 menu_show (struct tm *t, char key)
 {
-   ESP_LOGE (TAG, "Menu %d %d %d key %c flip %d", menu1, menu2, menu3, key, flip);
+   ESP_LOGI (TAG, "Menu %d %d %d key %c flip %d", menu1, menu2, menu3, key, flip);
    if (key && !menu1)
    {
       menu1 = 1;                // Enter menu

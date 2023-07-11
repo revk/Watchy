@@ -7,28 +7,14 @@ static const char __attribute__((unused)) TAG[] = "RTC";
 #include "watchy.h"
 #include <driver/i2c.h>
 
-esp_err_t
+void
 ertc_init (void)
-{
-   i2c_config_t config = {
-      .mode = I2C_MODE_MASTER,
-      .sda_io_num = GPIOSDA,
-      .scl_io_num = GPIOSCL,
-      .sda_pullup_en = true,
-      .scl_pullup_en = true,
-      .master.clk_speed = 100000,
-   };
-   esp_err_t e = i2c_driver_install (I2CPORT, I2C_MODE_MASTER, 0, 0, 0);
-   if (!e)
-      e = i2c_param_config (I2CPORT, &config);
-   if (!e)
-      e = i2c_set_timeout (I2CPORT, 80000 * 5);
-   return e;
+{                               // Not sure any needed
 }
 
 time_t
 ertc_read (void)
-{
+{                               // read the time
    uint8_t S = 0,
       M = 0,
       H = 0,
@@ -71,7 +57,7 @@ ertc_read (void)
 
 void
 ertc_write (time_t now)
-{
+{                               // write the time
    struct tm t = { 0 };
    gmtime_r (&now, &t);         // Store UTC
    uint8_t S = ((t.tm_sec / 10) << 4) + (t.tm_sec % 10);
