@@ -177,7 +177,7 @@ app_main ()
             last_btn |= (1 << b);
             char key = "RLUDRULD"[(b ^ flip) & 7];      // Mapped for display flipping
             ESP_LOGI (TAG, "Key %d=%c (flip %X)", b, key, flip);
-            epaper_refresh = 5;
+            epaper_refresh = 10; // handle keys pressing too fast for display updates
             return key;
          }
       return 0;
