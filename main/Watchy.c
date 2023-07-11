@@ -59,7 +59,7 @@ RTC_NOINIT_ATTR char rtctz[30];
 #define s8r(n,d) int8_t n,ring##n;
 #define s16r(n,d) int16_t n,ring##n;
 #define u8l(n,d) uint8_t n;
-#define u8lr(n,d) uint8_t n;
+#define u8lr(n,d) RTC_NOINIT_ATTR uint8_t n;
 #define b(n) uint8_t n;
 #define s(n,d) char * n;
 #define io(n,d)           uint8_t n;
@@ -109,11 +109,11 @@ night (time_t now)
          if (last_btn & (1 << b))
             mask |= 1LL << btn[b];
       esp_sleep_enable_ext1_wakeup (mask, ESP_EXT1_WAKEUP_ALL_LOW);
-      ESP_LOGE (TAG, "Wait key release %X, %d", last_btn, secs);
+      ESP_LOGE (TAG, "Wait key release %X, or %d seconds", last_btn, secs);
    } else
    {
       esp_sleep_enable_ext1_wakeup (BTNMASK, ESP_EXT1_WAKEUP_ANY_HIGH); // Wait press
-      ESP_LOGE (TAG, "Wait key press, %d", secs);
+      ESP_LOGE (TAG, "Wait key press, or %d seconds", secs);
    }
    esp_deep_sleep (1000000LL * secs);   // Next minute
 }
@@ -173,14 +173,14 @@ app_main ()
          if ((btns & (1 << b)) && !(last_btn & (1 << b)))
          {
             last_btn |= (1 << b);
-	    char key="RLUDRULD"[(b ^ flip) & 7]; // Mapped for display flipping
-            ESP_LOGE (TAG, "Key %c", key);
-	    return key;
+            char key = "RLUDRULD"[(b ^ flip) & 7];      // Mapped for display flipping
+            ESP_LOGE (TAG, "Key %d=%c (flip %X)", b, key, flip);
+            return key;
          }
       return 0;
    }
    char key = btn_read ();
-   {
+   {                            // Time zone
       int l;
       for (l = 0; l < sizeof (rtctz) && rtctz[l]; l++);
       if (l < sizeof (rtctz))
@@ -195,7 +195,7 @@ app_main ()
    {
       if (gfx_ok ())
          return;
-      ESP_LOGI (TAG, "Start E-paper");
+      ESP_LOGE (TAG, "Start E-paper flip=%d", flip);
     const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: wakeup ? 1 : 0, norefresh: wakeup ? 1 : 0, direct:1);
       if (e)
       {
@@ -253,10 +253,11 @@ app_main ()
       }
    }
 
-   if (wakeup && (wakeup == ESP_SLEEP_WAKEUP_TIMER || !bits.charging) && !bits.wifi)
+   if (wakeup && !bits.wifi && !bits.holdoff && !key)
       night (now);
 
    // Full startup
+   ESP_LOGE (TAG, "Revk boot wakeup=%d wifi=%d holdoff=%d key=%c", wakeup, bits.wifi, bits.holdoff, key);
    bits.revkstarted = 1;
    revk_boot (&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
@@ -321,20 +322,32 @@ app_main ()
       }
    }
 
+   if (key || !wakeup)
+   {                            // Delayed
+      now = ertc_read ();
+      face_show (now, key);
+   }
+
+   if (!bits.holdoff)
+   {
+      revk_pre_shutdown ();
+      night (now);
+   }
+
    while (1)
    {
       read_battery ();
       now = ertc_read ();
+      key = btn_read ();
       if (key || now != last)
          face_show (now, key);
-      key = btn_read ();
       last = now;
       if (bits.wifi && !bits.wifistarted)
       {                         // Start WiFi
          bits.wifistarted = 1;
          revk_start ();
       }
-      if (!revk_shutting_down (NULL) && ((!bits.charging && !bits.holdoff) || uptime () > 60))
+      if (!revk_shutting_down (NULL) && (!bits.holdoff || uptime () > 120))
       {
          revk_pre_shutdown ();
          bits.revkstarted = 0;

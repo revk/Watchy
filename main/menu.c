@@ -18,6 +18,12 @@ typedef struct
 } menulist_t;
 
 void
+gfx_gap (uint8_t g)
+{
+   gfx_pos (gfx_x (), gfx_y () + g, gfx_a ());
+}
+
+void
 gfx_menu (struct tm *t, const char *title)
 {                               // Start menu
    gfx_lock ();
@@ -28,7 +34,7 @@ gfx_menu (struct tm *t, const char *title)
    char temp[30];
    strftime (temp, sizeof (temp), "%F", t);
    gfx_pos (100, 0, GFX_C | GFX_T);
-   gfx_text (2, title ? : temp);
+   gfx_text (-2, title ? : temp);
    strftime (temp, sizeof (temp), "%H:%M %Z", t);
    gfx_pos (100, 199, GFX_C | GFX_B);
    gfx_text (2, temp);
@@ -40,6 +46,7 @@ gfx_menu (struct tm *t, const char *title)
    gfx_icon2 (32, 32, icon_down);
    gfx_pos (199, 199, GFX_R | GFX_B);
    gfx_icon2 (32, 32, icon_left);
+   gfx_pos (100, 24, GFX_C | GFX_T | GFX_V);
 }
 
 uint8_t
@@ -122,6 +129,47 @@ menu_upgrade (struct tm *t, char key)
    bits.wifi = 1;
    bits.holdoff = 1;
    gfx_menu (t, "Upgrade");
+   extern const char *otahost;
+   gfx_gap (5);
+   gfx_text (-2, "from...");
+   gfx_text (strlen (otahost) > 16 ? -1 : -2, otahost);
+   if (revk_link_down ())
+   {
+      gfx_gap (5);
+      gfx_text (-2, "Waiting");
+      return;
+   }
+      gfx_gap (5);
+      int8_t percent=revk_ota_progress();
+      if(percent==-2)gfx_text(-2,"Up to date");
+      else if(percent==101)gfx_text(-2,"Done");
+      else if(percent>=0&&percent<=100)gfx_text(5,"%3d%%",percent);
+   const char *r;
+   if (revk_shutting_down (&r))
+   {
+      ESP_LOGE (TAG, "Shutting down %s", r);
+      gfx_gap (5);
+      gfx_text (-2, "Upgrading");
+      gfx_gap (5);
+      gfx_text (-1, r);
+      return;
+   }
+   ESP_LOGE (TAG, "Start upgrade");
+   r = revk_command ("upgrade", NULL);
+   if (r)
+   {
+      gfx_gap (5);
+      gfx_text (-2, "Trying");
+      gfx_gap (5);
+      gfx_text (-1, r);
+      return;
+   }
+   if (uptime () > 120 || key == 'R')
+   {
+      menu1 = 0;
+      bits.holdoff = 0;
+      return;
+   }
 }
 
 void
@@ -199,6 +247,7 @@ menu_main (struct tm *t, char key)
 void
 menu_show (struct tm *t, char key)
 {
+   ESP_LOGE (TAG, "Menu %d %d %d key %c flip %d", menu1, menu2, menu3, key, flip);
    if (key && !menu1)
    {
       menu1 = 1;                // Enter menu
@@ -206,7 +255,6 @@ menu_show (struct tm *t, char key)
       menu3 = 0;
       key = 0;                  // used the key top enter menu
    }
-   ESP_LOGE (TAG, "Menu %d %d %d key %c", menu1, menu2, menu3, key);
    // Menu functions called with key set to update state and then called (after state change) with no key to display
    void process (char key)
    {
