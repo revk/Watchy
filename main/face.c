@@ -120,9 +120,9 @@ face_basic (struct tm *t)
    strftime (temp, sizeof (temp), "%a", t);
    if (bits.revkstarted)
    {
-      gfx_icon2 (32, 32, bits.charging ? icon_power : NULL);
-      gfx_icon2 (32, 32, !revk_link_down ()? icon_wifi : NULL);
-      gfx_icon2 (32, 32, lwmqtt_connected (revk_mqtt (0)) ? icon_mqtt : NULL);
+      gfx_icon2 (ICONSIZE, ICONSIZE, bits.charging ? icon_power : NULL);
+      gfx_icon2 (ICONSIZE, ICONSIZE, !revk_link_down ()? icon_wifi : NULL);
+      gfx_icon2 (ICONSIZE, ICONSIZE, lwmqtt_connected (revk_mqtt (0)) ? icon_mqtt : NULL);
    }
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_text (4, "%s", temp);
