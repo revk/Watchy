@@ -194,7 +194,7 @@ menu_face (struct tm *t, char key)
 void
 menu_flip (struct tm *t, char key)
 {                               //  Flip display
-   bits.holdoff = 1;
+   bits.startup = 1;
    if (!bits.revkstarted)
       return;
    flip ^= 3;
@@ -209,7 +209,7 @@ menu_flip (struct tm *t, char key)
 void
 menu_turn (struct tm *t, char key)
 {                               //  Turn display
-   bits.holdoff = 1;
+   bits.startup = 1;
    if (!bits.revkstarted)
       return;
    flip ^= 5;
@@ -226,17 +226,15 @@ menu_info (struct tm *t, char key)
 {                               //  Info
    if (key == 'L')
    {
-      bits.holdoff = 0;
       menu2 = 0;
       return;
    }
    if (key == 'R')
    {
-      bits.holdoff = 0;
       menu1 = 0;
       return;
    }
-   bits.holdoff = 1;
+   bits.startup = 1;
    if (!bits.revkstarted)
       return;
    extern const char *wifissid;

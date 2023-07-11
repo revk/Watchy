@@ -29,6 +29,7 @@ RTC_NOINIT_ATTR int16_t last_adjust;
 RTC_NOINIT_ATTR uint8_t last_hour;
 RTC_NOINIT_ATTR uint8_t last_min;
 RTC_NOINIT_ATTR uint8_t last_btn;
+RTC_NOINIT_ATTR uint8_t epaper_refresh;
 RTC_NOINIT_ATTR uint8_t battery;
 RTC_NOINIT_ATTR uint8_t menu1;
 RTC_NOINIT_ATTR uint8_t menu2;
@@ -98,6 +99,11 @@ night (time_t now)
       rtc_gpio_pulldown_dis (btn[b]);
    }
    uint8_t secs = 60 - now % 60;
+   if (epaper_refresh)
+   {
+      epaper_refresh--;
+      secs = 0;
+   }
    if (last_btn)
    {                            // Wait release
       uint64_t mask = 0;
@@ -111,7 +117,7 @@ night (time_t now)
       esp_sleep_enable_ext1_wakeup (BTNMASK, ESP_EXT1_WAKEUP_ANY_HIGH); // Wait press
       ESP_LOGI (TAG, "Wait key press, or %d seconds", secs);
    }
-   esp_deep_sleep (1000000LL * secs);   // Next minute
+   esp_deep_sleep (1000000LL * secs ? : 500000LL);      // Next minute
 }
 
 void
@@ -171,6 +177,7 @@ app_main ()
             last_btn |= (1 << b);
             char key = "RLUDRULD"[(b ^ flip) & 7];      // Mapped for display flipping
             ESP_LOGI (TAG, "Key %d=%c (flip %X)", b, key, flip);
+            epaper_refresh = 5;
             return key;
          }
       return 0;
@@ -224,6 +231,10 @@ app_main ()
             face_show (now, key);
             key = 0;
          }
+      } else if (epaper_refresh && !key)
+      {	// Forced refresh
+         epaper_init ();
+         face_show (now, key);
       }
       if (wakeup == ESP_SLEEP_WAKEUP_TIMER)
       {                         // Per minute wake up
@@ -249,7 +260,7 @@ app_main ()
       }
    }
 
-   if (wakeup && !bits.wifi && !bits.holdoff && !key)
+   if (wakeup && !bits.wifi && !bits.holdoff && !key && !bits.startup)
       night (now);
 
    // Full startup
