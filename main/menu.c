@@ -61,6 +61,10 @@ gfx_menu (struct tm *t, const char *title)
 uint8_t
 menu_list (struct tm *t, uint8_t pos, uint8_t len, menulist_t * m, const char *title, char key)
 {                               // Show a list, handle key U/D/L, return new position
+   if (pos < 1)
+      pos = 1;
+   else if (pos > len)
+      pos = len;
    if (key)
    {                            // State
       if (key == 'U' && pos > 1)
@@ -201,6 +205,9 @@ menu_face (struct tm *t, char key)
    {                            // Selected
       menu1 = 0;
       face = menu2 - 1;
+      jo_t j = jo_object_alloc ();
+      jo_int (j, "face", face);
+      revk_setting (j);
    }
 }
 
@@ -278,7 +285,7 @@ void
 menu_main (struct tm *t, char key)
 {
    if (key == 'R')
-      menu2 = 0xFF;             // Selected
+      menu2 = 0xFF;             // Selected (0xFF tells it use starting point of choice)
    else
       menu1 = menu_list (t, menu1, sizeof (list_main) / sizeof (*list_main), list_main, NULL, key);
 }
@@ -295,12 +302,12 @@ menu_show (struct tm *t, char key)
       if (key == 'R')
       {                         // Quick upgrade
          menu1 = 6;
-         menu2 = 1;
+         menu2 = 0xFF;
       }
       if (key == 'L')
       {                         // Quick info
          menu1 = 7;
-         menu2 = 1;
+         menu2 = 0xFF;
       }
       key = 0;                  // used the key top enter menu
    }

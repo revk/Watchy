@@ -31,3 +31,4 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 - [ ] Better icons
 - [ ] WiFi menu
 - [x] Info meni
+- [x] Face menu
