@@ -46,3 +46,8 @@ typedef struct bits
    uint8_t newhour:1;           // This is start of new hour
 } bits_t;
 extern bits_t bits;
+
+
+const char *gfx_qr (const char *value, uint8_t scale);
+void face_init (void);          // Cold start up watch face
+void face_show (time_t, char);  // Show current time

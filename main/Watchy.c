@@ -19,10 +19,6 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #warning Lower battery life if CONFIG_SECURE_SIGNED_ON_BOOT_NO_SECURE_BOOT
 #endif
 
-const char *gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t scale);  // QR
-void face_init (void);          // Cold start up watch face
-void face_show (time_t, char);  // Show current time
-
 bits_t bits = { 0 };
 
 const uint8_t btn[] = { GPIOBTN2, GPIOBTN3, GPIOBTN1, GPIOBTN4 };

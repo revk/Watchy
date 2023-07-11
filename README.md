@@ -30,4 +30,4 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 - [x] Icons
 - [ ] Better icons
 - [ ] WiFi menu
-- [ ] Info meni
+- [x] Info meni

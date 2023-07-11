@@ -5,7 +5,7 @@
 #include "iec18004.h"
 
 const char *
-gfx_qr (const char *value, gfx_pos_t posx, gfx_pos_t posy, uint8_t scale)
+gfx_qr (const char *value, uint8_t scale)
 {                               // QR code
 #ifndef CONFIG_GFX_NONE
    int W = gfx_width ();
@@ -44,7 +44,7 @@ face_init (void)
    gfx_refresh ();
    gfx_clear (0);
    gfx_pos (100, 100, GFX_C | GFX_M);
-   gfx_qr ("HTTPS://WATCHY.REVK.UK", 0, 0, 0);
+   gfx_qr ("HTTPS://WATCHY.REVK.UK", 0);
    gfx_unlock ();
 }
 
@@ -95,7 +95,7 @@ face_basic (struct tm *t)
    }
    gfx_pos (0, 199, GFX_L | GFX_B);
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
-   gfx_qr (temp, 0, 199, 2);
+   gfx_qr (temp, 2);
    gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
    gfx_7seg (2, "%3d", battery);
    strftime (temp, sizeof (temp), "%a", t);

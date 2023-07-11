@@ -8,6 +8,10 @@ static const char __attribute__((unused)) TAG[] = "Menu";
 #include "icons.h"
 #include "menu.h"
 
+static const int margin = 24;   // Some formatting
+static const int left = 24;
+static const int line = 22;
+
 RTC_NOINIT_ATTR uint8_t btnlast;
 
 typedef void menu_fun (struct tm *, char);
@@ -67,9 +71,6 @@ menu_list (struct tm *t, uint8_t pos, uint8_t len, menulist_t * m, const char *t
       return pos;
    }
    gfx_menu (t, title);
-   const int margin = 24;
-   const int left = 24;
-   const int line = 22;
    const int lines = (200 - margin - margin) / line;
    int8_t base = pos - lines / 2;
    if (base + lines > len)
@@ -122,6 +123,8 @@ menu_upgrade (struct tm *t, char key)
 {                               //  Upgrade
    if (key == 'L' || key == 'R')
    {
+      if (key == 'R')
+         menu1 = 0;
       menu2 = 0;
       bits.wifi = 0;
       bits.holdoff = 0;
@@ -133,7 +136,7 @@ menu_upgrade (struct tm *t, char key)
    extern const char *otahost;
    gfx_gap (5);
    gfx_text (-2, "from...");
-   gfx_text (strlen (otahost) > 16 ? -1 : -2, otahost);
+   gfx_text (strlen (otahost) > 16 ? -1 : -2, "%s", otahost);
    if (revk_link_down ())
    {
       gfx_gap (5);
@@ -223,10 +226,31 @@ menu_info (struct tm *t, char key)
 {                               //  Info
    if (key == 'L')
    {
+      bits.holdoff = 0;
       menu2 = 0;
       return;
    }
+   if (key == 'R')
+   {
+      bits.holdoff = 0;
+      menu1 = 0;
+      return;
+   }
+   bits.holdoff = 1;
+   if (!bits.revkstarted)
+      return;
+   extern const char *wifissid;
    gfx_menu (t, "Info");
+   gfx_gap (5);
+   gfx_text (2, "MAC");
+   gfx_gap (5);
+   gfx_text (2, revk_id);
+   gfx_gap (10);
+   gfx_text (2, "WiFi");
+   gfx_gap (5);
+   gfx_text (strlen (wifissid) > 16 ? -1 : -2, "%s", wifissid);
+   gfx_pos (100, 199 - margin, GFX_C | GFX_B);
+   gfx_qr ("HTTPS://WATCHY.REVK.UK", 2);
 }
 
 menulist_t list_main[] = {
@@ -261,6 +285,11 @@ menu_show (struct tm *t, char key)
       if (key == 'R')
       {                         // Quick upgrade
          menu1 = 6;
+         menu2 = 1;
+      }
+      if (key == 'L')
+      {                         // Quick info
+         menu1 = 7;
          menu2 = 1;
       }
       key = 0;                  // used the key top enter menu
