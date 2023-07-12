@@ -198,7 +198,7 @@ face_analogue (struct tm *t)
    gfx_pos (100, 150, GFX_C | GFX_M);
    gfx_7seg (2, "%6d", steps_read ());
    gfx_pos (100, 50, GFX_C | GFX_M);
-   gfx_qr ("HTTPS://WATCHY.REVK.UK", 1);
+   gfx_icon (ajk);
    gfx_pos (0, 0, GFX_L | GFX_T);
    gfx_battery ();
    gfx_pos (199, 0, GFX_R | GFX_T);

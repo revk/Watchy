@@ -89,7 +89,7 @@ acc_init (void)
    if (status == 1)
       return;                   // OK...
 #if 1                           // Soft reset and reconfigure
-   ESP_LOGE (TAG, "Soft reset err=%02X status=%02X",i2c_read(0x02),i2c_read(0x03));
+   ESP_LOGE (TAG, "Soft reset err=%02X status=%02X", i2c_read (0x02), i2c_read (0x03));
    i2c_write (0x7E, 0xB6);
    sleep (1);
    status = i2c_read (0x2A);
