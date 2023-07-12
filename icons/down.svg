@@ -4,8 +4,8 @@
    inkscape:version="1.2.2 (b0a84865, 2022-12-01)"
    id="svg8"
    version="1.1"
-   viewBox="0 0 4.7624999 3.9687501"
-   height="15"
+   viewBox="0 0 4.7624999 4.7625001"
+   height="18"
    width="18"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -27,9 +27,9 @@
      inkscape:document-rotation="0"
      inkscape:current-layer="layer1"
      inkscape:document-units="mm"
-     inkscape:cy="-0.95726496"
-     inkscape:cx="7.1415005"
-     inkscape:zoom="32.90625"
+     inkscape:cy="9.012931"
+     inkscape:cx="9"
+     inkscape:zoom="38.666667"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
      borderopacity="1.0"
@@ -42,7 +42,7 @@
     <inkscape:grid
        empspacing="4"
        dotted="true"
-       originy="-4.4979201"
+       originy="-4.4979202"
        originx="0"
        id="grid833"
        type="xygrid" />
@@ -59,13 +59,13 @@
     </rdf:RDF>
   </metadata>
   <g
-     transform="translate(0,-288.53332)"
+     transform="translate(0,-286.94582)"
      id="layer1"
      inkscape:groupmode="layer"
      inkscape:label="Layer 1">
     <g
        id="g2341"
-       transform="matrix(1,0,0,-1,-4.2333337,581.29997)">
+       transform="matrix(1,0,0,-1,-4.2333337,580.50622)">
       <path
          style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          d="m 4.2333337,292.76665 h 4.7625 l -2.38125,-3.96875 z"
