@@ -35,7 +35,6 @@ RTC_NOINIT_ATTR int16_t last_adjust;
 RTC_NOINIT_ATTR uint8_t last_hour;
 RTC_NOINIT_ATTR uint8_t last_min;
 RTC_NOINIT_ATTR uint8_t last_btn;
-RTC_NOINIT_ATTR uint8_t epaper_refresh;
 RTC_NOINIT_ATTR uint8_t battery;
 RTC_NOINIT_ATTR uint8_t menu1;
 RTC_NOINIT_ATTR uint8_t menu2;
@@ -97,7 +96,6 @@ app_callback (int client, const char *prefix, const char *target, const char *su
 void
 night (time_t now)
 {
-   gfx_sleep ();
    for (uint8_t b = 0; b < 4; b++)
    {
       rtc_gpio_set_direction_in_sleep (btn[b], RTC_GPIO_MODE_INPUT_ONLY);
@@ -105,11 +103,6 @@ night (time_t now)
       rtc_gpio_pulldown_dis (btn[b]);
    }
    uint8_t secs = 60 - now % 60;
-   if (epaper_refresh)
-   {
-      epaper_refresh--;
-      secs = 0;
-   }
    if (last_btn)
    {                            // Wait release
       uint64_t mask = 0;
@@ -186,7 +179,12 @@ app_main ()
 {
    uint8_t wakeup = esp_sleep_get_wakeup_cause ();
    uint8_t reset = esp_reset_reason ();
-   ESP_LOGE (TAG, "Wake %d/%d @ %lld", reset, wakeup, time (0));
+   {
+      struct timeval tv;
+      gettimeofday (&tv, NULL);
+
+      ESP_LOGE (TAG, "Wake %d/%d @ %lld.%06ld", reset, wakeup, tv.tv_sec, tv.tv_usec);
+   }
    if (!wakeup)
       menu1 = menu2 = menu3 = 0;
 
@@ -214,7 +212,6 @@ app_main ()
             last_btn |= (1 << b);
             char key = "RLUDRULD"[(b ^ flip) & 7];      // Mapped for display flipping
             ESP_LOGI (TAG, "Key %d=%c (flip %X)", b, key, flip);
-            epaper_refresh = 20;        // handle keys pressing too fast for display updates
             return key;
          }
       return 0;
@@ -268,7 +265,7 @@ app_main ()
    if (now > 1000000000)
    {                            // Time updates
       uint8_t v = now / 60 % 60;
-      if (last_min != v)
+      if (last_min != v || key)
       {                         // Update display
          bits.newmin = 1;
          if (!(v % 5))
@@ -280,13 +277,9 @@ app_main ()
             face_show (now, key);
             key = 0;
          }
-      } else if (epaper_refresh && !key)
-      {                         // Forced refresh
-         epaper_init ();
-         face_show (now, key);
       }
       if (wakeup == ESP_SLEEP_WAKEUP_TIMER)
-      {                         // Per minute wake up
+      {
          v = now / 3600 % 24;
          if (last_hour != v)
          {                      // Normal start and attempt local clock sync
@@ -376,7 +369,13 @@ app_main ()
       face_show (now, key);
    }
 
-   if (!bits.holdoff && !bits.timeunsync)
+   if (bits.startup)
+   {
+      face_show (now, key);
+      key = 0;
+   }
+
+   if (!bits.busy && !bits.holdoff && !bits.timeunsync)
    {
       revk_pre_shutdown ();
       night (now);
@@ -386,7 +385,7 @@ app_main ()
    while (1)
    {
       read_battery ();
-      now = ertc_read ();
+      now = time (0);
       key = btn_read ();
       if (key || now != last)
          face_show (now, key);
@@ -396,7 +395,7 @@ app_main ()
          bits.wifistarted = 1;
          revk_start ();
       }
-      if (!revk_shutting_down (NULL) && !(bits.timeunsync && uptime () < 20) && !(bits.holdoff && uptime () < 120))
+      if (!bits.busy && !revk_shutting_down (NULL) && !(bits.timeunsync && uptime () < 20) && !(bits.holdoff && uptime () < 120))
       {
          revk_pre_shutdown ();
          night (now);           // Stay up in charging for 1 minute at least

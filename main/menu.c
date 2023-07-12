@@ -37,9 +37,6 @@ gfx_menu (struct tm *t, const char *title)
 {                               // Start menu
    gfx_lock ();
    gfx_clear (0);
-   // Arrows
-
-   // Time
    char temp[30];
    strftime (temp, sizeof (temp), "%F", t);
    gfx_pos (100, 0, GFX_C | GFX_T);
@@ -59,6 +56,7 @@ gfx_menu (struct tm *t, const char *title)
    gfx_pos (gfx_x (), gfx_y () - 1, gfx_a ());
    gfx_battery ();
    gfx_pos (100, 24, GFX_C | GFX_T | GFX_V);
+   gfx_gap (5);
 }
 
 uint8_t
@@ -114,10 +112,53 @@ menu_wifi (struct tm *t, char key)
       bits.holdoff = 0;
       return;
    }
-   bits.wifi = 1;
-   bits.holdoff = 1;
+   if (key == 'R' && menu2 == 0xFF)
+      menu2 = 1;                // Selected
+   bits.startup = 1;
+   if (!bits.revkstarted)
+      return;
    gfx_menu (t, "WiFi");
+   char temp[30];
+   gfx_text (2, "Access point");
+   snprintf (temp, sizeof (temp), "%s-%s", appname, revk_id);
+   gfx_gap (10);
+   gfx_text (strlen (temp) > 16 ? -1 : -2, "%s", temp);
+   if (menu2 == 1)
+   {                            // Selected
+      bits.wifi = 1;
+      bits.holdoff = 1;
+      revk_command ("apconfig", NULL);
+      menu2 = 2;
+   } else if (menu2 == 2)
+   {
+      bits.wifi = 1;
+      bits.holdoff = 1;
+      bits.busy = 1;
+      gfx_gap (10);
+      gfx_text (2, "Connect to AP");
+      gfx_gap (5);
+      gfx_iconq (wifi, !revk_link_down ());
+      gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
+      wifi_mode_t mode = 0;
+      esp_wifi_get_mode (&mode);
+      if (mode != WIFI_MODE_AP && mode != WIFI_MODE_APSTA)
+         menu2 = 255;           // AP mode closed
+   } else if (menu2 == 0xFF)
+   {
+      gfx_gap (10);
+      gfx_pos (left - 3, gfx_y (), GFX_R | GFX_T);
+      gfx_icon (right);
+      gfx_pos (left, gfx_y (), GFX_L | GFX_T | GFX_H);
+      gfx_text (2, "Start AP");
+   }
+   const char *r;
+   if (revk_shutting_down (&r))
+   {
+      gfx_pos (100, 199 - margin, GFX_C | GFX_B);
+      gfx_text (-1, "%s", r);
+   }
 }
+
 
 void
 menu_timezone (struct tm *t, char key)
@@ -144,9 +185,10 @@ menu_upgrade (struct tm *t, char key)
    }
    bits.wifi = 1;
    bits.holdoff = 1;
+   if (!bits.revkstarted)
+      return;
    gfx_menu (t, "Upgrade");
    extern const char *otahost;
-   gfx_gap (5);
    gfx_text (-2, "from...");
    gfx_text (strlen (otahost) > 16 ? -1 : -2, "%s", otahost);
    if (revk_link_down ())
@@ -261,7 +303,6 @@ menu_info (struct tm *t, char key)
    if (!bits.revkstarted)
       return;
    gfx_menu (t, "Info");
-   gfx_gap (5);
    gfx_text (2, "MAC");
    gfx_gap (5);
    gfx_text (2, revk_id);
@@ -281,23 +322,22 @@ menu_info (struct tm *t, char key)
 void
 menu_mqtt (struct tm *t, char key)
 {                               //  MQTT
-   bits.wifi = 1;
-   bits.holdoff = 1;
    if (key == 'L')
    {
       menu2 = 0;
       return;
    }
-   if (key == 'R')
+   if (key == 'R' || uptime () > 110)
    {
       menu1 = 0;
       return;
    }
+   bits.busy = 1;
+   bits.wifi = 1;
    bits.startup = 1;
    if (!bits.revkstarted)
       return;
    gfx_menu (t, "MQTT");
-   gfx_gap (10);
    gfx_text (2, "Host");
    gfx_gap (5);
    extern const char *mqtthost;
@@ -336,7 +376,7 @@ menu_main (struct tm *t, char key)
 void
 menu_show (struct tm *t, char key)
 {
-   ESP_LOGI (TAG, "Menu %d %d %d key %c flip %d", menu1, menu2, menu3, key, flip);
+   ESP_LOGI (TAG, "Menu %d %d %d key %c flip %d started %d", menu1, menu2, menu3, key, flip, bits.revkstarted);
    if (key && !menu1)
    {
       menu1 = 1;                // Enter menu
@@ -354,6 +394,7 @@ menu_show (struct tm *t, char key)
       }
       key = 0;                  // used the key top enter menu
    }
+   bits.busy = 0;               // Has to be set each time
    // Menu functions called with key set to update state and then called (after state change) with no key to display
    void process (char key)
    {

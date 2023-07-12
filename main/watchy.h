@@ -43,6 +43,7 @@ typedef struct bits
    uint8_t startup:1;           // We want startup
    uint8_t wifi:1;              // We want wifi connected
    uint8_t holdoff:1;           // We want to stay on line (e.g. access internet, etc)
+   uint8_t busy:1;              // Really keep up
    uint8_t revkstarted:1;       // Main revk library started so all settings loaded
    uint8_t wifistarted:1;       // WiFi started
    uint8_t newmin:1;            // This is start of new minute
