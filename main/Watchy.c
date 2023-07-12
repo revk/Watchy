@@ -6,6 +6,7 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #include "revk.h"
 #include "watchy.h"
 #include "esp_sleep.h"
+#include "esp_sntp.h"
 #include "esp_task_wdt.h"
 #include <driver/gpio.h>
 #include <driver/uart.h>
@@ -19,6 +20,9 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 
 #ifdef	CONFIG_SECURE_SIGNED_ON_BOOT_NO_SECURE_BOOT
 #warning Lower battery life if CONFIG_SECURE_SIGNED_ON_BOOT_NO_SECURE_BOOT
+#endif
+#ifndef	CONFIG_RTC_CLK_SRC_EXT_OSC
+#warning You want CONFIG_RTC_CLK_SRC_EXT_OSC, I expect
 #endif
 
 bits_t bits = { 0 };
@@ -167,11 +171,22 @@ i2c_init (void)
 }
 
 void
+timesync (struct timeval *tv)
+{
+   bits.timeunsync = 0;
+   last_hour = tv->tv_sec / 3600 % 24;
+   last_min = tv->tv_sec / 60 % 60;
+   last_adjust = adjust * last_min / 60;
+   ertc_write (tv->tv_sec);
+   ESP_LOGE (TAG, "Time sync @ %ld", uptime ());
+}
+
+void
 app_main ()
 {
    uint8_t wakeup = esp_sleep_get_wakeup_cause ();
    uint8_t reset = esp_reset_reason ();
-   ESP_LOGI (TAG, "Wake %d/%d", reset, wakeup);
+   ESP_LOGE (TAG, "Wake %d/%d @ %lld", reset, wakeup, time (0));
    if (!wakeup)
       menu1 = menu2 = menu3 = 0;
 
@@ -199,7 +214,7 @@ app_main ()
             last_btn |= (1 << b);
             char key = "RLUDRULD"[(b ^ flip) & 7];      // Mapped for display flipping
             ESP_LOGI (TAG, "Key %d=%c (flip %X)", b, key, flip);
-            epaper_refresh = 20; // handle keys pressing too fast for display updates
+            epaper_refresh = 20;        // handle keys pressing too fast for display updates
             return key;
          }
       return 0;
@@ -213,7 +228,10 @@ app_main ()
          setenv ("TZ", rtctz, 1);
          tzset ();
       } else
+      {
+         *rtctz = 0;
          ESP_LOGE (TAG, "TZ not set");
+      }
    }
 
    void epaper_init (void)
@@ -233,7 +251,6 @@ app_main ()
          face_init ();
    }
 
-   time_t now = 0;
    if (i2c_init ())
       ESP_LOGE (TAG, "RTC init fail");
    if (reset == ESP_RST_POWERON || reset == ESP_RST_EXT || reset == ESP_RST_BROWNOUT)
@@ -241,10 +258,15 @@ app_main ()
       ertc_init ();
       acc_init ();
    }
-   if (!(now = ertc_read ()))
-      ESP_LOGE (TAG, "RTC read fail");
-   else
-   {
+   time_t now = time (0);
+   if (now < 1000000000)
+   {                            // We have no clock...
+      now = ertc_read ();
+      bits.wifi = 1;
+      bits.timeunsync = 1;
+   }
+   if (now > 1000000000)
+   {                            // Time updates
       uint8_t v = now / 60 % 60;
       if (last_min != v)
       {                         // Update display
@@ -268,9 +290,10 @@ app_main ()
          v = now / 3600 % 24;
          if (last_hour != v)
          {                      // Normal start and attempt local clock sync
-            bits.newhour = 1;
             last_hour = v;
             last_adjust = 0;
+            bits.timeunsync = 1;
+            bits.newhour = 1;
             bits.wifi = 1;
          } else
          {
@@ -285,7 +308,8 @@ app_main ()
             }
          }
       }
-   }
+   } else
+      bits.wifi = 1;            // Let's try and set clock
 
    if (wakeup && !bits.wifi && !bits.holdoff && !key && !bits.startup)
       night (now);
@@ -337,23 +361,13 @@ app_main ()
    }
 
    epaper_init ();
-   time_t last = now;
 
-   if (bits.wifi || bits.charging)
+   if (bits.wifi || bits.charging || !now)
    {
       bits.wifistarted = 1;
       revk_start ();            // Start WiFi
 
-      ESP_LOGI (TAG, "Wait Time");
-      while ((now = time (0)) < 30)
-         sleep (1);
-      if (now > 1000000000)
-      {
-         last_hour = now / 3600 % 24;
-         last_min = now / 60 % 60;
-         last_adjust = adjust * last_min / 60;
-         ertc_write (now);
-      }
+      sntp_set_time_sync_notification_cb (&timesync);
    }
 
    if (key || !wakeup)
@@ -362,12 +376,13 @@ app_main ()
       face_show (now, key);
    }
 
-   if (!bits.holdoff)
+   if (!bits.holdoff && !bits.timeunsync)
    {
       revk_pre_shutdown ();
       night (now);
    }
 
+   time_t last = now;
    while (1)
    {
       read_battery ();
@@ -381,10 +396,10 @@ app_main ()
          bits.wifistarted = 1;
          revk_start ();
       }
-      if (!revk_shutting_down (NULL) && (!bits.holdoff || uptime () > 120))
+      if (!revk_shutting_down (NULL) && !(bits.timeunsync && uptime () < 20) && !(bits.holdoff && uptime () < 120))
       {
          revk_pre_shutdown ();
-         night (59);            // Stay up in charging for 1 minute at least
+         night (now);           // Stay up in charging for 1 minute at least
       }
       usleep (10000);
    }

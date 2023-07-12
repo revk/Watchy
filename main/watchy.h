@@ -35,6 +35,7 @@ extern uint8_t menu2;
 extern uint8_t menu3;
 extern uint8_t face;
 extern uint8_t flip;
+extern char rtctz[];
 
 typedef struct bits
 {                               // Struct to just save a bit of RAM
@@ -46,6 +47,7 @@ typedef struct bits
    uint8_t wifistarted:1;       // WiFi started
    uint8_t newmin:1;            // This is start of new minute
    uint8_t newhour:1;           // This is start of new hour
+   uint8_t timeunsync:1;        // Time sync wanted
 } bits_t;
 extern bits_t bits;
 extern const uint8_t gfx_cos[256];

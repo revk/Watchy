@@ -47,12 +47,23 @@ ertc_read (void)
    t.tm_mday = ((d & 0x30) >> 4) * 10 + (d & 0xF);
    t.tm_mon = ((m & 0x10) >> 4) * 10 + (m & 0xF) - 1;
    t.tm_year = (m >> 7) * 100 + ((y & 0xF0) >> 4) * 10 + (y & 0xF);
-   //time_t now=timegm (&t);
-   time_t now = mktime (&t);    // TODO needs to be timegm for non UK timezones
-   ESP_LOGI (TAG, "Rx %02X %02X %02X %02X %02X %02X %02X %lld", S, M, H, d, w, m, y, now);
+   //time_t now=timegm (&t); - would be nice, but instead we'll work with TZ
+   if (*rtctz)
+   {
+      unsetenv ("TZ");
+      tzset ();
+   }
+   struct timeval tv = {.tv_sec = mktime (&t) };
+   settimeofday (&tv, NULL);
+   if (*rtctz)
+   {
+      setenv ("TZ", rtctz, 1);
+      tzset ();
+   }
+   ESP_LOGI (TAG, "Rx %02X %02X %02X %02X %02X %02X %02X %lld", S, M, H, d, w, m, y, tv.tv_sec);
    if (S & 0x80)
       return 0;                 // time reported but not set in RTC chip
-   return now;
+   return tv.tv_sec;
 }
 
 void
