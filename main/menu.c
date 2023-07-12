@@ -119,7 +119,7 @@ menu_wifi (struct tm *t, char key)
       return;
    gfx_menu (t, "WiFi");
    char temp[30];
-   gfx_text (2, "Access point");
+   gfx_text (-2, "Access point");
    snprintf (temp, sizeof (temp), "%s-%s", appname, revk_id);
    gfx_gap (10);
    gfx_text (strlen (temp) > 16 ? -1 : -2, "%s", temp);
@@ -127,6 +127,8 @@ menu_wifi (struct tm *t, char key)
    {                            // Selected
       bits.wifi = 1;
       bits.holdoff = 1;
+      if (!bits.wifistarted)
+         return;
       revk_command ("apconfig", NULL);
       menu2 = 2;
    } else if (menu2 == 2)
@@ -158,7 +160,6 @@ menu_wifi (struct tm *t, char key)
       gfx_text (-1, "%s", r);
    }
 }
-
 
 void
 menu_timezone (struct tm *t, char key)

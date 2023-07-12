@@ -96,6 +96,7 @@ app_callback (int client, const char *prefix, const char *target, const char *su
 void
 night (time_t now)
 {
+	gfx_wait();
    for (uint8_t b = 0; b < 4; b++)
    {
       rtc_gpio_set_direction_in_sleep (btn[b], RTC_GPIO_MODE_INPUT_ONLY);
@@ -355,7 +356,7 @@ app_main ()
 
    epaper_init ();
 
-   if (bits.wifi || bits.charging || !now)
+   if (bits.wifi)
    {
       bits.wifistarted = 1;
       revk_start ();            // Start WiFi
