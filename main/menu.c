@@ -260,7 +260,6 @@ menu_info (struct tm *t, char key)
    bits.startup = 1;
    if (!bits.revkstarted)
       return;
-   extern const char *wifissid;
    gfx_menu (t, "Info");
    gfx_gap (5);
    gfx_text (2, "MAC");
@@ -269,13 +268,49 @@ menu_info (struct tm *t, char key)
    gfx_gap (10);
    gfx_text (2, "WiFi");
    gfx_gap (5);
+   extern const char *wifissid;
    gfx_text (strlen (wifissid) > 16 ? -1 : -2, "%s", wifissid);
    gfx_pos (100, 199 - margin, GFX_C | GFX_B);
    gfx_qr ("HTTPS://WATCHY.REVK.UK", 2);
    gfx_pos (50, 199 - margin, GFX_C | GFX_B);
-   gfx_icon(ajk);
+   gfx_icon (ajk);
    gfx_pos (150, 199 - margin, GFX_C | GFX_B);
-   gfx_icon(aa);
+   gfx_icon (aa);
+}
+
+void
+menu_mqtt (struct tm *t, char key)
+{                               //  MQTT
+   bits.wifi = 1;
+   bits.holdoff = 1;
+   if (key == 'L')
+   {
+      menu2 = 0;
+      return;
+   }
+   if (key == 'R')
+   {
+      menu1 = 0;
+      return;
+   }
+   bits.startup = 1;
+   if (!bits.revkstarted)
+      return;
+   gfx_menu (t, "MQTT");
+   gfx_gap (10);
+   gfx_text (2, "Host");
+   gfx_gap (5);
+   extern const char *mqtthost;
+   gfx_text (strlen (mqtthost) > 16 ? -1 : -2, "%s", mqtthost);
+   gfx_gap (10);
+   gfx_text (2, "Name");
+   gfx_gap (5);
+   extern char *hostname;
+   gfx_text (strlen (hostname) > 16 ? -1 : -2, "%s", hostname);
+   gfx_gap (10);
+   gfx_iconq (wifi, !revk_link_down ());
+   gfx_gap (5);
+   gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
 }
 
 menulist_t list_main[] = {
@@ -285,6 +320,7 @@ menulist_t list_main[] = {
    {menu_turn, "Turn display"},
    {menu_timezone, "Timezone"},
    {menu_upgrade, "Upgrade"},
+   {menu_mqtt, "MQTT connect"},
    {menu_info, "Info"},
 };
 
@@ -313,7 +349,7 @@ menu_show (struct tm *t, char key)
       }
       if (key == 'L')
       {                         // Quick info
-         menu1 = 7;
+         menu1 = 8;
          menu2 = 0xFF;
       }
       key = 0;                  // used the key top enter menu
