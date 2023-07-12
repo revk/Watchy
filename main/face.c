@@ -161,12 +161,20 @@ face_analogue (struct tm *t)
    for (int dx = -1; dx < 1; dx++)
       for (int dy = -1; dy < 1; dy++)
          gfx_line (100 + dx, 100 + dy, ax (h, 60) + dx, ay (h, 60) + dy, 255);
+   char temp[10];
    gfx_pos (150, 100, GFX_C | GFX_M);
    gfx_text (2, "%02d", t->tm_mday);
    gfx_line (150 - 13, 100 - 9, 150 - 13, 100 + 10, 255);
    gfx_line (150 + 14, 100 - 9, 150 + 14, 100 + 10, 255);
    gfx_line (150 - 13, 100 - 9, 150 + 14, 100 - 9, 255);
    gfx_line (150 - 13, 100 + 10, 150 + 14, 100 + 10, 255);
+   strftime (temp, sizeof (temp), "%a", t);
+   gfx_pos (50, 100, GFX_C | GFX_M);
+   gfx_text (2, "%s",temp);
+   gfx_line (50 - 19, 100 - 9, 50 - 19, 100 + 10, 255);
+   gfx_line (50 + 20, 100 - 9, 50 + 20, 100 + 10, 255);
+   gfx_line (50 - 19, 100 - 9, 50 + 20, 100 - 9, 255);
+   gfx_line (50 - 19, 100 + 10, 50 + 20, 100 + 10, 255);
    gfx_pos (100, 150, GFX_C | GFX_M);
    gfx_7seg (2, "%6d", steps_read ());
    gfx_pos (100, 50, GFX_C | GFX_M);
