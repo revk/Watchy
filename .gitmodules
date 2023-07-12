@@ -1,12 +1,6 @@
 [submodule "watchy-hardware"]
 	path = watchy-hardware
 	url = https://github.com/sqfmi/watchy-hardware
-[submodule "components/ESP32-GFX"]
-	path = components/ESP32-GFX
-	url = https://github.com/revk/ESP32-GFX
 [submodule "components/QR"]
 	path = components/QR
 	url = https://github.com/revk/QR
-[submodule "components/ESP32-RevK"]
-	path = components/ESP32-RevK
-	url = https://github.com/revk/ESP32-RevK
