@@ -53,10 +53,11 @@ gfx_menu (struct tm *t, const char *title)
    gfx_icon (right);
    gfx_pos (0, 199, GFX_L | GFX_B | GFX_H);
    gfx_icon (down);
-   gfx_battery ();
+   gfx_iconq (charging, bits.charging);
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_icon (left);
-   gfx_iconq (charging, bits.charging);
+   gfx_pos (gfx_x (), gfx_y () - 1, gfx_a ());
+   gfx_battery ();
    gfx_pos (100, 24, GFX_C | GFX_T | GFX_V);
 }
 
