@@ -32,7 +32,7 @@ icons/%.png:    icons/%.svg
 	file $@
 
 icons/%.mono:   icons/%.png
-	convert $< -monochrome $@
+	convert $< -dither None -monochrome $@
 
 icons/%.h:      icons/%.mono
 	echo "const unsigned char icon_$(patsubst icons/%.h,%,$@)[]={" > $@
