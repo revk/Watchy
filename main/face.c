@@ -141,6 +141,7 @@ face_basic (struct tm *t)
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
    gfx_qr (temp, 2);
    gfx_battery ();
+   gfx_7seg (1, "%3d", battery);
    gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
    gfx_7seg (2, "%d", steps_read ());
    strftime (temp, sizeof (temp), "%a", t);
