@@ -4,9 +4,9 @@
    inkscape:version="1.2.2 (b0a84865, 2022-12-01)"
    id="svg8"
    version="1.1"
-   viewBox="0 0 3.9687499 4.7625001"
+   viewBox="0 0 4.7624999 4.7625001"
    height="18"
-   width="15"
+   width="18"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -43,7 +43,7 @@
        empspacing="4"
        dotted="true"
        originy="-2.0000003e-07"
-       originx="-4.4979167"
+       originx="-4.4979166"
        id="grid833"
        type="xygrid" />
   </sodipodi:namedview>
@@ -65,7 +65,7 @@
      inkscape:label="Layer 1">
     <g
        id="g2341"
-       transform="rotate(90,3.5718719,294.48644)">
+       transform="rotate(90,3.9687493,294.88332)">
       <path
          style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          d="m 1.322917,293.5604 h 4.7625 l -2.38125,-3.96875 z"
