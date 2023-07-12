@@ -31,7 +31,6 @@ const uint8_t btn[] = { GPIOBTN2, GPIOBTN3, GPIOBTN1, GPIOBTN4 };
 
 #define	BTNMASK	((1LL<<GPIOBTN1)|(1LL<<GPIOBTN2)|(1LL<<GPIOBTN3)|(1LL<<GPIOBTN4))
 
-RTC_NOINIT_ATTR int16_t last_adjust;
 RTC_NOINIT_ATTR uint8_t last_hour;
 RTC_NOINIT_ATTR uint8_t last_min;
 RTC_NOINIT_ATTR uint8_t last_btn;
@@ -45,7 +44,6 @@ RTC_NOINIT_ATTR char rtctz[30];
 #define settings                \
 	u8lr(face,0)	\
 	u8lr(flip,5)	\
-	s16lr(adjust,0)	\
 
 #define	port_mask(x)	((x)&0x7F)
 #define u32(n,d)        uint32_t n;
@@ -96,7 +94,7 @@ app_callback (int client, const char *prefix, const char *target, const char *su
 void
 night (time_t now)
 {
-	gfx_wait();
+   gfx_wait ();
    for (uint8_t b = 0; b < 4; b++)
    {
       rtc_gpio_set_direction_in_sleep (btn[b], RTC_GPIO_MODE_INPUT_ONLY);
@@ -111,11 +109,11 @@ night (time_t now)
          if (last_btn & (1 << b))
             mask |= 1LL << btn[b];
       esp_sleep_enable_ext1_wakeup (mask, ESP_EXT1_WAKEUP_ALL_LOW);
-      ESP_LOGI (TAG, "Wait key release %X, or %d seconds", last_btn, secs);
+      ESP_LOGE (TAG, "Wait key release %X, or %d seconds", last_btn, secs);
    } else
    {
       esp_sleep_enable_ext1_wakeup (BTNMASK, ESP_EXT1_WAKEUP_ANY_HIGH); // Wait press
-      ESP_LOGI (TAG, "Wait key press, or %d seconds", secs);
+      ESP_LOGE (TAG, "Wait key press, or %d seconds", secs);
    }
    esp_deep_sleep (1000000LL * secs ? : 600000LL);      // Next minute - or fast
 }
@@ -170,7 +168,6 @@ timesync (struct timeval *tv)
    bits.timeunsync = 0;
    last_hour = tv->tv_sec / 3600 % 24;
    last_min = tv->tv_sec / 60 % 60;
-   last_adjust = adjust * last_min / 60;
    ertc_write (tv->tv_sec);
    ESP_LOGE (TAG, "Time sync @ %ld", uptime ());
 }
@@ -184,7 +181,7 @@ app_main ()
       struct timeval tv;
       gettimeofday (&tv, NULL);
 
-      ESP_LOGE (TAG, "Wake %d/%d @ %lld.%06ld", reset, wakeup, tv.tv_sec, tv.tv_usec);
+      ESP_LOGI (TAG, "Wake %d/%d @ %lld.%06ld", reset, wakeup, tv.tv_sec, tv.tv_usec);
    }
    if (!wakeup)
       menu1 = menu2 = menu3 = 0;
@@ -285,21 +282,9 @@ app_main ()
          if (last_hour != v)
          {                      // Normal start and attempt local clock sync
             last_hour = v;
-            last_adjust = 0;
             bits.timeunsync = 1;
             bits.newhour = 1;
             bits.wifi = 1;
-         } else
-         {
-            if (adjust)
-            {                   // Not totally clean, but avoids the sleep wake up early at end of minute doing an adjust as well
-               int16_t a = ((int) adjust * ((int) last_min + 1) / 60);
-               if (a != last_adjust)
-               {
-                  ertc_write (now + a - last_adjust);
-                  last_adjust = a;
-               }
-            }
          }
       }
    } else
@@ -309,7 +294,7 @@ app_main ()
       night (now);
 
    // Full startup
-   ESP_LOGI (TAG, "Revk boot wakeup=%d wifi=%d holdoff=%d key=%c", wakeup, bits.wifi, bits.holdoff, key);
+   ESP_LOGE (TAG, "Revk boot wakeup=%d wifi=%d holdoff=%d key=%c", wakeup, bits.wifi, bits.holdoff, key);
    bits.revkstarted = 1;
    revk_boot (&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
