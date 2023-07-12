@@ -39,7 +39,11 @@ gfx_battery (void)
 void
 gfx_square_icon (const uint8_t * icon, uint8_t bytes, uint8_t visible)
 {                               // Assumes square icon
-   if (bytes > 72)
+   if (bytes > 200)
+      bytes /= 6;
+   else if (bytes > 128)
+      bytes /= 5;
+   else if (bytes > 72)
       bytes /= 4;
    else if (bytes > 32)
       bytes /= 3;

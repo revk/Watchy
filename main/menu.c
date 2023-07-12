@@ -272,6 +272,10 @@ menu_info (struct tm *t, char key)
    gfx_text (strlen (wifissid) > 16 ? -1 : -2, "%s", wifissid);
    gfx_pos (100, 199 - margin, GFX_C | GFX_B);
    gfx_qr ("HTTPS://WATCHY.REVK.UK", 2);
+   gfx_pos (50, 199 - margin, GFX_C | GFX_B);
+   gfx_icon(ajk);
+   gfx_pos (150, 199 - margin, GFX_C | GFX_B);
+   gfx_icon(aa);
 }
 
 menulist_t list_main[] = {
