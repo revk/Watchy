@@ -29,6 +29,7 @@ main/icons.c: $(patsubst %.svg,%.h,$(wildcard icons/*.svg))
 
 icons/%.png:    icons/%.svg
 	inkscape --export-background=WHITE --export-type=png --export-filename=$@ $<
+	file $@
 
 icons/%.mono:   icons/%.png
 	convert $< -monochrome $@

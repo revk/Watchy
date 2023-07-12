@@ -22,6 +22,21 @@ const uint8_t gfx_cos[256] =
 };
 
 void
+gfx_battery (void)
+{
+   if (battery >= 80)
+      gfx_icon (bat4);
+   else if (battery >= 60)
+      gfx_icon (bat3);
+   else if (battery >= 40)
+      gfx_icon (bat2);
+   else if (battery >= 20)
+      gfx_icon (bat1);
+   else
+      gfx_icon (bat0);
+}
+
+void
 gfx_square_icon (const uint8_t * icon, uint8_t bytes, uint8_t visible)
 {                               // Assumes square icon
    if (bytes > 72)
@@ -122,17 +137,16 @@ face_basic (struct tm *t)
          gfx_text (-1, "%s", r);
       }
    }
-   gfx_pos (0, 199, GFX_L | GFX_B);
+   gfx_pos (0, 199, GFX_L | GFX_B | GFX_H);
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
    gfx_qr (temp, 2);
-   gfx_pos (199, 140, GFX_R | GFX_B | GFX_H);
-   gfx_7seg (2, "%d", steps_read ());
+   gfx_battery ();
    gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
-   gfx_7seg (2, "%3d", battery);
+   gfx_7seg (2, "%d", steps_read ());
    strftime (temp, sizeof (temp), "%a", t);
    if (bits.revkstarted)
    {
-      gfx_iconq (power, bits.charging);
+      gfx_iconq (charging, bits.charging);
       gfx_iconq (wifi, !revk_link_down ());
       gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
    }
@@ -170,7 +184,7 @@ face_analogue (struct tm *t)
    gfx_line (150 - 13, 100 + 10, 150 + 14, 100 + 10, 255);
    strftime (temp, sizeof (temp), "%a", t);
    gfx_pos (50, 100, GFX_C | GFX_M);
-   gfx_text (2, "%s",temp);
+   gfx_text (2, "%s", temp);
    gfx_line (50 - 19, 100 - 9, 50 - 19, 100 + 10, 255);
    gfx_line (50 + 20, 100 - 9, 50 + 20, 100 + 10, 255);
    gfx_line (50 - 19, 100 - 9, 50 + 20, 100 - 9, 255);
@@ -179,4 +193,6 @@ face_analogue (struct tm *t)
    gfx_7seg (2, "%6d", steps_read ());
    gfx_pos (100, 50, GFX_C | GFX_M);
    gfx_qr ("HTTPS://WATCHY.REVK.UK", 1);
+   gfx_pos (0, 0, GFX_L | GFX_T);
+   gfx_battery ();
 }

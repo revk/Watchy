@@ -91,7 +91,7 @@ menu_list (struct tm *t, uint8_t pos, uint8_t len, menulist_t * m, const char *t
    {
       if (base == pos)
       {
-         gfx_pos (18 - 32, y, GFX_L | GFX_T);
+         gfx_pos (left - 3, y, GFX_R | GFX_T);
          gfx_icon (right);
       }
       gfx_pos (left, y + 1, GFX_L | GFX_T);
