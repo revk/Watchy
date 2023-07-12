@@ -169,7 +169,7 @@ timesync (struct timeval *tv)
    last_hour = tv->tv_sec / 3600 % 24;
    last_min = tv->tv_sec / 60 % 60;
    ertc_write (tv->tv_sec);
-   ESP_LOGE (TAG, "Time sync @ %ld", uptime ());
+   ESP_LOGI (TAG, "Time sync @ %ld", uptime ());
 }
 
 void
@@ -234,7 +234,7 @@ app_main ()
       if (gfx_ok ())
          return;
       ESP_LOGI (TAG, "Start E-paper flip=%d", flip);
-    const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: wakeup ? 1 : 0, norefresh: wakeup ? 1 : 0, direct:1);
+    const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: 1, norefresh: wakeup ? 1 : 0, direct:1);
       if (e)
       {
          ESP_LOGE (TAG, "gfx %s", e);
@@ -294,7 +294,7 @@ app_main ()
       night (now);
 
    // Full startup
-   ESP_LOGE (TAG, "Revk boot wakeup=%d wifi=%d holdoff=%d key=%c", wakeup, bits.wifi, bits.holdoff, key);
+   ESP_LOGI (TAG, "Revk boot wakeup=%d wifi=%d holdoff=%d key=%c", wakeup, bits.wifi, bits.holdoff, key);
    bits.revkstarted = 1;
    revk_boot (&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
