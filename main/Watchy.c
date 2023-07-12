@@ -234,7 +234,7 @@ app_main ()
       if (gfx_ok ())
          return;
       ESP_LOGI (TAG, "Start E-paper flip=%d", flip);
-    const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: 1, norefresh: wakeup ? 1 : 0, direct:1);
+    const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: 1, norefresh: 1, direct:1);
       if (e)
       {
          ESP_LOGE (TAG, "gfx %s", e);
