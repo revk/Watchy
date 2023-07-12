@@ -22,8 +22,7 @@ issue:
 	git push
 
 main/icons.h: $(patsubst %.svg,%.h,$(wildcard icons/*.svg))
-	echo '#define	ICONSIZE	32' > main/icons.h
-	grep -h const icons/*.h | sed -e 's/const/extern const/' -e 's/={/;/' >> main/icons.h
+	grep -h const icons/*.h | sed 's/const unsigned char icon_\([A-Za-z0-9]*\).*/extern const unsigned char icon_\1[];extern const unsigned char icon_\1_size;/' > main/icons.h
 
 main/icons.c: $(patsubst %.svg,%.h,$(wildcard icons/*.svg))
 	cat icons/*.h > main/icons.c
@@ -32,12 +31,13 @@ icons/%.png:    icons/%.svg
 	inkscape --export-background=WHITE --export-type=png --export-filename=$@ $<
 
 icons/%.mono:   icons/%.png
-	convert $< -resize 32x32 -monochrome $@
+	convert $< -monochrome $@
 
 icons/%.h:      icons/%.mono
 	echo "const unsigned char icon_$(patsubst icons/%.h,%,$@)[]={" > $@
 	od -Anone -tx1 -v -w64 $< | sed 's/ \(..\)/0x\1,/g' >> $@
 	echo "};" >> $@
+	echo "const unsigned char icon_$(patsubst icons/%.h,%,$@)_size=sizeof(icon_$(patsubst icons/%.h,%,$@));" >> $@
 
 set:	watchy
 

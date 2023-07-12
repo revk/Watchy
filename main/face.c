@@ -21,6 +21,18 @@ const uint8_t gfx_cos[256] =
    237, 239, 240, 242, 243, 245, 246, 247, 248, 249, 250, 251, 252, 252, 253, 254, 254, 255, 255, 255, 255, 255
 };
 
+void
+gfx_square_icon (const uint8_t * icon, uint8_t bytes, uint8_t visible)
+{                               // Assumes square icon
+   if (bytes > 72)
+      bytes /= 4;
+   else if (bytes > 32)
+      bytes /= 3;
+   else if (bytes > 8)
+      bytes /= 2;
+   gfx_icon2 (bytes, bytes, visible ? icon : NULL);
+}
+
 const char *
 gfx_qr (const char *value, uint8_t scale)
 {                               // QR code
@@ -120,9 +132,9 @@ face_basic (struct tm *t)
    strftime (temp, sizeof (temp), "%a", t);
    if (bits.revkstarted)
    {
-      gfx_icon2 (ICONSIZE, ICONSIZE, bits.charging ? icon_power : NULL);
-      gfx_icon2 (ICONSIZE, ICONSIZE, !revk_link_down ()? icon_wifi : NULL);
-      gfx_icon2 (ICONSIZE, ICONSIZE, lwmqtt_connected (revk_mqtt (0)) ? icon_mqtt : NULL);
+      gfx_iconq (power, bits.charging);
+      gfx_iconq (wifi, !revk_link_down ());
+      gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
    }
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_text (4, "%s", temp);

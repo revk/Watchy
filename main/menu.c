@@ -48,13 +48,13 @@ gfx_menu (struct tm *t, const char *title)
    gfx_pos (100, 199, GFX_C | GFX_B);
    gfx_text (2, temp);
    gfx_pos (0, 0, GFX_L | GFX_T);
-   gfx_icon2 (ICONSIZE, ICONSIZE, icon_up);
+   gfx_icon (up);
    gfx_pos (199, 0, GFX_R | GFX_T);
-   gfx_icon2 (ICONSIZE, ICONSIZE, icon_right);
+   gfx_icon (right);
    gfx_pos (0, 199, GFX_L | GFX_B);
-   gfx_icon2 (ICONSIZE, ICONSIZE, icon_down);
+   gfx_icon (down);
    gfx_pos (199, 199, GFX_R | GFX_B);
-   gfx_icon2 (ICONSIZE, ICONSIZE, icon_left);
+   gfx_icon (left);
    gfx_pos (100, 24, GFX_C | GFX_T | GFX_V);
 }
 
@@ -91,8 +91,8 @@ menu_list (struct tm *t, uint8_t pos, uint8_t len, menulist_t * m, const char *t
    {
       if (base == pos)
       {
-         gfx_pos (18 - ICONSIZE, y, GFX_L | GFX_T);
-         gfx_icon2 (ICONSIZE, ICONSIZE, icon_right);
+         gfx_pos (18 - 32, y, GFX_L | GFX_T);
+         gfx_icon (right);
       }
       gfx_pos (left, y + 1, GFX_L | GFX_T);
       gfx_text (-2, m[base - 1].name);
