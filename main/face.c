@@ -203,4 +203,11 @@ face_analogue (struct tm *t)
    gfx_battery ();
    gfx_pos (199, 0, GFX_R | GFX_T);
    gfx_iconq (charging, bits.charging);
+   if (bits.revkstarted)
+   {
+      gfx_pos (199, 199, GFX_R | GFX_B);
+      gfx_iconq (wifi, !revk_link_down ());
+      gfx_pos (0, 199, GFX_L | GFX_B);
+      gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
+   }
 }
