@@ -2,9 +2,9 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="32"
-   height="32"
-   viewBox="0 0 8.4666666 8.4666668"
+   width="40"
+   height="40"
+   viewBox="0 0 10.583333 10.583334"
    version="1.1"
    id="svg8"
    inkscape:version="1.2.2 (b0a84865, 2022-12-01)"
@@ -26,14 +26,14 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="10.826741"
-     inkscape:cx="32.142637"
-     inkscape:cy="33.112458"
+     inkscape:cx="0.87745703"
+     inkscape:cy="33.204821"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:window-width="1390"
      inkscape:window-height="1205"
-     inkscape:window-x="3007"
+     inkscape:window-x="3209"
      inkscape:window-y="25"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -50,7 +50,7 @@
        spacingx="0.99999999"
        spacingy="0.99999999"
        originx="-14.495842"
-       originy="-15.999994" />
+       originy="-15.999995" />
   </sodipodi:namedview>
   <metadata
      id="metadata5">
@@ -67,11 +67,11 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-14.495839,-281.57209)">
+     transform="translate(-14.495839,-277.33875)">
     <path
        id="path26"
-       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.48381;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-       d="m 19.696791,285.20065 h -2.419048 m 5.321905,-3.38666 -2.902857,3.38666 2.902857,3.38667 m -7.740952,0 4.838095,-6.77333 v 6.77333 c 0,0.668 -0.541522,1.20953 -1.209524,1.20953 -0.668001,0 -1.209524,-0.54153 -1.209524,-1.20953"
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.604762;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="m 20.997029,281.87446 h -3.023808 m 6.652378,-4.23333 -3.62857,4.23333 3.62857,4.23333 m -9.676186,0 6.047616,-8.46666 v 8.46666 c 0,0.835 -0.676902,1.51191 -1.511904,1.51191 -0.835001,0 -1.511904,-0.67691 -1.511904,-1.51191"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="ccccccccsc" />
   </g>
