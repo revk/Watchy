@@ -1,3 +1,4 @@
+#define	ICONSIZE	32
 extern const unsigned char icon_down[];
 extern const unsigned char icon_left[];
 extern const unsigned char icon_mqtt[];

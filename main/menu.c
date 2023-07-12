@@ -21,6 +21,11 @@ typedef struct
    const char *name;
 } menulist_t;
 
+menulist_t list_face[] = {
+#define face(n,d) {NULL,#d},
+#include "faces.m"
+};
+
 void
 gfx_gap (uint8_t g)
 {
@@ -43,19 +48,23 @@ gfx_menu (struct tm *t, const char *title)
    gfx_pos (100, 199, GFX_C | GFX_B);
    gfx_text (2, temp);
    gfx_pos (0, 0, GFX_L | GFX_T);
-   gfx_icon2 (32, 32, icon_up);
+   gfx_icon2 (ICONSIZE, ICONSIZE, icon_up);
    gfx_pos (199, 0, GFX_R | GFX_T);
-   gfx_icon2 (32, 32, icon_right);
+   gfx_icon2 (ICONSIZE, ICONSIZE, icon_right);
    gfx_pos (0, 199, GFX_L | GFX_B);
-   gfx_icon2 (32, 32, icon_down);
+   gfx_icon2 (ICONSIZE, ICONSIZE, icon_down);
    gfx_pos (199, 199, GFX_R | GFX_B);
-   gfx_icon2 (32, 32, icon_left);
+   gfx_icon2 (ICONSIZE, ICONSIZE, icon_left);
    gfx_pos (100, 24, GFX_C | GFX_T | GFX_V);
 }
 
 uint8_t
 menu_list (struct tm *t, uint8_t pos, uint8_t len, menulist_t * m, const char *title, char key)
 {                               // Show a list, handle key U/D/L, return new position
+   if (pos < 1)
+      pos = 1;
+   else if (pos > len)
+      pos = len;
    if (key)
    {                            // State
       if (key == 'U' && pos > 1)
@@ -82,8 +91,8 @@ menu_list (struct tm *t, uint8_t pos, uint8_t len, menulist_t * m, const char *t
    {
       if (base == pos)
       {
-         gfx_pos (18 - 32, y, GFX_L | GFX_T);
-         gfx_icon2 (32, 32, icon_right);
+         gfx_pos (18 - ICONSIZE, y, GFX_L | GFX_T);
+         gfx_icon2 (ICONSIZE, ICONSIZE, icon_right);
       }
       gfx_pos (left, y + 1, GFX_L | GFX_T);
       gfx_text (-2, m[base - 1].name);
@@ -183,12 +192,23 @@ menu_upgrade (struct tm *t, char key)
 void
 menu_face (struct tm *t, char key)
 {                               //  Face select
-   if (key == 'L')
-   {
-      menu2 = 0;
+   if (menu2 == 0xFF)
+      menu2 = face + 1;
+   if (key == 'R')
+      menu3 = 1;                // Selected
+   else
+      menu2 = menu_list (t, menu2, sizeof (list_face) / sizeof (*list_face), list_face, "Face", key);
+   bits.startup = 1;
+   if (!bits.revkstarted)
       return;
+   if (menu3)
+   {                            // Selected
+      menu1 = 0;
+      face = menu2 - 1;
+      jo_t j = jo_object_alloc ();
+      jo_int (j, "face", face);
+      revk_setting (j);
    }
-   gfx_menu (t, "Face");
 }
 
 void
@@ -261,12 +281,11 @@ menulist_t list_main[] = {
    {menu_info, "Info"},
 };
 
-
 void
 menu_main (struct tm *t, char key)
 {
    if (key == 'R')
-      menu2 = 1;                // Selected
+      menu2 = 0xFF;             // Selected (0xFF tells it use starting point of choice)
    else
       menu1 = menu_list (t, menu1, sizeof (list_main) / sizeof (*list_main), list_main, NULL, key);
 }
@@ -283,12 +302,12 @@ menu_show (struct tm *t, char key)
       if (key == 'R')
       {                         // Quick upgrade
          menu1 = 6;
-         menu2 = 1;
+         menu2 = 0xFF;
       }
       if (key == 'L')
       {                         // Quick info
          menu1 = 7;
-         menu2 = 1;
+         menu2 = 0xFF;
       }
       key = 0;                  // used the key top enter menu
    }
@@ -299,7 +318,7 @@ menu_show (struct tm *t, char key)
          return;
       if (!menu2)
          menu_main (t, key);
-      else if (!menu3 && menu1 && menu1 <= sizeof (list_main) / sizeof (*list_main))
+      else if (menu1 && menu1 <= sizeof (list_main) / sizeof (*list_main))
          list_main[menu1 - 1].fun (t, key);
    }
    if (key)

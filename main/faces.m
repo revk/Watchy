@@ -7,6 +7,7 @@
 #endif
 
 // List of faces
-face(basic,Basic)
+face(basic,Basic digital)
+face(analogue,Analogue)
 
 #undef face
