@@ -4,9 +4,9 @@
    inkscape:version="1.2.2 (b0a84865, 2022-12-01)"
    id="svg8"
    version="1.1"
-   viewBox="0 0 8.4666665 8.4666669"
-   height="32"
-   width="32"
+   viewBox="0 0 4.7624999 4.7625001"
+   height="18"
+   width="18"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -19,7 +19,7 @@
   <sodipodi:namedview
      inkscape:window-maximized="0"
      inkscape:window-y="25"
-     inkscape:window-x="197"
+     inkscape:window-x="198"
      inkscape:window-height="1174"
      inkscape:window-width="1955"
      units="px"
@@ -27,9 +27,9 @@
      inkscape:document-rotation="0"
      inkscape:current-layer="layer1"
      inkscape:document-units="mm"
-     inkscape:cy="13.079365"
-     inkscape:cx="16.126984"
-     inkscape:zoom="31.5"
+     inkscape:cy="9"
+     inkscape:cx="9"
+     inkscape:zoom="56.777778"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
      borderopacity="1.0"
@@ -40,7 +40,7 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1">
     <inkscape:grid
-       empspacing="4"
+       empspacing="9"
        dotted="true"
        originy="0"
        originx="0"
@@ -55,25 +55,27 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <g
-     transform="translate(0,-288.53332)"
+     transform="translate(0,-295.94166)"
      id="layer1"
      inkscape:groupmode="layer"
      inkscape:label="Layer 1">
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.81944px;line-height:1.25;font-family:'xkcd Script';-inkscape-font-specification:'xkcd Script, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-       x="1.3600078"
-       y="295.96735"
-       id="text594"><tspan
-         sodipodi:role="line"
-         id="tspan592"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.81944px;font-family:'xkcd Script';-inkscape-font-specification:'xkcd Script, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
-         x="1.3600078"
-         y="295.96735">Q</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.52916667;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 0.79375,298.32291 h 3.175"
+       id="path2290"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:#000000;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1"
+       d="M 1.0583333,297.26458 0,298.32291 l 1.0583333,1.05833 z"
+       id="path2292" />
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.52916667;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="m 4.7625,298.32291 -1.0583334,-1.05833 v 2.11666 z"
+       id="path2294"
+       sodipodi:nodetypes="cccc" />
   </g>
 </svg>
