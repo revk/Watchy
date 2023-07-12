@@ -55,7 +55,7 @@ gfx_qr (const char *value, uint8_t scale)
    int W = gfx_width ();
    int H = gfx_height ();
    unsigned int width = 0;
- uint8_t *qr = qr_encode (strlen (value), value, widthp: &width, noquiet:scale ? 0 : 1);
+ uint8_t *qr = qr_encode (strlen (value), value, widthp: &width, noquiet:1);
    if (qr && width <= W && width <= H)
    {
       const int w = W > H ? H : W;
@@ -140,14 +140,14 @@ face_basic (struct tm *t)
    gfx_pos (0, 199, GFX_L | GFX_B | GFX_H);
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
    gfx_qr (temp, 2);
+   gfx_iconq (charging, bits.charging);
    gfx_battery ();
    gfx_7seg (1, "%3d", battery);
    gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
-   gfx_7seg (2, "%d", steps_read ());
+   gfx_7seg (2, "%6d", steps_read ());
    strftime (temp, sizeof (temp), "%a", t);
    if (bits.revkstarted)
    {
-      gfx_iconq (charging, bits.charging);
       gfx_iconq (wifi, !revk_link_down ());
       gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
    }
@@ -196,4 +196,6 @@ face_analogue (struct tm *t)
    gfx_qr ("HTTPS://WATCHY.REVK.UK", 1);
    gfx_pos (0, 0, GFX_L | GFX_T);
    gfx_battery ();
+   gfx_pos (199, 0, GFX_R | GFX_T);
+   gfx_iconq (charging, bits.charging);
 }

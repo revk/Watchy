@@ -47,14 +47,16 @@ gfx_menu (struct tm *t, const char *title)
    strftime (temp, sizeof (temp), "%H:%M %Z", t);
    gfx_pos (100, 199, GFX_C | GFX_B);
    gfx_text (2, temp);
-   gfx_pos (0, 0, GFX_L | GFX_T);
+   gfx_pos (0, 0, GFX_L | GFX_T || GFX_H);
    gfx_icon (up);
-   gfx_pos (199, 0, GFX_R | GFX_T);
+   gfx_pos (199, 0, GFX_R | GFX_T | GFX_H);
    gfx_icon (right);
-   gfx_pos (0, 199, GFX_L | GFX_B);
+   gfx_pos (0, 199, GFX_L | GFX_B | GFX_H);
    gfx_icon (down);
-   gfx_pos (199, 199, GFX_R | GFX_B);
+   gfx_battery ();
+   gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_icon (left);
+   gfx_iconq (charging, bits.charging);
    gfx_pos (100, 24, GFX_C | GFX_T | GFX_V);
 }
 
