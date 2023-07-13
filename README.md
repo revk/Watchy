@@ -12,7 +12,8 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 - [x] OLED soft/partial updates (e.g. for 7 seg digits)
 - [x] OLED sleep mode control
 - [ ] Accelerometer
-- [ ] Step counter and day reset
+- [x] Step counter
+- [ ] Step reset on day change
 - [ ] Step reporting to URL?
 - [x] RTC
 - [x] Low power mode
@@ -28,7 +29,7 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 - [x] Sleep hold off during OTA!
 - [x] RTC adjust
 - [x] Icons
-- [ ] Better icons
-- [ ] WiFi menu
+- [x] Better icons
+- [x] WiFi menu
 - [x] Info meni
 - [x] Face menu
