@@ -149,7 +149,7 @@ face_basic (struct tm *t)
    gfx_pos (gfx_x (), gfx_y () - 3, gfx_a ());  // Position for battery icon - this is temporary until calibrated
    gfx_7seg (1, "%3d", battery);
    gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
-   gfx_7seg (2, "%6d", steps_read ());
+   gfx_7seg (2, "%6d", steps);
    strftime (temp, sizeof (temp), "%a", t);
    if (bits.revkstarted)
    {
@@ -196,7 +196,7 @@ face_analogue (struct tm *t)
    gfx_line (50 - 19, 100 - 9, 50 + 20, 100 - 9, 255);
    gfx_line (50 - 19, 100 + 10, 50 + 20, 100 + 10, 255);
    gfx_pos (100, 150, GFX_C | GFX_M);
-   gfx_7seg (2, "%6d", steps_read ());
+   gfx_7seg (2, "%6d", steps);
    gfx_pos (100, 50, GFX_C | GFX_M);
    gfx_icon (ajk);
    gfx_pos (0, 0, GFX_L | GFX_T);

@@ -29,6 +29,7 @@
 #define	BATHIGH		2400
 #define	BATLOW		2000
 
+extern uint32_t steps;
 extern uint8_t battery;
 extern uint8_t menu1;
 extern uint8_t menu2;

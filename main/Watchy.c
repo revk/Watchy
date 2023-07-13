@@ -31,6 +31,7 @@ const uint8_t btn[] = { GPIOBTN2, GPIOBTN3, GPIOBTN1, GPIOBTN4 };
 
 #define	BTNMASK	((1LL<<GPIOBTN1)|(1LL<<GPIOBTN2)|(1LL<<GPIOBTN3)|(1LL<<GPIOBTN4))
 
+RTC_NOINIT_ATTR uint32_t steps;
 RTC_NOINIT_ATTR uint8_t last_hour;
 RTC_NOINIT_ATTR uint8_t last_min;
 RTC_NOINIT_ATTR uint8_t last_btn;
@@ -94,6 +95,7 @@ app_callback (int client, const char *prefix, const char *target, const char *su
 void
 night (time_t now)
 {
+   ESP_LOGE (TAG, "Night");
    gfx_wait ();
    for (uint8_t b = 0; b < 4; b++)
    {
@@ -116,6 +118,12 @@ night (time_t now)
       ESP_LOGE (TAG, "Wait key press, or %d seconds", secs);
    }
    esp_deep_sleep (1000000LL * secs ? : 600000LL);      // Next minute - or fast
+}
+
+void
+read_steps (void)
+{
+   steps = acc_steps ();
 }
 
 void
@@ -252,6 +260,7 @@ app_main ()
    {                            // Some h/w init
       ertc_init ();
       acc_init ();
+      read_steps ();
    }
    time_t now = time (0);
    if (now < 1000000000)
@@ -266,9 +275,10 @@ app_main ()
       if (last_min != v || key)
       {                         // Update display
          bits.newmin = 1;
+         last_min = v;
          if (!(v % 5))
             read_battery ();
-         last_min = v;
+         read_steps ();
          if (wakeup)
          {
             epaper_init ();
@@ -370,9 +380,13 @@ app_main ()
    time_t last = now;
    while (1)
    {
-      read_battery ();
       now = time (0);
       key = btn_read ();
+      if (now != last)
+      {
+         read_steps ();
+         read_battery ();
+      }
       if (key || now != last)
          face_show (now, key);
       last = now;
