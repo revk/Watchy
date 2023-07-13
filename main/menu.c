@@ -183,9 +183,13 @@ menu_timezone (struct tm *t, char key)
       if (menu2 > sizeof (timezone) / sizeof (*timezone))
          menu2 = 254;
    }
-   if (key == 'R' && menu2 == 254)
-      menu2 = 1;                // Picking time zone
-   else if (key == 'R')
+   if (menu2 == 254)
+   {
+      if (key == 'R')
+         menu2 = 1;
+      else if (key == 'L')
+         menu2 = 0;
+   } else if (key == 'R')
       menu3 = 1;                // Selected
    else
       menu2 = menu_list (t, menu2, sizeof (list_timezone) / sizeof (*list_timezone), list_timezone, "Timezone", key);
@@ -196,6 +200,7 @@ menu_timezone (struct tm *t, char key)
       return;
    if (menu2 == 254)
    {                            // Special case for not found
+      gfx_menu (t, "Timezone");
       gfx_text (-2, "Has been set");
       gfx_text (-2, "via the WiFi");
       gfx_text (-2, "Settings");
@@ -203,7 +208,6 @@ menu_timezone (struct tm *t, char key)
       gfx_text (strlen (rtctz) > 16 ? -1 : -2, "%s", rtctz);
       gfx_gap (10);
       gfx_menu1 ("Override");
-
    } else if (menu3)
    {                            // Selected
       menu1 = 0;
