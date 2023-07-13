@@ -18,8 +18,9 @@ issue:
 	-git commit -a -m checkpoint
 	@make set
 	cp $(PROJECT_NAME)*.bin release
-	git commit -a -m release
-	git push
+	-git push
+	-git commit -a -m release
+	-git push
 
 main/icons.h: $(patsubst %.svg,%.h,$(wildcard icons/*.svg))
 	grep -h const icons/*.h | sed 's/const unsigned char icon_\([A-Za-z0-9]*\).*/extern const unsigned char icon_\1[];extern const unsigned char icon_\1_size;/' > main/icons.h
