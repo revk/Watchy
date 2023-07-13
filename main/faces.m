@@ -9,5 +9,6 @@
 // List of faces
 face(basic,Basic digital)
 face(analogue,Analogue)
+face (lunar,Lunar)
 
 #undef face

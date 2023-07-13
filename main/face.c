@@ -43,7 +43,7 @@ gfx_square_icon (const uint8_t * icon, uint16_t bytes, uint8_t visible)
    for (int i = 25; i >= 1; i--)
       if (bytes > i * i * 8)
       {
-         bytes /= i+1;
+         bytes /= i + 1;
          break;
       }
    gfx_icon2 (bytes, bytes, visible ? icon : NULL);
