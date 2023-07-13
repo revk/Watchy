@@ -524,8 +524,6 @@ const uint8_t bma423_config_file[] = {
 
 RTC_NOINIT_ATTR uint16_t fi_addr;
 
-#define	BLOCK	8
-
 static void
 i2c_write (uint8_t reg, uint8_t val)
 {
@@ -560,26 +558,17 @@ i2c_address (uint16_t addr)
 static void
 i2c_write_block (uint16_t addr, uint16_t len, const uint8_t * data)
 {
-   while (len)
-   {
-      uint8_t block = BLOCK;
-      if (len < block)
-         block = len;
-      i2c_address (addr);
-      esp_err_t e;
-      i2c_cmd_handle_t txn = i2c_cmd_link_create ();
-      i2c_master_start (txn);
-      i2c_master_write_byte (txn, (ACCADDRESS << 1) | I2C_MASTER_WRITE, true);
-      i2c_master_write_byte (txn, 0x5E, true);
-      i2c_master_write (txn, data, block, true);
-      i2c_master_stop (txn);
-      if ((e = i2c_master_cmd_begin (I2CPORT, txn, 10 / portTICK_PERIOD_MS)))
-         ESP_LOGE (TAG, "Write fail %d", e);
-      i2c_cmd_link_delete (txn);
-      data += block;
-      addr += block;
-      len -= block;
-   }
+   i2c_address (addr);
+   esp_err_t e;
+   i2c_cmd_handle_t txn = i2c_cmd_link_create ();
+   i2c_master_start (txn);
+   i2c_master_write_byte (txn, (ACCADDRESS << 1) | I2C_MASTER_WRITE, true);
+   i2c_master_write_byte (txn, 0x5E, true);
+   i2c_master_write (txn, data, len, true);
+   i2c_master_stop (txn);
+   if ((e = i2c_master_cmd_begin (I2CPORT, txn, 10 / portTICK_PERIOD_MS)))
+      ESP_LOGE (TAG, "Write fail %d", e);
+   i2c_cmd_link_delete (txn);
 }
 
 static uint8_t
@@ -604,28 +593,19 @@ i2c_read (uint8_t reg)
 static void
 i2c_read_block (uint16_t addr, uint16_t len, uint8_t * data)
 {
-   while (len)
-   {
-      uint8_t block = BLOCK;
-      if (len < block)
-         block = len;
-      i2c_address (addr);
-      esp_err_t e;
-      i2c_cmd_handle_t txn = i2c_cmd_link_create ();
-      i2c_master_start (txn);
-      i2c_master_write_byte (txn, (ACCADDRESS << 1) | I2C_MASTER_WRITE, true);
-      i2c_master_write_byte (txn, 0x5E, true);
-      i2c_master_start (txn);
-      i2c_master_write_byte (txn, (ACCADDRESS << 1) | I2C_MASTER_READ, true);
-      i2c_master_read (txn, data, block, I2C_MASTER_LAST_NACK);
-      i2c_master_stop (txn);
-      if ((e = i2c_master_cmd_begin (I2CPORT, txn, 10 / portTICK_PERIOD_MS)))
-         ESP_LOGE (TAG, "Read fail %d", e);
-      i2c_cmd_link_delete (txn);
-      data += block;
-      addr += block;
-      len -= block;
-   }
+   i2c_address (addr);
+   esp_err_t e;
+   i2c_cmd_handle_t txn = i2c_cmd_link_create ();
+   i2c_master_start (txn);
+   i2c_master_write_byte (txn, (ACCADDRESS << 1) | I2C_MASTER_WRITE, true);
+   i2c_master_write_byte (txn, 0x5E, true);
+   i2c_master_start (txn);
+   i2c_master_write_byte (txn, (ACCADDRESS << 1) | I2C_MASTER_READ, true);
+   i2c_master_read (txn, data, len, I2C_MASTER_LAST_NACK);
+   i2c_master_stop (txn);
+   if ((e = i2c_master_cmd_begin (I2CPORT, txn, 10 / portTICK_PERIOD_MS)))
+      ESP_LOGE (TAG, "Read fail %d", e);
+   i2c_cmd_link_delete (txn);
 }
 
 void
@@ -642,7 +622,7 @@ acc_init (void)
    {                            // Not initialised
       ESP_LOGE (TAG, "Initialise");
       // Soft reset
-      i2c_write (0x7E, 0xB6);
+      i2c_write (0x7E, 0xB6);   // CMD (soft boot command)
       sleep (1);
       // Load ASIC!
       i2c_write (0x7C, 0x00);   // PWR_CONF (aps_off)

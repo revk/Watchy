@@ -206,8 +206,8 @@ app_main ()
       };
       gpio_config (&config);
    }
-   gpio_set_level (GPIOVIB, 0);
    gpio_reset_pin (GPIOVIB);
+   gpio_set_level (GPIOVIB, 0);
    gpio_set_direction (GPIOVIB, GPIO_MODE_OUTPUT);
 
    char btn_read (void)
