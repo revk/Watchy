@@ -95,7 +95,6 @@ app_callback (int client, const char *prefix, const char *target, const char *su
 void
 night (time_t now)
 {
-   ESP_LOGE (TAG, "Night");
    gfx_wait ();
    for (uint8_t b = 0; b < 4; b++)
    {
