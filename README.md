@@ -11,7 +11,7 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 - [x] OLED display
 - [x] OLED soft/partial updates (e.g. for 7 seg digits)
 - [x] OLED sleep mode control
-- [ ] Accelerometer
+- [x] Accelerometer
 - [x] Step counter
 - [ ] Step reset on day change
 - [ ] Step reporting to URL?
@@ -24,7 +24,7 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 - [x] Basic menus
 - [ ] Vibration motor
 - [ ] Alarm clock
-- [ ] Time zone select
+- [x] Time zone select
 - [x] OTA via menu
 - [x] Sleep hold off during OTA!
 - [x] RTC adjust

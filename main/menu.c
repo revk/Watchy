@@ -14,15 +14,10 @@ static const int line = 22;
 
 RTC_NOINIT_ATTR uint8_t btnlast;
 
-typedef void menu_fun (struct tm *, char);
-typedef struct
-{
-   menu_fun *fun;
-   const char *name;
-} menulist_t;
+typedef void menu_fun_t (struct tm *, char);
 
-menulist_t list_face[] = {
-#define face(n,d) {NULL,#d},
+const char *const list_face[] = {
+#define face(n,d) #d,
 #include "faces.m"
 };
 
@@ -30,6 +25,15 @@ void
 gfx_gap (uint8_t g)
 {
    gfx_pos (gfx_x (), gfx_y () + g, gfx_a ());
+}
+
+void
+gfx_menu1 (const char *title)
+{
+   gfx_pos (left - 3, gfx_y (), GFX_R | GFX_T);
+   gfx_icon (right);
+   gfx_pos (left, gfx_y (), GFX_L | GFX_T | GFX_H);
+   gfx_text (-2, title);
 }
 
 void
@@ -60,7 +64,7 @@ gfx_menu (struct tm *t, const char *title)
 }
 
 uint8_t
-menu_list (struct tm *t, uint8_t pos, uint8_t len, menulist_t * m, const char *title, char key)
+menu_list (struct tm *t, uint8_t pos, uint8_t len, const char *const m[], const char *title, char key)
 {                               // Show a list, handle key U/D/L, return new position
    if (pos < 1)
       pos = 1;
@@ -96,7 +100,7 @@ menu_list (struct tm *t, uint8_t pos, uint8_t len, menulist_t * m, const char *t
          gfx_icon (right);
       }
       gfx_pos (left, y + 1, GFX_L | GFX_T);
-      gfx_text (-2, m[base - 1].name);
+      gfx_text (-2, m[base - 1]);
       y += line;
       base++;
    }
@@ -148,10 +152,7 @@ menu_wifi (struct tm *t, char key)
    } else if (menu2 == 0xFF)
    {
       gfx_gap (10);
-      gfx_pos (left - 3, gfx_y (), GFX_R | GFX_T);
-      gfx_icon (right);
-      gfx_pos (left, gfx_y (), GFX_L | GFX_T | GFX_H);
-      gfx_text (2, "Start AP");
+      gfx_menu1 ("Start AP");
    }
    const char *r;
    if (revk_shutting_down (&r))
@@ -161,15 +162,55 @@ menu_wifi (struct tm *t, char key)
    }
 }
 
+const char *const list_timezone[] = {
+#define	tz(tag,...)	#tag,
+#include "tzlist.m"
+};
+
+const char *const timezone[] = {
+#define	tz(tag,...)	#__VA_ARGS__,
+#include "tzlist.m"
+};
+
 void
 menu_timezone (struct tm *t, char key)
 {                               //  Timezone
-   if (key == 'L')
-   {
-      menu2 = 0;
-      return;
+   if (menu2 == 0xFF)
+   {                            // Find timezone
+      for (menu2 = 1; menu2 <= sizeof (timezone) / sizeof (*timezone); menu2++)
+         if (!strcmp (rtctz, timezone[menu2 - 1]))
+            break;
+      if (menu2 > sizeof (timezone) / sizeof (*timezone))
+         menu2 = 254;
    }
-   gfx_menu (t, "Timezone");
+   if (key == 'R' && menu2 == 254)
+      menu2 = 1;                // Picking time zone
+   else if (key == 'R')
+      menu3 = 1;                // Selected
+   else
+      menu2 = menu_list (t, menu2, sizeof (list_timezone) / sizeof (*list_timezone), list_timezone, "Timezone", key);
+   if (!menu2)
+      return;
+   bits.startup = 1;
+   if (!bits.revkstarted)
+      return;
+   if (menu2 == 254)
+   {                            // Special case for not found
+      gfx_text (-2, "Has been set");
+      gfx_text (-2, "via the WiFi");
+      gfx_text (-2, "Settings");
+      gfx_gap (5);
+      gfx_text (strlen (rtctz) > 16 ? -1 : -2, "%s", rtctz);
+      gfx_gap (10);
+      gfx_menu1 ("Override");
+
+   } else if (menu3)
+   {                            // Selected
+      menu1 = 0;
+      jo_t j = jo_object_alloc ();
+      jo_string (j, "tz", timezone[menu2 - 1]);
+      revk_setting (j);
+   }
 }
 
 void
@@ -244,6 +285,8 @@ menu_face (struct tm *t, char key)
       menu3 = 1;                // Selected
    else
       menu2 = menu_list (t, menu2, sizeof (list_face) / sizeof (*list_face), list_face, "Face", key);
+   if (!menu2)
+      return;
    bits.startup = 1;
    if (!bits.revkstarted)
       return;
@@ -367,15 +410,34 @@ menu_mqtt (struct tm *t, char key)
    gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
 }
 
-menulist_t list_main[] = {
-   {menu_face, "Face select"},
-   {menu_wifi, "WiFi settings"},
-   {menu_flip, "Flip display"},
-   {menu_turn, "Turn display"},
-   {menu_timezone, "Timezone"},
-   {menu_upgrade, "Upgrade"},
-   {menu_mqtt, "MQTT connect"},
-   {menu_info, "Info"},
+#define	menus	\
+	m(face,Face select)	\
+	m(wifi,WiFi settings)	\
+	m(flip,Flip display)	\
+	m(turn,Turn display)	\
+	m(timezone,Set timezone)	\
+	m(upgrade,S/W Upgrade)	\
+	m(mqtt,MQTT connect)	\
+	m(info,Information)	\
+
+
+const char *const list_main[] = {
+#define m(t,d)	#d,
+   menus
+#undef	m
+};
+
+enum
+{
+#define m(t,d)	mnum_##t,
+   menus
+#undef	m
+};
+
+menu_fun_t *const fun_main[] = {
+#define m(t,d)	&menu_##t,
+   menus
+#undef	m
 };
 
 void
@@ -417,7 +479,7 @@ menu_show (struct tm *t, char key)
       if (!menu2)
          menu_main (t, key);
       else if (menu1 && menu1 <= sizeof (list_main) / sizeof (*list_main))
-         list_main[menu1 - 1].fun (t, key);
+         fun_main[menu1 - 1] (t, key);
    }
    if (key)
       process (key);
