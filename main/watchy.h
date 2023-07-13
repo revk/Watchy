@@ -30,6 +30,7 @@
 #define	BATLOW		2000
 
 extern uint32_t steps;
+extern uint32_t laststeps;
 extern uint8_t battery;
 extern uint8_t menu1;
 extern uint8_t menu2;
@@ -49,6 +50,7 @@ typedef struct bits
    uint8_t wifistarted:1;       // WiFi started
    uint8_t newmin:1;            // This is start of new minute
    uint8_t newhour:1;           // This is start of new hour
+   uint8_t newday:1;            // This is start of new day (localtime)
    uint8_t timeunsync:1;        // Time sync wanted
 } bits_t;
 extern bits_t bits;

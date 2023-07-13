@@ -522,7 +522,7 @@ const uint8_t bma423_config_file[] = {
    0x80, 0x2e, 0x18, 0x00, 0x80, 0x2e, 0x18, 0x00, 0x80, 0x2e, 0x18, 0x00
 };
 
-uint8_t features[64] = { 0 };
+RTC_NOINIT_ATTR uint16_t fi_addr;
 
 #define	BLOCK	8
 
@@ -549,8 +549,8 @@ i2c_address (uint16_t addr)
    i2c_master_start (txn);
    i2c_master_write_byte (txn, (ACCADDRESS << 1) | I2C_MASTER_WRITE, true);
    i2c_master_write_byte (txn, 0x5B, true);
-   i2c_master_write_byte (txn, (addr / 2) & 0xF, true);
-   i2c_master_write_byte (txn, (addr / 2) >> 4, true);
+   i2c_master_write_byte (txn, (addr >> 1) & 0xF, true);
+   i2c_master_write_byte (txn, addr >> 5, true);
    i2c_master_stop (txn);
    if ((e = i2c_master_cmd_begin (I2CPORT, txn, 10 / portTICK_PERIOD_MS)))
       ESP_LOGE (TAG, "Write fail %d", e);
@@ -638,7 +638,7 @@ acc_init (void)
       return;
    }
    uint8_t status = i2c_read (0x2A);
-   //if (status != 1) // TODO we only call on power up, so may as well always do...
+   //if (!fi_addr||status != 1) // TODO we only call on power up, so may as well always do...
    {                            // Not initialised
       ESP_LOGE (TAG, "Initialise");
       // Soft reset
@@ -656,19 +656,13 @@ acc_init (void)
       if (!status)
          ESP_LOGE (TAG, "Initialisation failed");
 
-      uint16_t addr = (i2c_read (0x5C) << 5) + ((i2c_read (0x5B) & 0xF) << 1);
+      fi_addr = (i2c_read (0x5C) << 5) + ((i2c_read (0x5B) & 0xF) << 1);
 
-      // TODO We only know this once we have initialised - makes it difficult to make changes later if we don't store this.
-
-      ESP_LOGE (TAG, "Addr %04X", addr);
-
-      i2c_read_block (addr, sizeof (features), features);
-      ESP_LOG_BUFFER_HEX_LEVEL (TAG, features, sizeof (features), ESP_LOG_ERROR);
-      features[0x37] |= 0x30;   // en_activity, en_counter (reset_counter is 0240)
+      uint8_t features[64] = { 0 };
+      i2c_read_block (fi_addr, sizeof (features), features);
+      features[0x37] |= 0x30;   // en_activity, en_counter (reset_counter is 0x04)
       features[0x3B] |= 0x10;
-      i2c_write_block (addr, sizeof (features), features);
-      i2c_read_block (addr, sizeof (features), features);
-      ESP_LOG_BUFFER_HEX_LEVEL (TAG, features, sizeof (features), ESP_LOG_ERROR);
+      i2c_write_block (fi_addr, sizeof (features), features);
       status = i2c_read (0x2A);
 
       i2c_write (0x41, 0x00);   // ACC_RANGE ±2G
@@ -679,6 +673,15 @@ acc_init (void)
       if (!status)
          ESP_LOGE (TAG, "Config failed");
    }
+}
+
+void
+acc_step_reset (void)
+{
+   uint8_t features[64] = { 0 };
+   i2c_read_block (fi_addr, sizeof (features), features);
+   features[0x37] |= 0x04;      // reste_counter (self clearing)
+   i2c_write_block (fi_addr, sizeof (features), features);
 }
 
 uint32_t

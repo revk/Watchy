@@ -31,15 +31,16 @@ const uint8_t btn[] = { GPIOBTN2, GPIOBTN3, GPIOBTN1, GPIOBTN4 };
 
 #define	BTNMASK	((1LL<<GPIOBTN1)|(1LL<<GPIOBTN2)|(1LL<<GPIOBTN3)|(1LL<<GPIOBTN4))
 
-RTC_NOINIT_ATTR uint32_t steps;
-RTC_NOINIT_ATTR uint8_t last_hour;
-RTC_NOINIT_ATTR uint8_t last_min;
-RTC_NOINIT_ATTR uint8_t last_btn;
-RTC_NOINIT_ATTR uint8_t battery;
-RTC_NOINIT_ATTR uint8_t menu1;
+RTC_NOINIT_ATTR uint32_t steps; // Current step count
+RTC_NOINIT_ATTR uint32_t laststeps;     // Last day step count (0 when sent)
+RTC_NOINIT_ATTR uint8_t last_hour;      // Last hour number (to detect new hour)
+RTC_NOINIT_ATTR uint8_t last_min;       // Last minute number (to detect new minute)
+RTC_NOINIT_ATTR uint8_t last_btn;       // Last button state as turned in to keys
+RTC_NOINIT_ATTR uint8_t battery;        // Current Battery level (percent)
+RTC_NOINIT_ATTR uint8_t menu1;  // Current menu, levels
 RTC_NOINIT_ATTR uint8_t menu2;
 RTC_NOINIT_ATTR uint8_t menu3;
-RTC_NOINIT_ATTR char rtctz[30];
+RTC_NOINIT_ATTR char rtctz[30]; // Current timezone string
 
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
@@ -95,6 +96,7 @@ app_callback (int client, const char *prefix, const char *target, const char *su
 void
 night (time_t now)
 {
+   rtc_gpio_isolate (GPIOVIB);
    gfx_wait ();
    for (uint8_t b = 0; b < 4; b++)
    {
@@ -204,6 +206,10 @@ app_main ()
       };
       gpio_config (&config);
    }
+   gpio_set_level (GPIOVIB, 0);
+   gpio_reset_pin (GPIOVIB);
+   gpio_set_direction (GPIOVIB, GPIO_MODE_OUTPUT);
+
    char btn_read (void)
    {
       uint8_t btns = 0;
@@ -257,6 +263,7 @@ app_main ()
       ESP_LOGE (TAG, "RTC init fail");
    if (reset == ESP_RST_POWERON || reset == ESP_RST_EXT || reset == ESP_RST_BROWNOUT)
    {                            // Some h/w init
+      laststeps = 0;
       ertc_init ();
       acc_init ();
       read_steps ();
@@ -348,6 +355,9 @@ app_main ()
       strncpy (rtctz, tz, sizeof (rtctz));
    }
 
+   if (!wakeup || bits.newhour)
+      gpio_set_level (GPIOVIB, 1);
+
    epaper_init ();
 
    if (bits.wifi)
@@ -368,6 +378,15 @@ app_main ()
    {
       face_show (now, key);
       key = 0;
+   }
+
+   if (!wakeup || bits.newhour)
+      gpio_set_level (GPIOVIB, 0);
+
+   if (bits.newday && laststeps)
+   {
+      bits.holdoff = 1;
+      // TODO task that sends last days stats...
    }
 
    if (!bits.busy && !bits.holdoff && !bits.timeunsync)

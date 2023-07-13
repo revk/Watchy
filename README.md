@@ -13,7 +13,7 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 - [x] OLED sleep mode control
 - [x] Accelerometer
 - [x] Step counter
-- [ ] Step reset on day change
+- [x] Step reset on day change
 - [ ] Step reporting to URL?
 - [x] RTC
 - [x] Low power mode

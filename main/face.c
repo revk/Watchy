@@ -110,6 +110,13 @@ face_show (time_t now, char key)
 {
    struct tm t;
    localtime_r (&now, &t);
+   if (bits.newhour && !t.tm_hour)
+   {
+      laststeps = steps;
+      acc_step_reset ();
+      steps = 0;
+      bits.newday = 1;
+   }
    if (menu1 || key)
       menu_show (&t, key);
    if (!menu1)
