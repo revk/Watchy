@@ -137,13 +137,11 @@ face_basic (struct tm *t)
    strftime (temp, sizeof (temp), "%F", t);
    gfx_pos (100, 90, GFX_C | GFX_T | GFX_V);
    gfx_7seg (3, "%s", temp);
+   const char *r;
+   if (revk_shutting_down (&r))
    {
-      const char *r;
-      if (revk_shutting_down (&r))
-      {
-         gfx_pos (100, 130, GFX_C | GFX_B);
-         gfx_text (-1, "%s", r);
-      }
+      gfx_pos (100, 130, GFX_C | GFX_B);
+      gfx_text (-1, "%s", r);
    }
    gfx_pos (0, 199, GFX_L | GFX_B | GFX_H);
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
@@ -214,12 +212,10 @@ face_analogue (struct tm *t)
       gfx_pos (0, 199, GFX_L | GFX_B);
       gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
    }
+   const char *r;
+   if (revk_shutting_down (&r))
    {
-      const char *r;
-      if (revk_shutting_down (&r))
-      {
-         gfx_pos (100, 130, GFX_C | GFX_B);
-         gfx_text (-1, "%s", r);
-      }
+      gfx_pos (100, 130, GFX_C | GFX_B);
+      gfx_text (-1, "%s", r);
    }
 }

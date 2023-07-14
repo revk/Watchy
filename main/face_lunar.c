@@ -64,9 +64,16 @@ face_lunar (struct tm *t)
    gfx_icon (moon);
    gfx_pos (199, 0, GFX_R | GFX_T | GFX_V);
    gfx_7seg (6, "%02d", t->tm_hour);
-   gfx_7seg (6, "%02d", t->tm_min);
-   // TODO
+   gfx_7seg (4, "%02d", t->tm_min);
+   gfx_pos (0, 100, GFX_L | GFX_T);
+   gfx_7seg (2, "%-5d", steps);
    strftime (temp, sizeof (temp), "%F", t);
    gfx_pos (100, 199, GFX_C | GFX_B);
    gfx_7seg (3, temp);
+   const char *r;
+   if (revk_shutting_down (&r))
+   {
+      gfx_pos (100, 170, GFX_C | GFX_B);
+      gfx_text (-1, "%s", r);
+   }
 }

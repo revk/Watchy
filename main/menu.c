@@ -278,6 +278,8 @@ menu_upgrade (struct tm *t, char key)
       gfx_text (-1, r);
       return;
    }
+   gfx_pos (0, margin, GFX_B | GFX_L);
+   gfx_fill (percent * 2, 2, 255);
 }
 
 void
