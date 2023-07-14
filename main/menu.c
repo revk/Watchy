@@ -265,7 +265,6 @@ menu_upgrade (struct tm *t, char key)
       gfx_text (-2, "Upgrading");
       gfx_gap (5);
       gfx_text (-1, r);
-      return;
    }
    if (percent >= 0)
    {
