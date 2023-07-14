@@ -18,7 +18,6 @@ issue:
 	-git commit -a -m checkpoint
 	@make set
 	cp $(PROJECT_NAME)*.bin release
-	-git push
 	-git commit -a -m release
 	-git push
 
