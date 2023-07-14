@@ -22,6 +22,12 @@ const uint8_t gfx_cos[256] =
 };
 
 void
+gfx_gap (uint8_t g)
+{
+   gfx_pos (gfx_x (), gfx_y () + g, gfx_a ());
+}
+
+void
 gfx_battery (void)
 {
    if (battery >= 80)
@@ -34,6 +40,28 @@ gfx_battery (void)
       gfx_icon (bat1);
    else
       gfx_icon (bat0);
+}
+
+void
+gfx_charging (void)
+{
+   gfx_iconq (charging, bits.charging);
+}
+
+void
+gfx_wifi (void)
+{
+   if (!bits.revkstarted)
+      return;
+   gfx_iconq (wifi, !revk_link_down ());
+}
+
+void
+gfx_mqtt (void)
+{
+   if (!bits.revkstarted)
+      return;
+   gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
 }
 
 void
@@ -146,18 +174,15 @@ face_basic (struct tm *t)
    gfx_pos (0, 199, GFX_L | GFX_B | GFX_H);
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
    gfx_qr (temp, 2);
-   gfx_iconq (charging, bits.charging);
+   gfx_charging ();
    gfx_battery ();
    gfx_pos (gfx_x (), gfx_y () - 3, gfx_a ());  // Position for battery icon - this is temporary until calibrated
    gfx_7seg (1, "%3d", battery);
    gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
    gfx_7seg (2, "%6d", steps);
    strftime (temp, sizeof (temp), "%a", t);
-   if (bits.revkstarted)
-   {
-      gfx_iconq (wifi, !revk_link_down ());
-      gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
-   }
+   gfx_wifi ();
+   gfx_mqtt ();
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_text (4, "%s", temp);
 }
@@ -198,13 +223,13 @@ face_analogue (struct tm *t)
    gfx_pos (0, 0, GFX_L | GFX_T);
    gfx_battery ();
    gfx_pos (199, 0, GFX_R | GFX_T);
-   gfx_iconq (charging, bits.charging);
+   gfx_charging ();
    if (bits.revkstarted)
    {
       gfx_pos (199, 199, GFX_R | GFX_B);
-      gfx_iconq (wifi, !revk_link_down ());
+      gfx_wifi ();
       gfx_pos (0, 199, GFX_L | GFX_B);
-      gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
+      gfx_mqtt ();
    }
    const char *r;
    if (revk_shutting_down (&r))

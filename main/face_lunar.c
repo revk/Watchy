@@ -69,7 +69,8 @@ face_lunar (struct tm *t)
    gfx_7seg (4, "%02d", t->tm_min);
    gfx_pos (0, 100, GFX_L | GFX_T | GFX_V);
    gfx_7seg (2, "%-5d", steps);
-   gfx_text (2, "Moon phase %3d", moon_phase);
+   gfx_gap (5);
+   gfx_text (-2, "Moon phase %3d", moon_phase);
    strftime (temp, sizeof (temp), "%F", t);
    gfx_pos (100, 199, GFX_C | GFX_B);
    gfx_7seg (3, temp);

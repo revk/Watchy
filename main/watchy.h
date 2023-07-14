@@ -58,8 +58,12 @@ extern bits_t bits;
 extern const uint8_t gfx_cos[256];
 
 const char *gfx_qr (const char *value, uint8_t scale);
+void gfx_gap (uint8_t);
 void gfx_square_icon (const uint8_t * icon, uint16_t bytes, uint8_t visible);
-void gfx_battery (void);
+void gfx_battery (void);        // Icon
+void gfx_charging (void);       // Icon
+void gfx_wifi (void);           // Icon
+void gfx_mqtt (void);           // Icon
 #define	gfx_icon(i) gfx_square_icon(icon_##i,icon_##i##_size,1)
 #define	gfx_iconq(i,v) gfx_square_icon(icon_##i,icon_##i##_size,v)
 

@@ -22,12 +22,6 @@ const char *const list_face[] = {
 };
 
 void
-gfx_gap (uint8_t g)
-{
-   gfx_pos (gfx_x (), gfx_y () + g, gfx_a ());
-}
-
-void
 gfx_menu1 (const char *title)
 {
    gfx_pos (left - 3, gfx_y (), GFX_R | GFX_T);
@@ -54,7 +48,7 @@ gfx_menu (struct tm *t, const char *title)
    gfx_icon (right);
    gfx_pos (0, 199, GFX_L | GFX_B | GFX_H);
    gfx_icon (down);
-   gfx_iconq (charging, bits.charging);
+   gfx_charging ();
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_icon (left);
    gfx_pos (gfx_x (), gfx_y () - 1, gfx_a ());
@@ -143,8 +137,8 @@ menu_wifi (struct tm *t, char key)
       gfx_gap (10);
       gfx_text (2, "Connect to AP");
       gfx_gap (5);
-      gfx_iconq (wifi, !revk_link_down ());
-      gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
+      gfx_wifi ();
+      gfx_mqtt ();
       wifi_mode_t mode = 0;
       esp_wifi_get_mode (&mode);
       if (mode != WIFI_MODE_AP && mode != WIFI_MODE_APSTA)
@@ -412,9 +406,9 @@ menu_mqtt (struct tm *t, char key)
    extern char *hostname;
    gfx_text (strlen (hostname) > 16 ? -1 : -2, "%s", hostname);
    gfx_gap (10);
-   gfx_iconq (wifi, !revk_link_down ());
+   gfx_wifi ();
    gfx_gap (5);
-   gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
+   gfx_mqtt ();
 }
 
 #define	menus	\
