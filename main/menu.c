@@ -245,6 +245,11 @@ menu_upgrade (struct tm *t, char key)
    }
    gfx_gap (5);
    int8_t percent = revk_ota_progress ();
+   if (percent > 0)
+   {
+      gfx_pos (0, margin, GFX_B | GFX_L);
+      gfx_fill (percent * 2, 10, 255);
+   }
    if (percent == -2)
       gfx_text (-2, "Up to date");
    else if (percent == 101)
@@ -278,8 +283,6 @@ menu_upgrade (struct tm *t, char key)
       gfx_text (-1, r);
       return;
    }
-   gfx_pos (0, margin, GFX_B | GFX_L);
-   gfx_fill (percent * 2, 2, 255);
 }
 
 void
