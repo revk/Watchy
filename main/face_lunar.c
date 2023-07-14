@@ -37,7 +37,7 @@ fullmoon (int cycle)
 int
 lunarcycle (time_t t)
 {                               // report cycle for previous full moon
-   int cycle = ((long double) t + 2207726238UL) / 2551442.86195200L;
+   int cycle = ((long double) t + 2207726238UL) / 2551442.86195200L;    // Guess
    time_t f = fullmoon (cycle);
    if (t < f)
       return cycle - 1;
@@ -47,26 +47,29 @@ lunarcycle (time_t t)
    return cycle;
 }
 
-int
+uint8_t
 lunarphase (time_t t)
-{
+{                               // Phase, 0-255
    int cycle = lunarcycle (t);
    time_t base = fullmoon (cycle);
    time_t next = fullmoon (cycle + 1);
-   return (360 * (t - base) / (next - base));
+   return (255 * (t - base) / (next - base));
 }
 
 void
 face_lunar (struct tm *t)
 {
+   if (bits.newhour)
+      moon_phase = lunarphase (mktime (t));
    char temp[30];
    gfx_pos (0, 0, GFX_L | GFX_T);
    gfx_icon (moon);
    gfx_pos (199, 0, GFX_R | GFX_T | GFX_V);
    gfx_7seg (6, "%02d", t->tm_hour);
    gfx_7seg (4, "%02d", t->tm_min);
-   gfx_pos (0, 100, GFX_L | GFX_T);
+   gfx_pos (0, 100, GFX_L | GFX_T | GFX_V);
    gfx_7seg (2, "%-5d", steps);
+   gfx_text (2, "Moon phase %3d", moon_phase);
    strftime (temp, sizeof (temp), "%F", t);
    gfx_pos (100, 199, GFX_C | GFX_B);
    gfx_7seg (3, temp);

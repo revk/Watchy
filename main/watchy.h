@@ -37,6 +37,7 @@ extern uint8_t menu2;
 extern uint8_t menu3;
 extern uint8_t face;
 extern uint8_t flip;
+extern uint8_t moon_phase;
 extern char rtctz[];
 
 typedef struct bits

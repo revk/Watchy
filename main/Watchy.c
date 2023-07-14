@@ -40,6 +40,7 @@ RTC_NOINIT_ATTR uint8_t battery;        // Current Battery level (percent)
 RTC_NOINIT_ATTR uint8_t menu1;  // Current menu, levels
 RTC_NOINIT_ATTR uint8_t menu2;
 RTC_NOINIT_ATTR uint8_t menu3;
+RTC_NOINIT_ATTR uint8_t moon_phase;
 RTC_NOINIT_ATTR char rtctz[30]; // Current timezone string
 
 // Settings (RevK library used by MQTT setting command)
