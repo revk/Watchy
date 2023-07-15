@@ -6,6 +6,21 @@
 #define PI      3.1415926535897932384626433832795029L
 #define sinld(a)        sinl(PI*(a)/180.0L)
 
+const char *
+st (uint8_t n)
+{
+   if (n % 100 < 10 || n % 100 > 20)
+   {
+      if (n % 10 == 1)
+         return "st";
+      if (n % 10 == 2)
+         return "nd";
+      if (n % 10 == 3)
+         return "rd";
+   }
+   return "th";
+}
+
 time_t
 fullmoon (int cycle)
 {                               // report full moon for specific lunar cycle
@@ -77,9 +92,9 @@ face_lunar (struct tm *t)
    {
       struct tm m;
       localtime_r (&moon_next, &m);
-      strftime (temp, sizeof (temp), "%F %H:%M", &m);
+      strftime (temp, sizeof (temp), "%H:%M", &m);
       gfx_gap (-2);
-      gfx_7seg (2, temp);
+      gfx_text (2, "Next: %d%s, %s", m.tm_mday, st (m.tm_mday), temp);
    }
    gfx_status ();
    {
