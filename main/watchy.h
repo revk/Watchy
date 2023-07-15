@@ -30,7 +30,7 @@
 #define	BATLOW		2000
 
 extern uint32_t steps;
-extern uint32_t laststeps;
+extern uint32_t last_steps;
 extern uint8_t battery;
 extern uint8_t menu1;
 extern uint8_t menu2;

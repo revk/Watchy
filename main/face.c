@@ -136,8 +136,8 @@ face_show (time_t now, char key)
    struct tm t;
    localtime_r (&now, &t);
    if (bits.newhour && !t.tm_hour)
-   {
-      laststeps = steps;
+   { // New day
+      last_steps = steps;
       acc_step_reset ();
       steps = 0;
       bits.newday = 1;
