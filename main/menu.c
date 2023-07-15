@@ -231,6 +231,8 @@ menu_upgrade (struct tm *t, char key)
    {
       gfx_gap (5);
       gfx_text (-2, "Waiting");
+      gfx_gap (5);
+      gfx_status ();
       return;
    }
    gfx_gap (5);

@@ -96,8 +96,7 @@ lunar (struct tm *t, uint8_t force)
       struct tm m;
       localtime_r (&moon_next, &m);
       strftime (temp, sizeof (temp), "%H:%M", &m);
-      gfx_gap (-2);
-      gfx_text (2, "Next: %d%s, %s", m.tm_mday, st (m.tm_mday), temp);
+      gfx_text (-2, "Next: %d%s, %s", m.tm_mday, st (m.tm_mday), temp);
    }
    gfx_status ();
    {
