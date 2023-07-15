@@ -69,7 +69,7 @@ face_lunar (struct tm *t)
    gfx_charging ();
    gfx_wifi ();
    gfx_mqtt ();
-   gfx_pos (0, 100, GFX_L | GFX_T | GFX_V);
+   gfx_pos (0, 100 + 5, GFX_L | GFX_T | GFX_V);
    gfx_7seg (2, "%-5d", steps);
    strftime (temp, sizeof (temp), "%F", t);
    gfx_pos (100, 199, GFX_C | GFX_B | GFX_V);
