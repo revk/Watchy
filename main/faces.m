@@ -10,5 +10,6 @@
 face(basic,Basic digital)
 face(analogue,Analogue)
 face (lunar,Lunar)
+face (deathstar,Death Star)
 
 #undef face

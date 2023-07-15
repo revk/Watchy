@@ -62,8 +62,8 @@ lunarcycle (time_t t)
    return cycle;
 }
 
-void
-face_lunar (struct tm *t)
+static void
+lunar (struct tm *t, uint8_t force)
 {
    if (bits.newhour)
    {
@@ -117,7 +117,10 @@ face_lunar (struct tm *t)
       return 50 - l * (gfx_cos[(a) & 255] - 128) / 127;
    }
    gfx_pos (0, 0, GFX_L | GFX_T);
-   gfx_icon (moon);
+   if (force)
+      gfx_icon (deathstar);
+   else
+      gfx_icon (moon);
    for (int a = 0; a < 256; a += 4)
       gfx_line (ax (a, r), ay (a, r), ax (a + 4, r), ay (a + 4, r), 255);       // Outline
    int8_t l = (gfx_cos[moon_phase] - 128) * r / 127;
@@ -129,7 +132,8 @@ face_lunar (struct tm *t)
          while (y < q)
          {
             gfx_pos_t x = 50 + (int) l * (gfx_cos[(a + 192) & 255] - 128) / 127;
-            gfx_line (ax (a, r), y, x, y, 255);
+            if (!force || (y & 1))
+               gfx_line (ax (a, r), y, x, y, 255);
             y++;
          }
    } else if (moon_phase && moon_phase < 128)
@@ -139,8 +143,21 @@ face_lunar (struct tm *t)
          while (y < q)
          {
             gfx_pos_t x = 50 + (int) l * (gfx_cos[(a + 192) & 255] - 128) / 127;
-            gfx_line (x, y, ax (a, r), y, 255);
+            if (!force || (y & 1))
+               gfx_line (x, y, ax (a, r), y, 255);
             y++;
          }
       }
+}
+
+void
+face_lunar (struct tm *t)
+{
+   lunar (t, 0);
+}
+
+void
+face_deathstar (struct tm *t)
+{
+   lunar (t, 1);
 }
