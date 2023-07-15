@@ -83,7 +83,7 @@ gfx_square_icon (const uint8_t * icon, uint16_t bytes, uint8_t visible)
          bytes /= i + 1;
          break;
       }
-   gfx_icon2 (bytes, bytes, icon);
+   gfx_icon2 (bytes, bytes, visible ? icon : NULL);
 }
 
 const char *
