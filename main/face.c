@@ -22,9 +22,18 @@ const uint8_t gfx_cos[256] =
 };
 
 void
-gfx_gap (uint8_t g)
+gfx_gap (int8_t g)
 {
    gfx_pos (gfx_x (), gfx_y () + g, gfx_a ());
+}
+
+void
+gfx_status (void)
+{                               // shutdown status
+   const char *r;
+   if (!revk_shutting_down (&r))
+      return;
+   gfx_text (-1, "%s", r);
 }
 
 void
@@ -74,7 +83,7 @@ gfx_square_icon (const uint8_t * icon, uint16_t bytes, uint8_t visible)
          bytes /= i + 1;
          break;
       }
-   gfx_icon2 (bytes, bytes, visible ? icon : NULL);
+   gfx_icon2 (bytes, bytes, icon);
 }
 
 const char *
@@ -136,7 +145,7 @@ face_show (time_t now, char key)
    struct tm t;
    localtime_r (&now, &t);
    if (bits.newhour && !t.tm_hour)
-   { // New day
+   {                            // New day
       last_steps = steps;
       acc_step_reset ();
       steps = 0;
@@ -165,12 +174,8 @@ face_basic (struct tm *t)
    strftime (temp, sizeof (temp), "%F", t);
    gfx_pos (100, 90, GFX_C | GFX_T | GFX_V);
    gfx_7seg (3, "%s", temp);
-   const char *r;
-   if (revk_shutting_down (&r))
-   {
-      gfx_pos (100, 130, GFX_C | GFX_B);
-      gfx_text (-1, "%s", r);
-   }
+   gfx_pos (100, 130, GFX_C | GFX_B);
+   gfx_status ();
    gfx_pos (0, 199, GFX_L | GFX_B | GFX_H);
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
    gfx_qr (temp, 2);
@@ -231,10 +236,6 @@ face_analogue (struct tm *t)
       gfx_pos (0, 199, GFX_L | GFX_B);
       gfx_mqtt ();
    }
-   const char *r;
-   if (revk_shutting_down (&r))
-   {
-      gfx_pos (100, 130, GFX_C | GFX_B);
-      gfx_text (-1, "%s", r);
-   }
+   gfx_pos (100, 130, GFX_C | GFX_B);
+   gfx_status ();
 }

@@ -148,12 +148,8 @@ menu_wifi (struct tm *t, char key)
       gfx_gap (10);
       gfx_menu1 ("Start AP");
    }
-   const char *r;
-   if (revk_shutting_down (&r))
-   {
-      gfx_pos (100, 199 - margin, GFX_C | GFX_B);
-      gfx_text (-1, "%s", r);
-   }
+   gfx_pos (100, 199 - margin, GFX_C | GFX_B);
+   gfx_status ();
 }
 
 const char *const list_timezone[] = {
@@ -252,24 +248,17 @@ menu_upgrade (struct tm *t, char key)
       bits.holdoff = 0;
       return;
    }
-   const char *r;
-   if (revk_shutting_down (&r))
-   {
-      gfx_gap (5);
-      gfx_text (-2, "Upgrading");
-      gfx_gap (5);
-      gfx_text (-1, r);
-   }
+   gfx_gap (5);
+   gfx_status ();
    if (percent >= 0)
    {
       gfx_pos (0, 199 - margin, GFX_B | GFX_L);
       gfx_fill (percent * 2, 10, 255);
       return;
    }
-   r = revk_command ("upgrade", NULL);
+   const char *r = revk_command ("upgrade", NULL);
    if (r)
    {
-      gfx_gap (5);
       gfx_text (-2, "Trying");
       gfx_gap (5);
       gfx_text (-1, r);
@@ -406,9 +395,12 @@ menu_mqtt (struct tm *t, char key)
    extern char *hostname;
    gfx_text (strlen (hostname) > 16 ? -1 : -2, "%s", hostname);
    gfx_gap (10);
+   gfx_pos (50, gfx_y (), GFX_C | GFX_T);
    gfx_wifi ();
-   gfx_gap (5);
+   gfx_pos (150, gfx_y (), GFX_C | GFX_T);
    gfx_mqtt ();
+   gfx_pos (100, 199 - margin, GFX_C | GFX_B);
+   gfx_status ();
 }
 
 #define	menus	\

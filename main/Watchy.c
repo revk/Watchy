@@ -31,8 +31,9 @@ const uint8_t btn[] = { GPIOBTN2, GPIOBTN3, GPIOBTN1, GPIOBTN4 };
 
 #define	BTNMASK	((1LL<<GPIOBTN1)|(1LL<<GPIOBTN2)|(1LL<<GPIOBTN3)|(1LL<<GPIOBTN4))
 
+RTC_NOINIT_ATTR time_t moon_next;       // Next full moon
 RTC_NOINIT_ATTR uint32_t steps; // Current step count
-RTC_NOINIT_ATTR uint32_t last_steps;     // Last day step count (0 when sent)
+RTC_NOINIT_ATTR uint32_t last_steps;    // Last day step count (0 when sent)
 RTC_NOINIT_ATTR uint8_t last_hour;      // Last hour number (to detect new hour)
 RTC_NOINIT_ATTR uint8_t last_min;       // Last minute number (to detect new minute)
 RTC_NOINIT_ATTR uint8_t last_btn;       // Last button state as turned in to keys
@@ -47,7 +48,7 @@ RTC_NOINIT_ATTR char rtctz[30]; // Current timezone string
 #define settings                \
 	u8lr(face,0)	\
 	u8lr(flip,5)	\
-	s8l(testday,0)	\
+	s8r(testday,0)	\
 
 #define	port_mask(x)	((x)&0x7F)
 #define u32(n,d)        uint32_t n;
@@ -61,7 +62,7 @@ RTC_NOINIT_ATTR char rtctz[30]; // Current timezone string
 #define s16(n,d) int16_t n;
 #define s16lr(n,d) RTC_NOINIT_ATTR int16_t n;
 #define u16r(n,d) uint16_t n,ring##n;
-#define s8r(n,d) int8_t n,ring##n;
+#define s8r(n,d) RTC_NOINIT_ATTR int8_t n,ring##n;
 #define s16r(n,d) int16_t n,ring##n;
 #define u8l(n,d) uint8_t n;
 #define u8lr(n,d) RTC_NOINIT_ATTR uint8_t n;
@@ -198,7 +199,7 @@ app_main ()
    }
    if (!wakeup)
       menu1 = menu2 = menu3 = 0;
-   if (reset == ESP_RST_POWERON || reset == ESP_RST_EXT || reset == ESP_RST_BROWNOUT)
+   if (!wakeup || reset == ESP_RST_POWERON || reset == ESP_RST_EXT || reset == ESP_RST_BROWNOUT)
    {
       last_steps = 0;
       last_min = 255;
@@ -276,10 +277,10 @@ app_main ()
       acc_init ();
       read_steps ();
    }
-   time_t now = time (0) + testday * 86400;
+   time_t now = time (0) + 86400 * testday;
    if (now < 1000000000)
    {                            // We have no clock...
-      now = ertc_read () + testday * 86400;
+      now = ertc_read () + 86400 * testday;
       bits.wifi = 1;
       bits.timeunsync = 1;
    }
@@ -376,7 +377,7 @@ app_main ()
 
    if (key || !wakeup)
    {                            // Delayed
-      now = ertc_read () + testday * 86400;
+      now = ertc_read () + 86400 * testday;
       face_show (now, key);
    }
 
@@ -404,7 +405,7 @@ app_main ()
    time_t last = now;
    while (1)
    {
-      now = time (0) + testday * 86400;
+      now = time (0) + 86400 * testday;
       key = btn_read ();
       if (now != last)
       {

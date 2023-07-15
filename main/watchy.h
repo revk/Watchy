@@ -29,6 +29,7 @@
 #define	BATHIGH		2400
 #define	BATLOW		2000
 
+extern time_t moon_next;
 extern uint32_t steps;
 extern uint32_t last_steps;
 extern uint8_t battery;
@@ -58,8 +59,9 @@ extern bits_t bits;
 extern const uint8_t gfx_cos[256];
 
 const char *gfx_qr (const char *value, uint8_t scale);
-void gfx_gap (uint8_t);
+void gfx_gap (int8_t);
 void gfx_square_icon (const uint8_t * icon, uint16_t bytes, uint8_t visible);
+void gfx_status (void);
 void gfx_battery (void);        // Icon
 void gfx_charging (void);       // Icon
 void gfx_wifi (void);           // Icon
