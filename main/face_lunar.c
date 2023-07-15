@@ -78,6 +78,7 @@ lunar (struct tm *t, uint8_t force)
    gfx_pos (199, 0, GFX_R | GFX_T | GFX_V);
    gfx_7seg (6, "%02d", t->tm_hour);
    gfx_7seg (4, "%02d", t->tm_min);
+   gfx_gap (5);
    strftime (temp, sizeof (temp), "%a", t);
    gfx_text (3, temp);
    gfx_gap (5);
