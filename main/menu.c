@@ -252,6 +252,7 @@ menu_upgrade (struct tm *t, char key)
    }
    gfx_gap (5);
    gfx_status ();
+   gfx_gap (5);
    if (percent >= 0)
    {
       gfx_pos (0, 199 - margin, GFX_B | GFX_L);
