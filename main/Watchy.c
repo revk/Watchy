@@ -31,8 +31,9 @@ const uint8_t btn[] = { GPIOBTN2, GPIOBTN3, GPIOBTN1, GPIOBTN4 };
 
 #define	BTNMASK	((1LL<<GPIOBTN1)|(1LL<<GPIOBTN2)|(1LL<<GPIOBTN3)|(1LL<<GPIOBTN4))
 
+RTC_NOINIT_ATTR time_t moon_next;       // Next full moon
 RTC_NOINIT_ATTR uint32_t steps; // Current step count
-RTC_NOINIT_ATTR uint32_t laststeps;     // Last day step count (0 when sent)
+RTC_NOINIT_ATTR uint32_t last_steps;    // Last day step count (0 when sent)
 RTC_NOINIT_ATTR uint8_t last_hour;      // Last hour number (to detect new hour)
 RTC_NOINIT_ATTR uint8_t last_min;       // Last minute number (to detect new minute)
 RTC_NOINIT_ATTR uint8_t last_btn;       // Last button state as turned in to keys
@@ -40,17 +41,20 @@ RTC_NOINIT_ATTR uint8_t battery;        // Current Battery level (percent)
 RTC_NOINIT_ATTR uint8_t menu1;  // Current menu, levels
 RTC_NOINIT_ATTR uint8_t menu2;
 RTC_NOINIT_ATTR uint8_t menu3;
+RTC_NOINIT_ATTR uint8_t moon_phase;
 RTC_NOINIT_ATTR char rtctz[30]; // Current timezone string
 
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
 	u8lr(face,0)	\
 	u8lr(flip,5)	\
+	s8r(testday,0)	\
 
 #define	port_mask(x)	((x)&0x7F)
 #define u32(n,d)        uint32_t n;
 #define u32l(n,d)        uint32_t n;
 #define s8(n,d) int8_t n;
+#define s8l(n,d) int8_t n;
 #define s8n(n,d) int8_t n[d];
 #define u8(n,d) uint8_t n;
 #define u8r(n,d) RTC_NOINIT_ATTR uint8_t n,ring##n;
@@ -58,7 +62,7 @@ RTC_NOINIT_ATTR char rtctz[30]; // Current timezone string
 #define s16(n,d) int16_t n;
 #define s16lr(n,d) RTC_NOINIT_ATTR int16_t n;
 #define u16r(n,d) uint16_t n,ring##n;
-#define s8r(n,d) int8_t n,ring##n;
+#define s8r(n,d) RTC_NOINIT_ATTR int8_t n,ring##n;
 #define s16r(n,d) int16_t n,ring##n;
 #define u8l(n,d) uint8_t n;
 #define u8lr(n,d) RTC_NOINIT_ATTR uint8_t n;
@@ -72,6 +76,7 @@ settings
 #undef u32
 #undef u32l
 #undef s8
+#undef s8l
 #undef s8n
 #undef u8
 #undef u8r
@@ -181,6 +186,26 @@ timesync (struct timeval *tv)
    ESP_LOGI (TAG, "Time sync @ %ld", uptime ());
 }
 
+static void
+buzzer_task (void *pvParameters)
+{
+   bits.busy = 1;
+   gpio_set_level (GPIOVIB, 1);
+   usleep (100000);
+   gpio_set_level (GPIOVIB, 0);
+   bits.busy = 0;
+   vTaskDelete (NULL);
+}
+
+static void
+report_steps_task (void *pvParameters)
+{
+   bits.busy = 1;
+   sleep (1);                   // TODO
+   bits.busy = 0;
+   vTaskDelete (NULL);
+}
+
 void
 app_main ()
 {
@@ -194,7 +219,13 @@ app_main ()
    }
    if (!wakeup)
       menu1 = menu2 = menu3 = 0;
-
+   if (!wakeup || reset == ESP_RST_POWERON || reset == ESP_RST_EXT || reset == ESP_RST_BROWNOUT)
+   {
+      last_steps = 0;
+      last_min = 255;
+      last_hour = 255;
+      moon_next=0;
+   }
    // Charging
    gpio_pullup_dis (GPIORX);    // Used to detect the UART is down, and hence no VBUS and hence not charging.
    gpio_pulldown_en (GPIORX);
@@ -263,44 +294,39 @@ app_main ()
       ESP_LOGE (TAG, "RTC init fail");
    if (reset == ESP_RST_POWERON || reset == ESP_RST_EXT || reset == ESP_RST_BROWNOUT)
    {                            // Some h/w init
-      laststeps = 0;
       ertc_init ();
       acc_init ();
       read_steps ();
    }
-   time_t now = time (0);
+   time_t now = time (0) + 86400 * testday;
    if (now < 1000000000)
    {                            // We have no clock...
-      now = ertc_read ();
+      now = ertc_read () + 86400 * testday;
       bits.wifi = 1;
       bits.timeunsync = 1;
    }
    if (now > 1000000000)
    {                            // Time updates
-      uint8_t v = now / 60 % 60;
+      uint8_t v = now / 3600 % 24;
+      if (last_hour != v)
+      {                         // New hour
+         last_hour = v;
+         bits.timeunsync = 1;
+         bits.newhour = 1;
+         bits.wifi = 1;
+         read_battery ();
+      }
+      v = now / 60 % 60;
       if (last_min != v || key)
-      {                         // Update display
+      {                         // New minute
          bits.newmin = 1;
          last_min = v;
-         if (!(v % 5))
-            read_battery ();
          read_steps ();
          if (wakeup)
          {
             epaper_init ();
             face_show (now, key);
             key = 0;
-         }
-      }
-      if (wakeup == ESP_SLEEP_WAKEUP_TIMER)
-      {
-         v = now / 3600 % 24;
-         if (last_hour != v)
-         {                      // Normal start and attempt local clock sync
-            last_hour = v;
-            bits.timeunsync = 1;
-            bits.newhour = 1;
-            bits.wifi = 1;
          }
       }
    } else
@@ -319,6 +345,7 @@ app_main ()
 #define u32(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
 #define u32l(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_LIVE);
 #define s8(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_SIGNED);
+#define s8l(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_SIGNED|SETTING_LIVE);
 #define s8n(n,d) revk_register(#n,d,sizeof(*n),&n,NULL,SETTING_SIGNED);
 #define u8(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
 #define u8r(n,d) revk_register(#n,0,sizeof(n),&n,#d,0); revk_register("ring"#n,0,sizeof(ring##n),&ring##n,#d,0);
@@ -337,6 +364,7 @@ app_main ()
 #undef u32
 #undef u32l
 #undef s8
+#undef s8l
 #undef s8n
 #undef u8
 #undef u8r
@@ -356,7 +384,9 @@ app_main ()
    }
 
    if (!wakeup || bits.newhour)
-      gpio_set_level (GPIOVIB, 1);
+      revk_task ("Buzzer", buzzer_task, NULL, 1);
+   if (last_steps && bits.newhour)
+      revk_task ("Steps", report_steps_task, NULL, 8);
 
    epaper_init ();
 
@@ -370,7 +400,7 @@ app_main ()
 
    if (key || !wakeup)
    {                            // Delayed
-      now = ertc_read ();
+      now = ertc_read () + 86400 * testday;
       face_show (now, key);
    }
 
@@ -380,10 +410,7 @@ app_main ()
       key = 0;
    }
 
-   if (!wakeup || bits.newhour)
-      gpio_set_level (GPIOVIB, 0);
-
-   if (bits.newday && laststeps)
+   if (bits.newday && last_steps)
    {
       bits.holdoff = 1;
       // TODO task that sends last days stats...
@@ -398,7 +425,7 @@ app_main ()
    time_t last = now;
    while (1)
    {
-      now = time (0);
+      now = time (0) + 86400 * testday;
       key = btn_read ();
       if (now != last)
       {

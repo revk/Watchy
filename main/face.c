@@ -3,6 +3,7 @@
 #include "face.h"
 #include "menu.h"
 #include "iec18004.h"
+#include <math.h>
 
 const uint8_t gfx_cos[256] =
    { 255, 255, 255, 255, 255, 255, 254, 254, 253, 252, 252, 251, 250, 249, 248, 247, 246, 245, 243, 242, 240, 239, 237, 236, 234,
@@ -21,6 +22,145 @@ const uint8_t gfx_cos[256] =
    237, 239, 240, 242, 243, 245, 246, 247, 248, 249, 250, 251, 252, 252, 253, 254, 254, 255, 255, 255, 255, 255
 };
 
+const char *
+st (uint8_t n)
+{
+   if (n % 100 < 10 || n % 100 > 20)
+   {
+      if (n % 10 == 1)
+         return "st";
+      if (n % 10 == 2)
+         return "nd";
+      if (n % 10 == 3)
+         return "rd";
+   }
+   return "th";
+}
+
+#define PI      3.1415926535897932384626433832795029L
+#define sinld(a)        sinl(PI*(a)/180.0L)
+
+static time_t
+fullmoon (int cycle)
+{                               // report full moon for specific lunar cycle
+   long double k = cycle + 0.5;
+   long double T = k / 1236.85L;
+   long double JD =
+      2415020.75933L + 29.53058868L * k + 0.0001178L * T * T - 0.000000155L * T * T * T +
+      0.00033L * sinld (166.56L + 132.87L * T - 0.009173L * T * T);
+   long double M = 359.2242L + 29.10535608L * k - 0.0000333L * T * T - 0.00000347L * T * T * T;
+   long double M1 = 306.0253L + 385.81691806L * k + 0.0107306L * T * T + 0.00001236L * T * T * T;
+   long double F = 21.2964L + 390.67050646L * k - 0.0016528L * T * T - 0.00000239L * T * T * T;
+   long double A = (0.1734 - 0.000393 * T) * sinld (M)  //
+      + 0.0021 * sinld (2 * M)  //
+      - 0.4068 * sinld (M1)     //
+      + 0.0161 * sinld (2 * M1) //
+      - 0.0004 * sinld (3 * M1) //
+      + 0.0104 * sinld (2 * F)  //
+      - 0.0051 * sinld (M + M1) //
+      - 0.0074 * sinld (M - M1) //
+      + 0.0004 * sinld (2 * F + M)      //
+      - 0.0004 * sinld (2 * F - M)      //
+      - 0.0006 * sinld (2 * F + M1)     //
+      + 0.0010 * sinld (2 * F - M1)     //
+      + 0.0005 * sinld (M + 2 * M1);    //
+   JD += A;
+   return (JD - 2440587.5L) * 86400LL;
+}
+
+static int
+lunarcycle (time_t t)
+{                               // report cycle for previous full moon
+   int cycle = ((long double) t + 2207726238UL) / 2551442.86195200L;    // Guess
+   time_t f = fullmoon (cycle);
+   if (t < f)
+      return cycle - 1;
+   f = fullmoon (cycle + 1);
+   if (t >= f)
+      return cycle + 1;
+   return cycle;
+}
+
+void
+gfx_phase (uint8_t cx, uint8_t cy, uint8_t r)
+{                               // Show phase
+   // TODO moon needs inverting and lighting reversed for southern hemisphere
+   inline gfx_pos_t ax (gfx_pos_t a, gfx_pos_t l)
+   {
+      return cx + l * (gfx_cos[(a + 192) & 255] - 128) / 127;
+   }
+   inline gfx_pos_t ay (gfx_pos_t a, gfx_pos_t l)
+   {
+      return cy - l * (gfx_cos[(a) & 255] - 128) / 127;
+   }
+   for (int a = 0; a < 256; a += 4)
+      gfx_line (ax (a, r), ay (a, r), ax (a + 4, r), ay (a + 4, r), 255);       // Outline
+   int8_t l = (gfx_cos[moon_phase] - 128) * r / 127;
+   gfx_pos_t y = cy - r;
+   if (moon_phase > 128)
+      for (int a = 255; a >= 128; a--)
+      {                         // Light on right
+         gfx_pos_t q = ay (a, r);
+         while (y < q)
+         {
+            gfx_pos_t x = cx + (int) l * (gfx_cos[(a + 192) & 255] - 128) / 127;
+            gfx_line (ax (a, r), y, x, y, 255);
+            y++;
+         }
+   } else if (moon_phase && moon_phase < 128)
+      for (int a = 0; a < 128; a++)
+      {                         // Light on left
+         gfx_pos_t q = ay (a, r);
+         while (y < q)
+         {
+            gfx_pos_t x = cx + (int) l * (gfx_cos[(a + 192) & 255] - 128) / 127;
+            gfx_line (x, y, ax (a, r), y, 255);
+            y++;
+         }
+      }
+}
+
+void
+gfx_analogue (uint8_t cx, uint8_t cy, uint8_t r, struct tm *t)
+{
+   inline gfx_pos_t ax (gfx_pos_t a, gfx_pos_t l)
+   {
+      return cx + l * ((int) gfx_cos[(a + 192) & 255] - 128) / 127;
+   }
+   inline gfx_pos_t ay (gfx_pos_t a, gfx_pos_t l)
+   {
+      return cy - l * ((int) gfx_cos[(a) & 255] - 128) / 127;
+   }
+   for (int a = 0; a < 256; a += 4)
+      gfx_line (ax (a, r), ay (a, r), ax (a + 4, r), ay (a + 4, r), 255);
+   for (int h = 0; h < 12; h++)
+      gfx_line (ax (h * 256 / 12, r), ay (h * 256 / 12, r), ax (h * 256 / 12, (h % 3) ? (int) r * 9 / 10 : (int) r * 8 / 10),
+                ay (h * 256 / 12, (h % 3) ? (int) r * 9 / 10 : (int) r * 8 / 10), 255);
+   gfx_line (cx, cy, ax (t->tm_min * 256 / 60, (int) r * 95 / 100), ay (t->tm_min * 256 / 60, (int) r * 95 / 100), 255);
+   int h = ((int) t->tm_hour * 60 + t->tm_min) * 256 / 12 / 60;
+   if (r < 40)
+      gfx_line (cx, cy, ax (h, (int) r * 6 / 10), ay (h, (int) r * 6 / 10), 255);
+   else
+      for (int dx = -1; dx < 1; dx++)
+         for (int dy = -1; dy < 1; dy++)
+            gfx_line (cx + dx, cy + dy, ax (h, (int) r * 6 / 10) + dx, ay (h, (int) r * 6 / 10) + dy, 255);
+}
+
+void
+gfx_gap (int8_t g)
+{
+   gfx_pos (gfx_x (), gfx_y () + g, gfx_a ());
+}
+
+void
+gfx_status (void)
+{                               // shutdown status
+   const char *r;
+   if (!revk_shutting_down (&r))
+      return;
+   gfx_text (-1, "%s", r);
+}
+
 void
 gfx_battery (void)
 {
@@ -37,18 +177,37 @@ gfx_battery (void)
 }
 
 void
-gfx_square_icon (const uint8_t * icon, uint8_t bytes, uint8_t visible)
+gfx_charging (void)
+{
+   gfx_iconq (charging, bits.charging);
+}
+
+void
+gfx_wifi (void)
+{
+   if (!bits.revkstarted)
+      return;
+   gfx_iconq (wifi, !revk_link_down ());
+}
+
+void
+gfx_mqtt (void)
+{
+   if (!bits.revkstarted)
+      return;
+   gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
+}
+
+void
+gfx_square_icon (const uint8_t * icon, uint16_t bytes, uint8_t visible)
 {                               // Assumes square icon
-   if (bytes > 200)
-      bytes /= 6;
-   else if (bytes > 128)
-      bytes /= 5;
-   else if (bytes > 72)
-      bytes /= 4;
-   else if (bytes > 32)
-      bytes /= 3;
-   else if (bytes > 8)
-      bytes /= 2;
+   // Work out size, assuming square, allow up to 200x200
+   for (int i = 25; i >= 1; i--)
+      if (bytes > i * i * 8)
+      {
+         bytes /= i + 1;
+         break;
+      }
    gfx_icon2 (bytes, bytes, visible ? icon : NULL);
 }
 
@@ -111,11 +270,20 @@ face_show (time_t now, char key)
    struct tm t;
    localtime_r (&now, &t);
    if (bits.newhour && !t.tm_hour)
-   {
-      laststeps = steps;
+   {                            // New day
+      last_steps = steps;
       acc_step_reset ();
       steps = 0;
       bits.newday = 1;
+   }
+   if (bits.newhour || !moon_next)
+   {
+      time_t now = mktime (&t);
+      int cycle = lunarcycle (now);
+      time_t base = fullmoon (cycle);
+      time_t next = fullmoon (cycle + 1);
+      moon_phase = (256 * (now - base) / (next - base));
+      moon_next = next;
    }
    if (menu1 || key)
       menu_show (&t, key);
@@ -132,7 +300,7 @@ face_show (time_t now, char key)
 
 void
 face_basic (struct tm *t)
-{                               // Basic face
+{                               // Digital face
    char temp[30];
    gfx_pos (100, 0, GFX_C | GFX_T | GFX_H);
    strftime (temp, sizeof (temp), "%H:%M", t);
@@ -140,68 +308,60 @@ face_basic (struct tm *t)
    strftime (temp, sizeof (temp), "%F", t);
    gfx_pos (100, 90, GFX_C | GFX_T | GFX_V);
    gfx_7seg (3, "%s", temp);
-   {
-      const char *r;
-      if (revk_shutting_down (&r))
-      {
-         gfx_pos (100, 130, GFX_C | GFX_B);
-         gfx_text (-1, "%s", r);
-      }
-   }
+   gfx_pos (100, 130, GFX_C | GFX_B);
+   gfx_status ();
    gfx_pos (0, 199, GFX_L | GFX_B | GFX_H);
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
    gfx_qr (temp, 2);
-   gfx_iconq (charging, bits.charging);
+   gfx_charging ();
    gfx_battery ();
    gfx_pos (gfx_x (), gfx_y () - 3, gfx_a ());  // Position for battery icon - this is temporary until calibrated
    gfx_7seg (1, "%3d", battery);
    gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
    gfx_7seg (2, "%6d", steps);
+   gfx_wifi ();
+   gfx_mqtt ();
    strftime (temp, sizeof (temp), "%a", t);
-   if (bits.revkstarted)
-   {
-      gfx_iconq (wifi, !revk_link_down ());
-      gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
-   }
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_text (4, "%s", temp);
 }
 
 void
+face_combined (struct tm *t)
+{                               // Combined analogue/digital
+   char temp[30];
+   gfx_pos (100, 0, GFX_C | GFX_T | GFX_H);
+   strftime (temp, sizeof (temp), "%H:%M", t);
+   gfx_7seg (8, "%s", temp);
+   gfx_pos (199, 199, GFX_R | GFX_B | GFX_V);
+   strftime (temp, sizeof (temp), "%a", t);
+   gfx_text (3, "%s", temp);
+   gfx_gap (-5);
+   gfx_7seg (6, "%2d", t->tm_mday);
+   strftime (temp, sizeof (temp), "%b", t);
+   gfx_text (-3, "%s", temp);
+   gfx_pos (5, 80, GFX_L | GFX_T);
+   gfx_7seg (2, "%d", steps);
+   gfx_pos (105, 199, GFX_L | GFX_B | GFX_V);
+   gfx_battery ();
+   gfx_charging ();
+   gfx_wifi ();
+   gfx_mqtt ();
+   gfx_analogue (50, 150, 49, t);
+}
+
+void
 face_analogue (struct tm *t)
 {
-   inline gfx_pos_t ax (gfx_pos_t a, gfx_pos_t l)
-   {
-      return 100 + l * ((int) gfx_cos[(a + 192) & 255] - 128) / 127;
-   }
-   inline gfx_pos_t ay (gfx_pos_t a, gfx_pos_t l)
-   {
-      return 100 - l * ((int) gfx_cos[(a) & 255] - 128) / 127;
-   }
-   for (int a = 0; a < 256; a += 4)
-      gfx_line (ax (a, 99), ay (a, 99), ax (a + 4, 99), ay (a + 4, 99), 255);
-   for (int h = 0; h < 12; h++)
-      gfx_line (ax (h * 256 / 12, 99), ay (h * 256 / 12, 99), ax (h * 256 / 12, (h % 3) ? 90 : 80),
-                ay (h * 256 / 12, (h % 3) ? 90 : 80), 255);
-   gfx_line (100, 100, ax (t->tm_min * 256 / 60, 95), ay (t->tm_min * 256 / 60, 95), 255);
-   int h = ((int) t->tm_hour * 60 + t->tm_min) * 256 / 12 / 60;
-   for (int dx = -1; dx < 1; dx++)
-      for (int dy = -1; dy < 1; dy++)
-         gfx_line (100 + dx, 100 + dy, ax (h, 60) + dx, ay (h, 60) + dy, 255);
+   gfx_analogue (100, 100, 99, t);
    char temp[10];
    gfx_pos (150, 100, GFX_C | GFX_M);
    gfx_text (2, "%02d", t->tm_mday);
-   gfx_line (150 - 13, 100 - 9, 150 - 13, 100 + 10, 255);
-   gfx_line (150 + 14, 100 - 9, 150 + 14, 100 + 10, 255);
-   gfx_line (150 - 13, 100 - 9, 150 + 14, 100 - 9, 255);
-   gfx_line (150 - 13, 100 + 10, 150 + 14, 100 + 10, 255);
+   gfx_box (26 + 2, 18 + 2, 255);
    strftime (temp, sizeof (temp), "%a", t);
    gfx_pos (50, 100, GFX_C | GFX_M);
    gfx_text (2, "%s", temp);
-   gfx_line (50 - 19, 100 - 9, 50 - 19, 100 + 10, 255);
-   gfx_line (50 + 20, 100 - 9, 50 + 20, 100 + 10, 255);
-   gfx_line (50 - 19, 100 - 9, 50 + 20, 100 - 9, 255);
-   gfx_line (50 - 19, 100 + 10, 50 + 20, 100 + 10, 255);
+   gfx_box (38 + 2, 18 + 2, 255);
    gfx_pos (100, 150, GFX_C | GFX_M);
    gfx_7seg (2, "%6d", steps);
    gfx_pos (100, 50, GFX_C | GFX_M);
@@ -209,20 +369,14 @@ face_analogue (struct tm *t)
    gfx_pos (0, 0, GFX_L | GFX_T);
    gfx_battery ();
    gfx_pos (199, 0, GFX_R | GFX_T);
-   gfx_iconq (charging, bits.charging);
+   gfx_charging ();
    if (bits.revkstarted)
    {
       gfx_pos (199, 199, GFX_R | GFX_B);
-      gfx_iconq (wifi, !revk_link_down ());
+      gfx_wifi ();
       gfx_pos (0, 199, GFX_L | GFX_B);
-      gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
+      gfx_mqtt ();
    }
-   {
-      const char *r;
-      if (revk_shutting_down (&r))
-      {
-         gfx_pos (100, 130, GFX_C | GFX_B);
-         gfx_text (-1, "%s", r);
-      }
-   }
+   gfx_pos (100, 130, GFX_C | GFX_B);
+   gfx_status ();
 }

@@ -20,7 +20,8 @@ This is planned to be code for the SQFMI Watchy product - it is a work in progre
 - [x] Low power with buttons
 - [x] Finish basic watch face design
 - [x] Analogue watch face design
-- [ ] At least one other fun watch face design - ideas welcome
+- [x] Lunar face
+- [x] At least one other fun watch face design - ideas welcome
 - [x] Basic menus
 - [x] Vibration motor (simple mode)
 - [ ] Alarm clock

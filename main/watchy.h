@@ -29,14 +29,16 @@
 #define	BATHIGH		2400
 #define	BATLOW		2000
 
+extern time_t moon_next;
 extern uint32_t steps;
-extern uint32_t laststeps;
+extern uint32_t last_steps;
 extern uint8_t battery;
 extern uint8_t menu1;
 extern uint8_t menu2;
 extern uint8_t menu3;
 extern uint8_t face;
 extern uint8_t flip;
+extern uint8_t moon_phase;
 extern char rtctz[];
 
 typedef struct bits
@@ -57,10 +59,20 @@ extern bits_t bits;
 extern const uint8_t gfx_cos[256];
 
 const char *gfx_qr (const char *value, uint8_t scale);
-void gfx_square_icon (const uint8_t * icon, uint8_t bytes, uint8_t visible);
-void gfx_battery (void);
+void gfx_gap (int8_t);
+void gfx_square_icon (const uint8_t * icon, uint16_t bytes, uint8_t visible);
+void gfx_status (void);
+void gfx_battery (void);        // Icon
+void gfx_charging (void);       // Icon
+void gfx_wifi (void);           // Icon
+void gfx_mqtt (void);           // Icon
+void gfx_phase (uint8_t cx, uint8_t cy, uint8_t r);
+void gfx_analogue (uint8_t cx, uint8_t cy, uint8_t r, struct tm *t);
+
 #define	gfx_icon(i) gfx_square_icon(icon_##i,icon_##i##_size,1)
 #define	gfx_iconq(i,v) gfx_square_icon(icon_##i,icon_##i##_size,v)
+
+const char *st (uint8_t n);
 
 void face_init (void);          // Cold start up watch face
 void face_show (time_t, char);  // Show current time
