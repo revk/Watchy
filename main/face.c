@@ -3,6 +3,7 @@
 #include "face.h"
 #include "menu.h"
 #include "iec18004.h"
+#include <math.h>
 
 const uint8_t gfx_cos[256] =
    { 255, 255, 255, 255, 255, 255, 254, 254, 253, 252, 252, 251, 250, 249, 248, 247, 246, 245, 243, 242, 240, 239, 237, 236, 234,
@@ -20,6 +21,66 @@ const uint8_t gfx_cos[256] =
    230, 232, 234, 236,
    237, 239, 240, 242, 243, 245, 246, 247, 248, 249, 250, 251, 252, 252, 253, 254, 254, 255, 255, 255, 255, 255
 };
+
+const char *
+st (uint8_t n)
+{
+   if (n % 100 < 10 || n % 100 > 20)
+   {
+      if (n % 10 == 1)
+         return "st";
+      if (n % 10 == 2)
+         return "nd";
+      if (n % 10 == 3)
+         return "rd";
+   }
+   return "th";
+}
+
+#define PI      3.1415926535897932384626433832795029L
+#define sinld(a)        sinl(PI*(a)/180.0L)
+
+static time_t
+fullmoon (int cycle)
+{                               // report full moon for specific lunar cycle
+   long double k = cycle + 0.5;
+   long double T = k / 1236.85L;
+   long double JD =
+      2415020.75933L + 29.53058868L * k + 0.0001178L * T * T - 0.000000155L * T * T * T +
+      0.00033L * sinld (166.56L + 132.87L * T - 0.009173L * T * T);
+   long double M = 359.2242L + 29.10535608L * k - 0.0000333L * T * T - 0.00000347L * T * T * T;
+   long double M1 = 306.0253L + 385.81691806L * k + 0.0107306L * T * T + 0.00001236L * T * T * T;
+   long double F = 21.2964L + 390.67050646L * k - 0.0016528L * T * T - 0.00000239L * T * T * T;
+   long double A = (0.1734 - 0.000393 * T) * sinld (M)  //
+      + 0.0021 * sinld (2 * M)  //
+      - 0.4068 * sinld (M1)     //
+      + 0.0161 * sinld (2 * M1) //
+      - 0.0004 * sinld (3 * M1) //
+      + 0.0104 * sinld (2 * F)  //
+      - 0.0051 * sinld (M + M1) //
+      - 0.0074 * sinld (M - M1) //
+      + 0.0004 * sinld (2 * F + M)      //
+      - 0.0004 * sinld (2 * F - M)      //
+      - 0.0006 * sinld (2 * F + M1)     //
+      + 0.0010 * sinld (2 * F - M1)     //
+      + 0.0005 * sinld (M + 2 * M1);    //
+   JD += A;
+   return (JD - 2440587.5L) * 86400LL;
+}
+
+static int
+lunarcycle (time_t t)
+{                               // report cycle for previous full moon
+   int cycle = ((long double) t + 2207726238UL) / 2551442.86195200L;    // Guess
+   time_t f = fullmoon (cycle);
+   if (t < f)
+      return cycle - 1;
+   f = fullmoon (cycle + 1);
+   if (t >= f)
+      return cycle + 1;
+   return cycle;
+}
+
 
 void
 gfx_gap (int8_t g)
@@ -150,6 +211,12 @@ face_show (time_t now, char key)
       acc_step_reset ();
       steps = 0;
       bits.newday = 1;
+      time_t now = mktime (&t);
+      int cycle = lunarcycle (now);
+      time_t base = fullmoon (cycle);
+      time_t next = fullmoon (cycle + 1);
+      moon_phase = (256 * (now - base) / (next - base));
+      moon_next = next;
    }
    if (menu1 || key)
       menu_show (&t, key);

@@ -69,5 +69,7 @@ void gfx_mqtt (void);           // Icon
 #define	gfx_icon(i) gfx_square_icon(icon_##i,icon_##i##_size,1)
 #define	gfx_iconq(i,v) gfx_square_icon(icon_##i,icon_##i##_size,v)
 
+const char *st (uint8_t n);
+
 void face_init (void);          // Cold start up watch face
 void face_show (time_t, char);  // Show current time
