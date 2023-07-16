@@ -333,10 +333,12 @@ face_combined (struct tm *t)
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_V);
    strftime (temp, sizeof (temp), "%a", t);
    gfx_text (3, "%s", temp);
-   gfx_gap(-5);
+   gfx_gap (-5);
    gfx_7seg (6, "%2d", t->tm_mday);
    strftime (temp, sizeof (temp), "%b", t);
    gfx_text (-3, "%s", temp);
+   gfx_pos (5, 80, GFX_L | GFX_T);
+   gfx_7seg (2, "%d", steps);
    gfx_pos (105, 199, GFX_L | GFX_B | GFX_V);
    gfx_battery ();
    gfx_charging ();
