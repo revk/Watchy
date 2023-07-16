@@ -138,7 +138,7 @@ gfx_analogue (uint8_t cx, uint8_t cy, uint8_t r, struct tm *t)
                 ay (h * 256 / 12, (h % 3) ? (int) r * 9 / 10 : (int) r * 8 / 10), 255);
    gfx_line (cx, cy, ax (t->tm_min * 256 / 60, (int) r * 95 / 100), ay (t->tm_min * 256 / 60, (int) r * 95 / 100), 255);
    int h = ((int) t->tm_hour * 60 + t->tm_min) * 256 / 12 / 60;
-   if (r < 50)
+   if (r < 40)
       gfx_line (cx, cy, ax (h, (int) r * 6 / 10), ay (h, (int) r * 6 / 10), 255);
    else
       for (int dx = -1; dx < 1; dx++)
@@ -297,7 +297,7 @@ face_show (time_t now, char key)
 
 void
 face_basic (struct tm *t)
-{                               // Basic face
+{                               // Digital face
    char temp[30];
    gfx_pos (100, 0, GFX_C | GFX_T | GFX_H);
    strftime (temp, sizeof (temp), "%H:%M", t);
@@ -324,8 +324,8 @@ face_basic (struct tm *t)
 }
 
 void
-face_basic2 (struct tm *t)
-{                               // Basic face, alternative layour
+face_combined (struct tm *t)
+{                               // Combined analogue/digital
    char temp[30];
    gfx_pos (100, 0, GFX_C | GFX_T | GFX_H);
    strftime (temp, sizeof (temp), "%H:%M", t);
@@ -333,6 +333,7 @@ face_basic2 (struct tm *t)
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_V);
    strftime (temp, sizeof (temp), "%a", t);
    gfx_text (3, "%s", temp);
+   gfx_gap(-5);
    gfx_7seg (6, "%2d", t->tm_mday);
    strftime (temp, sizeof (temp), "%b", t);
    gfx_text (-3, "%s", temp);

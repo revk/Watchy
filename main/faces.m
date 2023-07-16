@@ -8,7 +8,7 @@
 
 // List of faces
 face(basic,Digital)
-face(basic2,Combined)
+face(combined,Combined)
 face(analogue,Analogue)
 face (lunar,Lunar)
 face (deathstar,Death Star)
