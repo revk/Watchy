@@ -135,8 +135,8 @@ gfx_analogue (uint8_t cx, uint8_t cy, uint8_t r, struct tm *t)
       gfx_line (ax (a, r), ay (a, r), ax (a + 4, r), ay (a + 4, r), 255);
    for (int h = 0; h < 12; h++)
       gfx_line (ax (h * 256 / 12, r), ay (h * 256 / 12, r), ax (h * 256 / 12, (h % 3) ? (int) r * 9 / 10 : (int) r * 8 / 10),
-                ay (h * 256 / 12, (h % 3) ? (int) r * 9 / 10 : 80), 255);
-   gfx_line (cx, cy, ax (t->tm_min * 256 / 60, 95), ay (t->tm_min * 256 / 60, 95), 255);
+                ay (h * 256 / 12, (h % 3) ? (int) r * 9 / 10 : (int) r * 8 / 10), 255);
+   gfx_line (cx, cy, ax (t->tm_min * 256 / 60, (int) r * 95 / 100), ay (t->tm_min * 256 / 60, (int) r * 95 / 100), 255);
    int h = ((int) t->tm_hour * 60 + t->tm_min) * 256 / 12 / 60;
    if (r < 50)
       gfx_line (cx, cy, ax (h, (int) r * 6 / 10), ay (h, (int) r * 6 / 10), 255);
@@ -321,6 +321,27 @@ face_basic (struct tm *t)
    strftime (temp, sizeof (temp), "%a", t);
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_text (4, "%s", temp);
+}
+
+void
+face_basic2 (struct tm *t)
+{                               // Basic face, alternative layour
+   char temp[30];
+   gfx_pos (100, 0, GFX_C | GFX_T | GFX_H);
+   strftime (temp, sizeof (temp), "%H:%M", t);
+   gfx_7seg (8, "%s", temp);
+   gfx_pos (199, 199, GFX_R | GFX_B | GFX_V);
+   strftime (temp, sizeof (temp), "%a", t);
+   gfx_text (-3, "%s", temp);
+   gfx_7seg (5, "%2d", t->tm_mday);
+   strftime (temp, sizeof (temp), "%b", t);
+   gfx_text (-3, "%s", temp);
+   gfx_pos (105, 199, GFX_L | GFX_B | GFX_V);
+   gfx_battery ();
+   gfx_charging ();
+   gfx_wifi ();
+   gfx_mqtt ();
+   gfx_analogue (50, 150, 49, t);
 }
 
 void

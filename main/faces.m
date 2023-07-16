@@ -7,7 +7,8 @@
 #endif
 
 // List of faces
-face(basic,Basic digital)
+face(basic,Digital 1)
+face(basic2,Digital 2)
 face(analogue,Analogue)
 face (lunar,Lunar)
 face (deathstar,Death Star)
