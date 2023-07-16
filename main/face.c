@@ -81,6 +81,70 @@ lunarcycle (time_t t)
    return cycle;
 }
 
+void
+gfx_phase (uint8_t cx, uint8_t cy, uint8_t r)
+{                               // Show phase
+   // TODO moon needs inverting and lighting reversed for southern hemisphere
+   inline gfx_pos_t ax (gfx_pos_t a, gfx_pos_t l)
+   {
+      return cx + l * (gfx_cos[(a + 192) & 255] - 128) / 127;
+   }
+   inline gfx_pos_t ay (gfx_pos_t a, gfx_pos_t l)
+   {
+      return cy - l * (gfx_cos[(a) & 255] - 128) / 127;
+   }
+   for (int a = 0; a < 256; a += 4)
+      gfx_line (ax (a, r), ay (a, r), ax (a + 4, r), ay (a + 4, r), 255);       // Outline
+   int8_t l = (gfx_cos[moon_phase] - 128) * r / 127;
+   gfx_pos_t y = cy - r;
+   if (moon_phase > 128)
+      for (int a = 255; a >= 128; a--)
+      {                         // Light on right
+         gfx_pos_t q = ay (a, r);
+         while (y < q)
+         {
+            gfx_pos_t x = cx + (int) l * (gfx_cos[(a + 192) & 255] - 128) / 127;
+            gfx_line (ax (a, r), y, x, y, 255);
+            y++;
+         }
+   } else if (moon_phase && moon_phase < 128)
+      for (int a = 0; a < 128; a++)
+      {                         // Light on left
+         gfx_pos_t q = ay (a, r);
+         while (y < q)
+         {
+            gfx_pos_t x = cx + (int) l * (gfx_cos[(a + 192) & 255] - 128) / 127;
+            gfx_line (x, y, ax (a, r), y, 255);
+            y++;
+         }
+      }
+}
+
+void
+gfx_analogue (uint8_t cx, uint8_t cy, uint8_t r, struct tm *t)
+{
+   inline gfx_pos_t ax (gfx_pos_t a, gfx_pos_t l)
+   {
+      return cx + l * ((int) gfx_cos[(a + 192) & 255] - 128) / 127;
+   }
+   inline gfx_pos_t ay (gfx_pos_t a, gfx_pos_t l)
+   {
+      return cy - l * ((int) gfx_cos[(a) & 255] - 128) / 127;
+   }
+   for (int a = 0; a < 256; a += 4)
+      gfx_line (ax (a, r), ay (a, r), ax (a + 4, r), ay (a + 4, r), 255);
+   for (int h = 0; h < 12; h++)
+      gfx_line (ax (h * 256 / 12, r), ay (h * 256 / 12, r), ax (h * 256 / 12, (h % 3) ? (int) r * 9 / 10 : (int) r * 8 / 10),
+                ay (h * 256 / 12, (h % 3) ? (int) r * 9 / 10 : 80), 255);
+   gfx_line (cx, cy, ax (t->tm_min * 256 / 60, 95), ay (t->tm_min * 256 / 60, 95), 255);
+   int h = ((int) t->tm_hour * 60 + t->tm_min) * 256 / 12 / 60;
+   if (r < 50)
+      gfx_line (cx, cy, ax (h, (int) r * 6 / 10), ay (h, (int) r * 6 / 10), 255);
+   else
+      for (int dx = -1; dx < 1; dx++)
+         for (int dy = -1; dy < 1; dy++)
+            gfx_line (cx + dx, cy + dy, ax (h, (int) r * 6 / 10) + dx, ay (h, (int) r * 6 / 10) + dy, 255);
+}
 
 void
 gfx_gap (int8_t g)
@@ -252,9 +316,9 @@ face_basic (struct tm *t)
    gfx_7seg (1, "%3d", battery);
    gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
    gfx_7seg (2, "%6d", steps);
-   strftime (temp, sizeof (temp), "%a", t);
    gfx_wifi ();
    gfx_mqtt ();
+   strftime (temp, sizeof (temp), "%a", t);
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_text (4, "%s", temp);
 }
@@ -262,24 +326,7 @@ face_basic (struct tm *t)
 void
 face_analogue (struct tm *t)
 {
-   inline gfx_pos_t ax (gfx_pos_t a, gfx_pos_t l)
-   {
-      return 100 + l * ((int) gfx_cos[(a + 192) & 255] - 128) / 127;
-   }
-   inline gfx_pos_t ay (gfx_pos_t a, gfx_pos_t l)
-   {
-      return 100 - l * ((int) gfx_cos[(a) & 255] - 128) / 127;
-   }
-   for (int a = 0; a < 256; a += 4)
-      gfx_line (ax (a, 99), ay (a, 99), ax (a + 4, 99), ay (a + 4, 99), 255);
-   for (int h = 0; h < 12; h++)
-      gfx_line (ax (h * 256 / 12, 99), ay (h * 256 / 12, 99), ax (h * 256 / 12, (h % 3) ? 90 : 80),
-                ay (h * 256 / 12, (h % 3) ? 90 : 80), 255);
-   gfx_line (100, 100, ax (t->tm_min * 256 / 60, 95), ay (t->tm_min * 256 / 60, 95), 255);
-   int h = ((int) t->tm_hour * 60 + t->tm_min) * 256 / 12 / 60;
-   for (int dx = -1; dx < 1; dx++)
-      for (int dy = -1; dy < 1; dy++)
-         gfx_line (100 + dx, 100 + dy, ax (h, 60) + dx, ay (h, 60) + dy, 255);
+   gfx_analogue (100, 100, 99, t);
    char temp[10];
    gfx_pos (150, 100, GFX_C | GFX_M);
    gfx_text (2, "%02d", t->tm_mday);

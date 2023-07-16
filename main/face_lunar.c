@@ -38,49 +38,12 @@ lunar (struct tm *t, uint8_t force)
          gfx_text (-1, "%s", r);
       }
    }
-   // Show phase
-   // TODO moon needs inverting and lighting reversed for southern hemisphere
-   const int r = 48;
-   inline gfx_pos_t ax (gfx_pos_t a, gfx_pos_t l)
-   {
-      return 50 + l * (gfx_cos[(a + 192) & 255] - 128) / 127;
-   }
-   inline gfx_pos_t ay (gfx_pos_t a, gfx_pos_t l)
-   {
-      return 50 - l * (gfx_cos[(a) & 255] - 128) / 127;
-   }
    gfx_pos (0, 0, GFX_L | GFX_T);
    if (force)
       gfx_icon (deathstar);
    else
       gfx_icon (moon);
-   for (int a = 0; a < 256; a += 4)
-      gfx_line (ax (a, r), ay (a, r), ax (a + 4, r), ay (a + 4, r), 255);       // Outline
-   int8_t l = (gfx_cos[moon_phase] - 128) * r / 127;
-   gfx_pos_t y = 50 - r;
-   if (moon_phase > 128)
-      for (int a = 255; a >= 128; a--)
-      {                         // Light on right
-         gfx_pos_t q = ay (a, r);
-         while (y < q)
-         {
-            gfx_pos_t x = 50 + (int) l * (gfx_cos[(a + 192) & 255] - 128) / 127;
-            if (!force || (y & 1))
-               gfx_line (ax (a, r), y, x, y, 255);
-            y++;
-         }
-   } else if (moon_phase && moon_phase < 128)
-      for (int a = 0; a < 128; a++)
-      {                         // Light on left
-         gfx_pos_t q = ay (a, r);
-         while (y < q)
-         {
-            gfx_pos_t x = 50 + (int) l * (gfx_cos[(a + 192) & 255] - 128) / 127;
-            if (!force || (y & 1))
-               gfx_line (x, y, ax (a, r), y, 255);
-            y++;
-         }
-      }
+   gfx_phase (50, 50, 48);
 }
 
 void

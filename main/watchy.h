@@ -66,6 +66,9 @@ void gfx_battery (void);        // Icon
 void gfx_charging (void);       // Icon
 void gfx_wifi (void);           // Icon
 void gfx_mqtt (void);           // Icon
+void gfx_phase (uint8_t cx, uint8_t cy, uint8_t r);
+void gfx_analogue (uint8_t cx, uint8_t cy, uint8_t r, struct tm *t);
+
 #define	gfx_icon(i) gfx_square_icon(icon_##i,icon_##i##_size,1)
 #define	gfx_iconq(i,v) gfx_square_icon(icon_##i,icon_##i##_size,v)
 
