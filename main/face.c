@@ -334,9 +334,10 @@ face_basic2 (struct tm *t)
    strftime (temp, sizeof (temp), "%a", t);
    gfx_text (-3, "%s", temp);
    gfx_7seg (5, "%2d", t->tm_mday);
+   gfx_gap(5);
    strftime (temp, sizeof (temp), "%b", t);
    gfx_text (-3, "%s", temp);
-   gfx_pos (105, 199, GFX_L | GFX_B | GFX_V);
+   gfx_pos (115, 199, GFX_L | GFX_B | GFX_V);
    gfx_battery ();
    gfx_charging ();
    gfx_wifi ();

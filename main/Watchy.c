@@ -186,6 +186,18 @@ timesync (struct timeval *tv)
    ESP_LOGI (TAG, "Time sync @ %ld", uptime ());
 }
 
+static void
+buzzer_task (void *pvParameters)
+{
+   bits.busy = 1;
+   gpio_set_level (GPIOVIB, 1);
+   usleep (500000);
+   gpio_set_level (GPIOVIB, 0);
+   bits.busy = 0;
+   vTaskDelete (NULL);
+
+}
+
 void
 app_main ()
 {
@@ -363,7 +375,7 @@ app_main ()
    }
 
    if (!wakeup || bits.newhour)
-      gpio_set_level (GPIOVIB, 1);
+      revk_task ("Buzzer", buzzer_task, NULL, 1);
 
    epaper_init ();
 
@@ -386,9 +398,6 @@ app_main ()
       face_show (now, key);
       key = 0;
    }
-
-   if (!wakeup || bits.newhour)
-      gpio_set_level (GPIOVIB, 0);
 
    if (bits.newday && last_steps)
    {
