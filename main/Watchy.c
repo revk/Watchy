@@ -191,11 +191,19 @@ buzzer_task (void *pvParameters)
 {
    bits.busy = 1;
    gpio_set_level (GPIOVIB, 1);
-   usleep (500000);
+   usleep (100000);
    gpio_set_level (GPIOVIB, 0);
    bits.busy = 0;
    vTaskDelete (NULL);
+}
 
+static void
+report_steps_task (void *pvParameters)
+{
+   bits.busy = 1;
+   sleep (1);                   // TODO
+   bits.busy = 0;
+   vTaskDelete (NULL);
 }
 
 void
@@ -216,6 +224,7 @@ app_main ()
       last_steps = 0;
       last_min = 255;
       last_hour = 255;
+      moon_next=0;
    }
    // Charging
    gpio_pullup_dis (GPIORX);    // Used to detect the UART is down, and hence no VBUS and hence not charging.
@@ -376,6 +385,8 @@ app_main ()
 
    if (!wakeup || bits.newhour)
       revk_task ("Buzzer", buzzer_task, NULL, 1);
+   if (last_steps && bits.newhour)
+      revk_task ("Steps", report_steps_task, NULL, 8);
 
    epaper_init ();
 

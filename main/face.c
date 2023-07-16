@@ -275,6 +275,9 @@ face_show (time_t now, char key)
       acc_step_reset ();
       steps = 0;
       bits.newday = 1;
+   }
+   if (bits.newhour || !moon_next)
+   {
       time_t now = mktime (&t);
       int cycle = lunarcycle (now);
       time_t base = fullmoon (cycle);
