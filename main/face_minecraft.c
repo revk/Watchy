@@ -38,7 +38,7 @@ face_minecraft (struct tm *t)
    gfx_blocky (3, "%s", temp);
    gfx_gap (5);
    gfx_blocky (5, "%2d", t->tm_mday);
-   gfx_gap (3);
+   gfx_gap (2);
    strftime (temp, sizeof (temp), "%b", t);
    gfx_blocky (-3, "%s", temp);
    gfx_gap (10);
