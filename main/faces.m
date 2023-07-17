@@ -10,7 +10,8 @@
 face(basic,Digital)
 face(combined,Combined)
 face(analogue,Analogue)
-face (lunar,Lunar)
-face (deathstar,Death Star)
+face(lunar,Lunar)
+face(deathstar,Death Star)
+face(minecraft,Minecraft)
 
 #undef face

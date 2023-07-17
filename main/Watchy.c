@@ -224,7 +224,7 @@ app_main ()
       last_steps = 0;
       last_min = 255;
       last_hour = 255;
-      moon_next=0;
+      moon_next = 0;
    }
    // Charging
    gpio_pullup_dis (GPIORX);    // Used to detect the UART is down, and hence no VBUS and hence not charging.
