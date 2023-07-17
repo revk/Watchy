@@ -36,12 +36,11 @@ face_minecraft (struct tm *t)
    gfx_pos (199, 0, GFX_R | GFX_T | GFX_V);
    strftime (temp, sizeof (temp), "%a", t);
    gfx_blocky (3, "%s", temp);
-   gfx_gap (5);
+   gfx_gap (3);
    gfx_blocky (5, "%2d", t->tm_mday);
-   gfx_gap (2);
    strftime (temp, sizeof (temp), "%b", t);
    gfx_blocky (-3, "%s", temp);
-   gfx_gap (10);
+   gfx_gap (13);
    gfx_blocky (2, "%5d", steps);
    gfx_pos (199, 199, GFX_B | GFX_R | GFX_H);
    gfx_battery ();
