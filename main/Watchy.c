@@ -471,6 +471,7 @@ app_main ()
       {                         // Start WiFi
          bits.wifistarted = 1;
          revk_start ();
+         continue;
       }
       if (!bits.busy && !revk_shutting_down (NULL) && !(bits.timeunsync && uptime () < 20) && !(bits.holdoff && uptime () < 120))
       {
