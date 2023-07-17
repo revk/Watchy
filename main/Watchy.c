@@ -206,6 +206,44 @@ report_steps_task (void *pvParameters)
    vTaskDelete (NULL);
 }
 
+static char key = 0;
+
+static void
+key_check (void)
+{                               // Actually check for keys (TODO queue keys)
+   uint8_t btns = 0;
+   for (uint8_t b = 0; b < 4; b++)
+      if (gpio_get_level (btn[b]))
+         btns |= (1 << b);
+   last_btn &= btns;
+   if (!key)
+      for (uint8_t b = 0; b < 4; b++)
+         if ((btns & (1 << b)) && !(last_btn & (1 << b)))
+         {
+            last_btn |= (1 << b);
+            key = "RLUDRULD"[(b ^ flip) & 7];   // Mapped for display flipping
+            ESP_LOGI (TAG, "Key %d=%c (flip %X)", b, key, flip);
+         }
+}
+
+static void
+key_task (void *pvParameters)
+{
+   while (1)
+   {
+      key_check ();
+      usleep (1000);
+   }
+}
+
+static char
+next_key (void)
+{
+   char ret = key;
+   key = 0;
+   return ret;
+}
+
 void
 app_main ()
 {
@@ -241,24 +279,10 @@ app_main ()
    gpio_set_level (GPIOVIB, 0);
    gpio_set_direction (GPIOVIB, GPIO_MODE_OUTPUT);
 
-   char btn_read (void)
-   {
-      uint8_t btns = 0;
-      for (uint8_t b = 0; b < 4; b++)
-         if (gpio_get_level (btn[b]))
-            btns |= (1 << b);
-      last_btn &= btns;
-      for (uint8_t b = 0; b < 4; b++)
-         if ((btns & (1 << b)) && !(last_btn & (1 << b)))
-         {
-            last_btn |= (1 << b);
-            char key = "RLUDRULD"[(b ^ flip) & 7];      // Mapped for display flipping
-            ESP_LOGI (TAG, "Key %d=%c (flip %X)", b, key, flip);
-            return key;
-         }
-      return 0;
-   }
-   char key = btn_read ();
+   key_check ();                // pick up as soon as possible, before task runs
+   revk_task ("Key", key_task, NULL, 1);
+   char key = next_key ();
+
    {                            // Time zone
       int l;
       for (l = 0; l < sizeof (rtctz) && rtctz[l]; l++);
@@ -325,8 +349,9 @@ app_main ()
          if (wakeup)
          {
             epaper_init ();
-            face_show (now, key);
-            key = 0;
+            do
+               face_show (now, key);
+            while ((key = next_key ()));
          }
       }
    } else
@@ -401,13 +426,16 @@ app_main ()
    if (key || !wakeup)
    {                            // Delayed
       now = ertc_read () + 86400 * testday;
-      face_show (now, key);
+      do
+         face_show (now, key);
+      while ((key = next_key ()));
    }
 
    if (bits.startup)
    {
-      face_show (now, key);
-      key = 0;
+      do
+         face_show (now, key);
+      while ((key = next_key ()));
    }
 
    if (bits.newday && last_steps)
@@ -426,14 +454,18 @@ app_main ()
    while (1)
    {
       now = time (0) + 86400 * testday;
-      key = btn_read ();
+      key = next_key ();
       if (now != last)
       {
          read_steps ();
          read_battery ();
       }
       if (key || now != last)
-         face_show (now, key);
+      {
+         do
+            face_show (now, key);
+         while ((key = next_key ()));
+      }
       last = now;
       if (bits.wifi && !bits.wifistarted)
       {                         // Start WiFi
