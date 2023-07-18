@@ -344,6 +344,7 @@ face_combined (struct tm *t)
    gfx_7seg (2, "%d", steps);
    gfx_pos (105, 199, GFX_L | GFX_B | GFX_V);
    gfx_battery ();
+   gfx_7seg (1, "%3d", battery);
    gfx_charging ();
    gfx_wifi ();
    gfx_mqtt ();
