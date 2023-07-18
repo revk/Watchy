@@ -33,14 +33,15 @@ gfx_menu1 (const char *title)
 void
 gfx_menu (struct tm *t, const char *title)
 {                               // Start menu
+   uint16_t c = gfx_icon_size (right) / 2;
    gfx_lock ();
    gfx_clear (0);
    char temp[30];
    strftime (temp, sizeof (temp), "%F", t);
-   gfx_pos (100, 0, GFX_C | GFX_T);
+   gfx_pos (100, c, GFX_C | GFX_M);
    gfx_text (-2, title ? : temp);
    strftime (temp, sizeof (temp), "%H:%M %Z", t);
-   gfx_pos (100, 199, GFX_C | GFX_B);
+   gfx_pos (100, 199 - c, GFX_C | GFX_M);
    gfx_text (2, temp);
    gfx_pos (0, 0, GFX_L | GFX_T || GFX_H);
    gfx_icon (up);
@@ -48,10 +49,11 @@ gfx_menu (struct tm *t, const char *title)
    gfx_icon (right);
    gfx_pos (0, 199, GFX_L | GFX_B | GFX_H);
    gfx_icon (down);
+   gfx_pos (c * 2, 199 - c, GFX_L | GFX_M);
    gfx_charging ();
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_icon (left);
-   gfx_pos (gfx_x (), gfx_y () - 1, gfx_a ());
+   gfx_pos (199 - c * 2, 199 - c, GFX_R | GFX_M);
    gfx_battery ();
    gfx_pos (100, 24, GFX_C | GFX_T | GFX_V);
    gfx_gap (5);

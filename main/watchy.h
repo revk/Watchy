@@ -26,8 +26,8 @@
 #define	RTCADDRESS	0x51
 #define	ADCCHANNEL	ADC_CHANNEL_6
 #define	ACCADDRESS	0x18
-#define	BATHIGH		2400
-#define	BATLOW		2000
+#define	BATHIGH		2400	// Based on what I see on full charge
+#define	BATLOW		1900	// Guess
 
 extern time_t moon_next;
 extern uint32_t steps;
@@ -61,6 +61,7 @@ extern const uint8_t gfx_cos[256];
 const char *gfx_qr (const char *value, uint8_t scale);
 void gfx_gap (int8_t);
 void gfx_square_icon (const uint8_t * icon, uint16_t bytes, uint8_t visible);
+uint16_t gfx_square_icon_size (uint16_t);
 void gfx_status (void);
 void gfx_battery (void);        // Icon
 void gfx_charging (void);       // Icon
@@ -70,6 +71,7 @@ void gfx_phase (uint8_t cx, uint8_t cy, uint8_t r);
 void gfx_analogue (uint8_t cx, uint8_t cy, uint8_t r, struct tm *t);
 
 #define	gfx_icon(i) gfx_square_icon(icon_##i,icon_##i##_size,1)
+#define	gfx_icon_size(i) gfx_square_icon_size(icon_##i##_size)
 #define	gfx_iconq(i,v) gfx_square_icon(icon_##i,icon_##i##_size,v)
 
 const char *st (uint8_t n);

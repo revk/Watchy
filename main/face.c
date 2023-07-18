@@ -198,16 +198,22 @@ gfx_mqtt (void)
    gfx_iconq (mqtt, lwmqtt_connected (revk_mqtt (0)));
 }
 
-void
-gfx_square_icon (const uint8_t * icon, uint16_t bytes, uint8_t visible)
-{                               // Assumes square icon
-   // Work out size, assuming square, allow up to 200x200
+uint16_t
+gfx_square_icon_size (uint16_t bytes)
+{                               // Size of icon from sizeof(), assuming square
    for (int i = 25; i >= 1; i--)
       if (bytes > i * i * 8)
       {
          bytes /= i + 1;
          break;
       }
+   return bytes;
+}
+
+void
+gfx_square_icon (const uint8_t * icon, uint16_t bytes, uint8_t visible)
+{                               // Assumes square icon
+   bytes = gfx_square_icon_size (bytes);
    gfx_icon2 (bytes, bytes, visible ? icon : NULL);
 }
 
@@ -342,7 +348,7 @@ face_combined (struct tm *t)
    gfx_text (-3, "%s", temp);
    gfx_pos (5, 80, GFX_L | GFX_T);
    gfx_7seg (2, "%d", steps);
-   gfx_pos (105, 199, GFX_L | GFX_B | GFX_V);
+   gfx_pos (115, 199, GFX_C | GFX_B | GFX_V);
    gfx_battery ();
    gfx_7seg (1, "%3d", battery);
    gfx_charging ();
