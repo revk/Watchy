@@ -350,9 +350,9 @@ face_combined (struct tm *t)
    gfx_7seg (2, "%d", steps);
    gfx_pos (115, 199, GFX_C | GFX_B | GFX_V);
    gfx_battery ();
-   gfx_pos(gfx_x()-5,gfx_y(),gfx_a());
+   gfx_pos (gfx_x () - 2, gfx_y (), gfx_a ());
    gfx_7seg (1, "%3d", battery);
-   gfx_pos(gfx_x()+5,gfx_y(),gfx_a());
+   gfx_pos (gfx_x () + 2, gfx_y (), gfx_a ());
    gfx_charging ();
    gfx_wifi ();
    gfx_mqtt ();

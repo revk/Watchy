@@ -26,8 +26,8 @@
 #define	RTCADDRESS	0x51
 #define	ADCCHANNEL	ADC_CHANNEL_6
 #define	ACCADDRESS	0x18
-#define	BATHIGH		2400	// Based on what I see on full charge
-#define	BATLOW		1900	// Guess
+#define	BATHIGH		2400    // Based on what I see on full charge
+#define	BATLOW		1900    // Guess
 
 extern time_t moon_next;
 extern uint32_t steps;
