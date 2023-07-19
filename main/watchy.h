@@ -64,6 +64,7 @@ void gfx_square_icon (const uint8_t * icon, uint16_t bytes, uint8_t visible);
 uint16_t gfx_square_icon_size (uint16_t);
 void gfx_status (void);
 void gfx_battery (void);        // Icon
+void gfx_percent (void);        // Icon
 void gfx_charging (void);       // Icon
 void gfx_wifi (void);           // Icon
 void gfx_mqtt (void);           // Icon

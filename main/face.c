@@ -176,6 +176,13 @@ gfx_battery (void)
       gfx_icon (bat0);
 }
 
+void gfx_percent(void)
+{
+   gfx_pos (gfx_x () - 2, gfx_y (), gfx_a ()); // 2 1/2 digits, so move left a tad
+   gfx_7seg (1, "%3d", battery);
+   gfx_pos (gfx_x () + 2, gfx_y (), gfx_a ());
+}
+
 void
 gfx_charging (void)
 {
@@ -321,8 +328,7 @@ face_basic (struct tm *t)
    gfx_qr (temp, 2);
    gfx_charging ();
    gfx_battery ();
-   gfx_pos (gfx_x (), gfx_y () - 3, gfx_a ());  // Position for battery icon - this is temporary until calibrated
-   gfx_7seg (1, "%3d", battery);
+   gfx_percent();
    gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
    gfx_7seg (2, "%6d", steps);
    gfx_wifi ();
@@ -350,9 +356,7 @@ face_combined (struct tm *t)
    gfx_7seg (2, "%d", steps);
    gfx_pos (115, 199, GFX_C | GFX_B | GFX_V);
    gfx_battery ();
-   gfx_pos (gfx_x () - 2, gfx_y (), gfx_a ());
-   gfx_7seg (1, "%3d", battery);
-   gfx_pos (gfx_x () + 2, gfx_y (), gfx_a ());
+   gfx_percent();
    gfx_charging ();
    gfx_wifi ();
    gfx_mqtt ();
