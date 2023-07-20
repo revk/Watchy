@@ -189,9 +189,9 @@ timesync (struct timeval *tv)
 static void
 buzzer_task (void *pvParameters)
 {
-   bits.busy = 1;
+	ESP_LOGE(TAG,"Buzzer");
    gpio_set_level (GPIOVIB, 1);
-   usleep (100000);
+   usleep (500000);
    gpio_set_level (GPIOVIB, 0);
    bits.busy = 0;
    vTaskDelete (NULL);
@@ -200,13 +200,19 @@ buzzer_task (void *pvParameters)
 static void
 report_steps_task (void *pvParameters)
 {
-   bits.busy = 1;
-   sleep (1);                   // TODO
+   while (uptime () < 10 && revk_link_down ())
+      sleep (1);
+   if (!revk_link_down ())
+   {
+      // TODO
+   }
    bits.busy = 0;
    vTaskDelete (NULL);
 }
 
-static char key = 0;
+static volatile char key1 = 0,
+   key2 = 0;
+static SemaphoreHandle_t key_mutex = NULL;
 
 static void
 key_check (void)
@@ -216,13 +222,19 @@ key_check (void)
       if (gpio_get_level (btn[b]))
          btns |= (1 << b);
    last_btn &= btns;
-   if (!key)
+   if (!key2)                   // Two key buffering
       for (uint8_t b = 0; b < 4; b++)
          if ((btns & (1 << b)) && !(last_btn & (1 << b)))
          {
             last_btn |= (1 << b);
-            key = "RLUDRULD"[(b ^ flip) & 7];   // Mapped for display flipping
+            char key = "RLUDRULD"[(b ^ flip) & 7];      // Mapped for display flipping
             ESP_LOGI (TAG, "Key %d=%c (flip %X)", b, key, flip);
+            xSemaphoreTake (key_mutex, portMAX_DELAY);
+            if (key1)
+               key2 = key;
+            else
+               key1 = key;
+            xSemaphoreGive (key_mutex);
          }
 }
 
@@ -239,8 +251,17 @@ key_task (void *pvParameters)
 static char
 next_key (void)
 {
-   char ret = key;
-   key = 0;
+   if (!key1)
+      return 0;
+   char ret = 0;
+   xSemaphoreTake (key_mutex, portMAX_DELAY);
+   if (key1)
+   {
+      ret = key1;
+      key1 = key2;
+      key2 = 0;
+   }
+   xSemaphoreGive (key_mutex);
    return ret;
 }
 
@@ -279,6 +300,8 @@ app_main ()
    gpio_set_level (GPIOVIB, 0);
    gpio_set_direction (GPIOVIB, GPIO_MODE_OUTPUT);
 
+   key_mutex = xSemaphoreCreateBinary ();
+   xSemaphoreGive (key_mutex);
    key_check ();                // pick up as soon as possible, before task runs
    revk_task ("Key", key_task, NULL, 1);
    char key = next_key ();
@@ -357,7 +380,13 @@ app_main ()
    } else
       bits.wifi = 1;            // Let's try and set clock
 
-   if (wakeup && !bits.wifi && !bits.holdoff && !key && !bits.startup)
+   if (!wakeup || bits.newhour || bits.newmin)  // TODO, testing
+   {
+      bits.busy = 1;
+      revk_task ("Buzzer", buzzer_task, NULL, 1);
+   }
+
+   if (wakeup && !bits.wifi && !bits.holdoff && !key && !bits.startup && !bits.busy)
       night (now);
 
    // Full startup
@@ -408,10 +437,11 @@ app_main ()
       strncpy (rtctz, tz, sizeof (rtctz));
    }
 
-   if (!wakeup || bits.newhour)
-      revk_task ("Buzzer", buzzer_task, NULL, 1);
    if (last_steps && bits.newhour)
+   {
+      bits.busy = 1;
       revk_task ("Steps", report_steps_task, NULL, 8);
+   }
 
    epaper_init ();
 
@@ -478,6 +508,6 @@ app_main ()
          revk_pre_shutdown ();
          night (now);           // Stay up in charging for 1 minute at least
       }
-      usleep (10000);
+      usleep (100000);
    }
 }
