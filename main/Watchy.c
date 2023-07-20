@@ -117,11 +117,11 @@ night (time_t now)
          if (last_btn & (1 << b))
             mask |= 1LL << btn[b];
       esp_sleep_enable_ext1_wakeup (mask, ESP_EXT1_WAKEUP_ALL_LOW);
-      ESP_LOGE (TAG, "Wait key release %X, or %d seconds", last_btn, secs);
+      ESP_LOGD (TAG, "Wait key release %X, or %d seconds", last_btn, secs);
    } else
    {
       esp_sleep_enable_ext1_wakeup (BTNMASK, ESP_EXT1_WAKEUP_ANY_HIGH); // Wait press
-      ESP_LOGE (TAG, "Wait key press, or %d seconds", secs);
+      ESP_LOGD (TAG, "Wait key press, or %d seconds", secs);
    }
    esp_deep_sleep (1000000LL * secs ? : 600000LL);      // Next minute - or fast
 }
@@ -189,7 +189,7 @@ timesync (struct timeval *tv)
 static void
 buzzer_task (void *pvParameters)
 {
-	ESP_LOGE(TAG,"Buzzer");
+   ESP_LOGI (TAG, "Buzzer");
    gpio_set_level (GPIOVIB, 1);
    usleep (500000);
    gpio_set_level (GPIOVIB, 0);
@@ -364,18 +364,18 @@ app_main ()
          read_battery ();
       }
       v = now / 60 % 60;
-      if (last_min != v || key)
-      {                         // New minute
+      if (last_min != v)
+      {
          bits.newmin = 1;
          last_min = v;
          read_steps ();
-         if (wakeup)
-         {
-            epaper_init ();
-            do
-               face_show (now, key);
-            while ((key = next_key ()));
-         }
+      }
+      if ((bits.newmin || key) && wakeup)
+      {                         // Draw ASAP
+         epaper_init ();
+         do
+            face_show (now, key);
+         while ((key = next_key ()));
       }
    } else
       bits.wifi = 1;            // Let's try and set clock
@@ -431,7 +431,7 @@ app_main ()
       strncpy (rtctz, tz, sizeof (rtctz));
    }
 
-   if (!wakeup || bits.newhour || bits.newmin)  // TODO, testing
+   if (!wakeup || bits.newhour)
    {
       bits.busy = 1;
       revk_task ("Buzzer", buzzer_task, NULL, 2);

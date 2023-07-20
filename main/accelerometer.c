@@ -620,7 +620,7 @@ acc_init (void)
    uint8_t status = i2c_read (0x2A);
    //if (!fi_addr||status != 1) // TODO we only call on power up, so may as well always do...
    {                            // Not initialised
-      ESP_LOGE (TAG, "Initialise");
+      ESP_LOGD (TAG, "Initialise");
       // Soft reset
       i2c_write (0x7E, 0xB6);   // CMD (soft boot command)
       sleep (1);
