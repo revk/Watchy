@@ -380,12 +380,6 @@ app_main ()
    } else
       bits.wifi = 1;            // Let's try and set clock
 
-   if (!wakeup || bits.newhour || bits.newmin)  // TODO, testing
-   {
-      bits.busy = 1;
-      revk_task ("Buzzer", buzzer_task, NULL, 1);
-   }
-
    if (wakeup && !bits.wifi && !bits.holdoff && !key && !bits.startup && !bits.busy)
       night (now);
 
@@ -435,6 +429,12 @@ app_main ()
    {                            // RTC cached
       extern char *tz;
       strncpy (rtctz, tz, sizeof (rtctz));
+   }
+
+   if (!wakeup || bits.newhour || bits.newmin)  // TODO, testing
+   {
+      bits.busy = 1;
+      revk_task ("Buzzer", buzzer_task, NULL, 1);
    }
 
    if (last_steps && bits.newhour)
