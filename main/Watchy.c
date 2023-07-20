@@ -434,7 +434,7 @@ app_main ()
    if (!wakeup || bits.newhour || bits.newmin)  // TODO, testing
    {
       bits.busy = 1;
-      revk_task ("Buzzer", buzzer_task, NULL, 1);
+      revk_task ("Buzzer", buzzer_task, NULL, 2);
    }
 
    if (last_steps && bits.newhour)
