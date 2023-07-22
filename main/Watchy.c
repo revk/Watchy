@@ -190,7 +190,7 @@ static void
 buzzer_task (void *pvParameters)
 {
    ESP_LOGI (TAG, "Buzzer");
-   if (battery > 10)
+   if (battery >= 10)
    {
 #if 0                           // Wants to be PWM or something, as just turning on seems to only work when charging?!
       gpio_set_level (GPIOVIB, 1);
