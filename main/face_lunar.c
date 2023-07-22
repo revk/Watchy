@@ -15,8 +15,9 @@ lunar (struct tm *t, uint8_t force)
    gfx_gap (5);
    gfx_pos (0, 100 + 5, GFX_L | GFX_T | GFX_V);
    gfx_7seg (2, "%-5d", steps);
-   gfx_pos (gfx_x (), gfx_y () + 2, GFX_L | GFX_T | GFX_H);
+   gfx_pos (gfx_x (), gfx_y () + 11, GFX_L | GFX_M | GFX_H);
    gfx_battery ();
+   gfx_percent ();
    gfx_charging ();
    gfx_wifi ();
    gfx_mqtt ();

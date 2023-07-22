@@ -42,10 +42,11 @@ face_minecraft (struct tm *t)
    gfx_blocky (-3, "%s", temp);
    gfx_gap (13);
    gfx_blocky (2, "%5d", steps);
-   gfx_pos (199, 199, GFX_B | GFX_R | GFX_H);
+   gfx_pos (199, 199, GFX_B | GFX_R | GFX_V);
    gfx_battery ();
+   gfx_percent ();
    gfx_charging ();
-   gfx_pos (199, 180, GFX_B | GFX_R | GFX_H);
+   gfx_pos (180, 199, GFX_B | GFX_R | GFX_V);
    gfx_wifi ();
    gfx_mqtt ();
 }
