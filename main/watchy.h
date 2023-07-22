@@ -43,6 +43,8 @@ extern char rtctz[];
 
 typedef struct bits
 {                               // Struct to just save a bit of RAM
+   uint8_t wakeup:4;            // Wakeup reason
+   uint8_t reset:4;             // Reset reason
    uint8_t charging:1;          // We are charging
    uint8_t startup:1;           // We want startup
    uint8_t wifi:1;              // We want wifi connected

@@ -190,7 +190,7 @@ static void
 buzzer_task (void *pvParameters)
 {
    ESP_LOGI (TAG, "Buzzer");
-   if (battery >= 10)
+   if (bits.reset != ESP_RST_BROWNOUT || bits.charging)
    {
 #if 0                           // Wants to be PWM or something, as just turning on seems to only work when charging?!
       gpio_set_level (GPIOVIB, 1);
@@ -273,17 +273,17 @@ next_key (void)
 void
 app_main ()
 {
-   uint8_t wakeup = esp_sleep_get_wakeup_cause ();
-   uint8_t reset = esp_reset_reason ();
+   bits.wakeup = esp_sleep_get_wakeup_cause ();
+   bits.reset = esp_reset_reason ();
    {
       struct timeval tv;
       gettimeofday (&tv, NULL);
 
-      ESP_LOGI (TAG, "Wake %d/%d @ %lld.%06ld", reset, wakeup, tv.tv_sec, tv.tv_usec);
+      ESP_LOGI (TAG, "Wake %d/%d @ %lld.%06ld", bits.reset, bits.wakeup, tv.tv_sec, tv.tv_usec);
    }
-   if (!wakeup)
+   if (!bits.wakeup)
       menu1 = menu2 = menu3 = 0;
-   if (!wakeup || reset == ESP_RST_POWERON || reset == ESP_RST_EXT || reset == ESP_RST_BROWNOUT)
+   if (!bits.wakeup || bits.reset == ESP_RST_POWERON || bits.reset == ESP_RST_EXT || bits.reset == ESP_RST_BROWNOUT)
    {
       last_steps = 0;
       last_min = 255;
@@ -338,13 +338,13 @@ app_main ()
          jo_string (j, "error", "Failed to start");
          jo_string (j, "description", e);
          revk_error ("gfx", &j);
-      } else if (!wakeup)
+      } else if (!bits.wakeup)
          face_init ();
    }
 
    if (i2c_init ())
       ESP_LOGE (TAG, "RTC init fail");
-   if (reset == ESP_RST_POWERON || reset == ESP_RST_EXT || reset == ESP_RST_BROWNOUT)
+   if (bits.reset == ESP_RST_POWERON || bits.reset == ESP_RST_EXT || bits.reset == ESP_RST_BROWNOUT)
    {                            // Some h/w init
       ertc_init ();
       acc_init ();
@@ -375,7 +375,7 @@ app_main ()
          last_min = v;
          read_steps ();
       }
-      if ((bits.newmin || key) && wakeup)
+      if ((bits.newmin || key) && bits.wakeup)
       {                         // Draw ASAP
          epaper_init ();
          do
@@ -385,11 +385,11 @@ app_main ()
    } else
       bits.wifi = 1;            // Let's try and set clock
 
-   if (wakeup && !bits.wifi && !bits.holdoff && !key && !bits.startup && !bits.busy)
+   if (bits.wakeup && !bits.wifi && !bits.holdoff && !key && !bits.startup && !bits.busy)
       night (now);
 
    // Full startup
-   ESP_LOGI (TAG, "Revk boot wakeup=%d wifi=%d holdoff=%d key=%c", wakeup, bits.wifi, bits.holdoff, key);
+   ESP_LOGI (TAG, "Revk boot wakeup=%d wifi=%d holdoff=%d key=%c", bits.wakeup, bits.wifi, bits.holdoff, key);
    bits.revkstarted = 1;
    revk_boot (&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
@@ -436,7 +436,7 @@ app_main ()
       strncpy (rtctz, tz, sizeof (rtctz));
    }
 
-   if (!wakeup || bits.newhour)
+   if (!bits.wakeup || bits.newhour)
    {
       bits.busy = 1;
       revk_task ("Buzzer", buzzer_task, NULL, 2);
@@ -458,7 +458,7 @@ app_main ()
       sntp_set_time_sync_notification_cb (&timesync);
    }
 
-   if (key || !wakeup)
+   if (key || !bits.wakeup)
    {                            // Delayed
       now = ertc_read () + 86400 * testday;
       do

@@ -277,12 +277,40 @@ face_t *const faces[] = {
 #include "faces.m"
 };
 
+void
+face_low_battery (struct tm *t)
+{
+   gfx_pos (100, 0, GFX_C | GFX_T | GFX_V);
+   gfx_text (6, "LOW");
+   gfx_text (5, "BATTERY");
+   gfx_pos (100, 199, GFX_C | GFX_B | GFX_V);
+   char temp[30];
+   strftime (temp, sizeof (temp), "%F", t);
+   gfx_7seg (3, "%s", temp);
+   gfx_gap(-5);
+   strftime (temp, sizeof (temp), "%H:%M", t);
+   gfx_7seg (7, "%s", temp);
+}
+
 extern uint8_t face;            // Face number
 void
 face_show (time_t now, char key)
 {
    struct tm t;
    localtime_r (&now, &t);
+   if (bits.reset == ESP_RST_BROWNOUT)
+   {
+      if (key || bits.charging)
+         bits.reset = 0;        // normal face
+      else
+      {
+         gfx_lock ();
+         gfx_clear (0);
+         face_low_battery (&t);
+         gfx_unlock ();
+         return;
+      }
+   }
    if (bits.newhour && !t.tm_hour)
    {                            // New day
       last_steps = steps;
