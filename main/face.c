@@ -282,7 +282,7 @@ face_low_battery (struct tm *t)
 {
    gfx_pos (100, 0, GFX_C | GFX_T | GFX_V);
    gfx_text (6, "LOW");
-   gfx_text (5, "BATTERY");
+   gfx_text (4, "BATTERY");
    gfx_pos (100, 199, GFX_C | GFX_B | GFX_V);
    char temp[30];
    strftime (temp, sizeof (temp), "%F", t);
