@@ -232,7 +232,7 @@ key_check (void)
          if ((btns & (1 << b)) && !(last_btn & (1 << b)))
          {
             last_btn |= (1 << b);
-            char key = "RLUDRULD"[(b ^ flip) & 7];      // Mapped for display flipping
+            char key = "RLUDRULD"[(b ^ flip ^ (flip >> 3)) & 7];        // Mapped for display flipping
             ESP_LOGI (TAG, "Key %d=%c (flip %X)", b, key, flip);
             xSemaphoreTake (key_mutex, portMAX_DELAY);
             if (key1)
