@@ -232,7 +232,7 @@ key_check (void)
          if ((btns & (1 << b)) && !(last_btn & (1 << b)))
          {
             last_btn |= (1 << b);
-            char key = "RLUDRULD"[(b ^ flip ^ (flip >> 3)) & 7];        // Mapped for display flipping
+            char key = "RLUDRULD"[(b ^ flip) & 7];        // Mapped for display flipping
             ESP_LOGI (TAG, "Key %d=%c (flip %X)", b, key, flip);
             xSemaphoreTake (key_mutex, portMAX_DELAY);
             if (key1)
@@ -330,7 +330,7 @@ app_main ()
       if (gfx_ok ())
          return;
       ESP_LOGI (TAG, "Start E-paper flip=%d", flip);
-    const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: 1, norefresh: 1, direct:1);
+    const char *e = gfx_init (sck: GPIOSCK, cs: GPIOSS, mosi: GPIOMOSI, dc: GPIODC, rst: GPIORES, busy: GPIOBUSY, flip: flip, width: 200, height: 200, partial: 1, mode2: 1, sleep: bits.wakeup ? 1 : 0, norefresh: 1, direct:1);
       if (e)
       {
          ESP_LOGE (TAG, "gfx %s", e);
