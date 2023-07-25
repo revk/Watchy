@@ -355,7 +355,7 @@ face_basic (struct tm *t)
    gfx_pos (0, 199, GFX_L | GFX_B | GFX_H);
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
    gfx_qr (temp, 2);
-   gfx_pos (40, 199 - 9, GFX_L | GFX_M | GFX_H);
+   gfx_pos (50, 199 - 9, GFX_L | GFX_M | GFX_H);
    gfx_charging ();
    gfx_battery ();
    gfx_percent ();
