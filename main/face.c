@@ -352,13 +352,14 @@ face_basic (struct tm *t)
    gfx_7seg (3, "%s", temp);
    gfx_pos (100, 130, GFX_C | GFX_B);
    gfx_status ();
-   gfx_pos (0, 199-9, GFX_L | GFX_M | GFX_H);
+   gfx_pos (0, 199, GFX_L | GFX_B | GFX_H);
    strftime (temp, sizeof (temp), "%FT%H:%M%z", t);
    gfx_qr (temp, 2);
+   gfx_pos (40, 199-9, GFX_L | GFX_M | GFX_H);
    gfx_charging ();
    gfx_battery ();
    gfx_percent ();
-   gfx_pos (199, 165-9, GFX_R | GFX_M | GFX_H);
+   gfx_pos (199, 165, GFX_R | GFX_M | GFX_H);
    gfx_7seg (2, "%6d", steps);
    gfx_wifi ();
    gfx_mqtt ();
