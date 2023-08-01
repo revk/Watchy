@@ -10,6 +10,7 @@ It does not yet do the buzzer, and does not do weather app stuff. It does have t
 
 ## Build/install
 
+- Ensure you have [ESP IDF](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/) installed for ESP32
 - Git clone with `--recursive` to get the submodules
 - Connect USB to Watchy
 - `make flash`
