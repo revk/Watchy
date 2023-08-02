@@ -318,9 +318,8 @@ face_show (time_t now, char key)
       steps = 0;
       bits.newday = 1;
    }
-   if (bits.newhour || !moon_next)
-   {
-      time_t now = mktime (&t);
+   if (bits.newhour || !moon_next || now >= moon_next / 60LL * 60LL)
+   {                            // Get next full moon
       int cycle = lunarcycle (now);
       time_t base = fullmoon (cycle);
       time_t next = fullmoon (cycle + 1);
@@ -359,10 +358,11 @@ face_basic (struct tm *t)
    gfx_charging ();
    gfx_battery ();
    gfx_percent ();
-   gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
-   gfx_7seg (2, "%6d", steps);
+   gfx_pos (50, 199 - 9 - 20, GFX_L | GFX_M | GFX_H);
    gfx_wifi ();
    gfx_mqtt ();
+   gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
+   gfx_7seg (2, "%6d", steps);
    strftime (temp, sizeof (temp), "%a", t);
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_text (4, "%s", temp);
