@@ -618,7 +618,7 @@ acc_init (void)
       return;
    }
    uint8_t status = i2c_read (0x2A);
-   if (!fi_addr || status != 1)
+   //if (!fi_addr || status != 1)
    {                            // Not initialised
       ESP_LOGD (TAG, "Initialise");
       // Soft reset
