@@ -21,6 +21,40 @@ const char *const list_face[] = {
 #include "faces.m"
 };
 
+#define	menus	\
+	m(face,Face select)	\
+	m(wifi,WiFi settings)	\
+	m(flip,Flip display)	\
+	m(turn,Turn display)	\
+	m(timezone,Set timezone)	\
+	m(upgrade,S/W Upgrade)	\
+	m(mqtt,MQTT connect)	\
+	m(steps,Steps)	\
+	m(info,Information)	\
+
+#define	m(t,d) void menu_##t(struct tm *, char);
+menus
+#undef m
+const char *const list_main[] = {
+#define m(t,d)	#d,
+   menus
+#undef	m
+};
+
+enum
+{
+#define m(t,d)	mnum_##t,
+   m (none,) menus
+#undef	m
+};
+
+menu_fun_t *const fun_main[] = {
+#define m(t,d)	&menu_##t,
+   menus
+#undef	m
+};
+
+
 void
 gfx_menu1 (const char *title)
 {
@@ -326,6 +360,38 @@ menu_turn (struct tm *t, char key)
 }
 
 void
+menu_steps (struct tm *t, char key)
+{                               //  Steps
+   if (key == 'L')
+   {
+      menu2 = 0;
+      return;
+   }
+   if (key == 'R')
+   {
+      menu1 = 0;
+      return;
+   }
+   gfx_menu (t, "");
+   t->tm_mday -= 7;
+   const int top = 10;
+   for (int i = 0; i < 7; i++)
+   {
+      t->tm_mday++;
+      mktime (t);
+      uint32_t s = (i < 6 ? stepbase[(t->tm_wday + 1) % 7] : steps) - stepbase[t->tm_wday];
+      char dow[4];
+      strftime (dow, sizeof (dow), "%a", t);
+      gfx_pos (left, top + i * 8 * 3, GFX_L | GFX_T | GFX_V);
+      gfx_text (3, "%s", dow);
+      gfx_pos (200 - left, top + i * 8 * 3, GFX_R | GFX_T | GFX_V);
+      gfx_text (3, "%d", s);
+   }
+   gfx_pos (100, 0, GFX_C | GFX_T);
+   gfx_text (1, "%d", steps);
+}
+
+void
 menu_info (struct tm *t, char key)
 {                               //  Info
    if (key == 'L')
@@ -335,7 +401,7 @@ menu_info (struct tm *t, char key)
    }
    if (key == 'R')
    {
-      menu1 = 0;
+      menu1 = mnum_upgrade;
       return;
    }
    bits.startup = 1;
@@ -408,36 +474,6 @@ menu_mqtt (struct tm *t, char key)
    gfx_status ();
 }
 
-#define	menus	\
-	m(face,Face select)	\
-	m(wifi,WiFi settings)	\
-	m(flip,Flip display)	\
-	m(turn,Turn display)	\
-	m(timezone,Set timezone)	\
-	m(upgrade,S/W Upgrade)	\
-	m(mqtt,MQTT connect)	\
-	m(info,Information)	\
-
-
-const char *const list_main[] = {
-#define m(t,d)	#d,
-   menus
-#undef	m
-};
-
-enum
-{
-#define m(t,d)	mnum_##t,
-   menus
-#undef	m
-};
-
-menu_fun_t *const fun_main[] = {
-#define m(t,d)	&menu_##t,
-   menus
-#undef	m
-};
-
 void
 menu_main (struct tm *t, char key)
 {
@@ -457,13 +493,13 @@ menu_show (struct tm *t, char key)
       menu2 = 0;
       menu3 = 0;
       if (key == 'R')
-      {                         // Quick upgrade
-         menu1 = 6;
+      {                         // Quick 
+         menu1 = mnum_steps;
          menu2 = 0xFF;
       }
       if (key == 'L')
-      {                         // Quick info
-         menu1 = 8;
+      {                         // Quick 
+         menu1 = mnum_info;
          menu2 = 0xFF;
       }
       key = 0;                  // used the key top enter menu

@@ -33,7 +33,6 @@ const uint8_t btn[] = { GPIOBTN2, GPIOBTN3, GPIOBTN1, GPIOBTN4 };
 
 RTC_NOINIT_ATTR time_t moon_next;       // Next full moon
 RTC_NOINIT_ATTR uint32_t steps; // Current step count
-RTC_NOINIT_ATTR uint32_t last_steps;    // Last day step count (0 when sent)
 RTC_NOINIT_ATTR uint8_t last_hour;      // Last hour number (to detect new hour)
 RTC_NOINIT_ATTR uint8_t last_min;       // Last minute number (to detect new minute)
 RTC_NOINIT_ATTR uint8_t last_btn;       // Last button state as turned in to keys
@@ -49,9 +48,11 @@ RTC_NOINIT_ATTR char rtctz[30]; // Current timezone string
 	u8lr(face,0)	\
 	u8lr(flip,5)	\
 	s8r(testday,0)	\
+	u32al(stepbase,7)\
 
 #define	port_mask(x)	((x)&0x7F)
 #define u32(n,d)        uint32_t n;
+#define u32al(n,a)        uint32_t n[a];
 #define u32l(n,d)        uint32_t n;
 #define s8(n,d) int8_t n;
 #define s8l(n,d) int8_t n;
@@ -74,6 +75,7 @@ settings
 #undef ioa
 #undef io
 #undef u32
+#undef u32al
 #undef u32l
 #undef s8
 #undef s8l
@@ -202,19 +204,6 @@ buzzer_task (void *pvParameters)
    vTaskDelete (NULL);
 }
 
-static void
-report_steps_task (void *pvParameters)
-{
-   while (uptime () < 10 && revk_link_down ())
-      sleep (1);
-   if (!revk_link_down ())
-   {
-      // TODO
-   }
-   bits.busy = 0;
-   vTaskDelete (NULL);
-}
-
 static volatile char key1 = 0,
    key2 = 0;
 static SemaphoreHandle_t key_mutex = NULL;
@@ -232,7 +221,7 @@ key_check (void)
          if ((btns & (1 << b)) && !(last_btn & (1 << b)))
          {
             last_btn |= (1 << b);
-            char key = "RLUDRULD"[(b ^ flip) & 7];        // Mapped for display flipping
+            char key = "RLUDRULD"[(b ^ flip) & 7];      // Mapped for display flipping
             ESP_LOGI (TAG, "Key %d=%c (flip %X)", b, key, flip);
             xSemaphoreTake (key_mutex, portMAX_DELAY);
             if (key1)
@@ -285,7 +274,6 @@ app_main ()
       menu1 = menu2 = menu3 = 0;
    if (!bits.wakeup || bits.reset == ESP_RST_POWERON || bits.reset == ESP_RST_EXT || bits.reset == ESP_RST_BROWNOUT)
    {
-      last_steps = 0;
       last_min = 255;
       last_hour = 255;
       moon_next = 0;
@@ -396,6 +384,7 @@ app_main ()
 #define ioa(n,a,d)           revk_register(#n,a,sizeof(*n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
 #define b(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN);
 #define u32(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
+#define u32al(n,a) revk_register(#n,a,sizeof(*n),&n,NULL,SETTING_LIVE);
 #define u32l(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_LIVE);
 #define s8(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_SIGNED);
 #define s8l(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_SIGNED|SETTING_LIVE);
@@ -415,6 +404,7 @@ app_main ()
 #undef io
 #undef ioa
 #undef u32
+#undef u32al
 #undef u32l
 #undef s8
 #undef s8l
@@ -442,12 +432,6 @@ app_main ()
       revk_task ("Buzzer", buzzer_task, NULL, 2);
    }
 
-   if (last_steps && bits.newhour)
-   {
-      bits.busy = 1;
-      revk_task ("Steps", report_steps_task, NULL, 8);
-   }
-
    epaper_init ();
 
    if (bits.wifi)
@@ -471,12 +455,6 @@ app_main ()
       do
          face_show (now, key);
       while ((key = next_key ()));
-   }
-
-   if (bits.newday && last_steps)
-   {
-      bits.holdoff = 1;
-      // TODO task that sends last days stats...
    }
 
    if (!bits.busy && !bits.holdoff && !bits.timeunsync)

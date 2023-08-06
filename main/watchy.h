@@ -40,6 +40,7 @@ extern uint8_t face;
 extern uint8_t flip;
 extern uint8_t moon_phase;
 extern char rtctz[];
+extern uint32_t stepbase[7];
 
 typedef struct bits
 {                               // Struct to just save a bit of RAM

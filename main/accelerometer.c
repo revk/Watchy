@@ -522,8 +522,6 @@ const uint8_t bma423_config_file[] = {
    0x80, 0x2e, 0x18, 0x00, 0x80, 0x2e, 0x18, 0x00, 0x80, 0x2e, 0x18, 0x00
 };
 
-RTC_NOINIT_ATTR uint16_t fi_addr;
-
 static void
 i2c_write (uint8_t reg, uint8_t val)
 {
@@ -618,7 +616,7 @@ acc_init (void)
       return;
    }
    uint8_t status = i2c_read (0x2A);
-   //if (!fi_addr || status != 1)
+   if (status != 1)
    {                            // Not initialised
       ESP_LOGD (TAG, "Initialise");
       // Soft reset
@@ -636,7 +634,7 @@ acc_init (void)
       if (!status)
          ESP_LOGE (TAG, "Initialisation failed");
 
-      fi_addr = (i2c_read (0x5C) << 5) + ((i2c_read (0x5B) & 0xF) << 1);
+      uint16_t fi_addr = (i2c_read (0x5C) << 5) + ((i2c_read (0x5B) & 0xF) << 1);
 
       uint8_t features[64] = { 0 };
       i2c_read_block (fi_addr, sizeof (features), features);
@@ -655,18 +653,9 @@ acc_init (void)
    }
 }
 
-void
-acc_step_reset (void)
-{
-   uint8_t features[64] = { 0 };
-   i2c_read_block (fi_addr, sizeof (features), features);
-   features[0x37] |= 0x04;      // reste_counter (self clearing)
-   i2c_write_block (fi_addr, sizeof (features), features);
-}
-
 uint32_t
 acc_steps (void)
-{
+{                               // Absolute
    esp_err_t e;
    uint8_t data[4];
    i2c_cmd_handle_t txn = i2c_cmd_link_create ();
