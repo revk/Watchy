@@ -42,7 +42,7 @@ face_minecraft (struct tm *t)
    gfx_blocky (-3, "%s", temp);
    gfx_blocky (2, "%4d", t->tm_year + 1900);
    gfx_gap (10);
-   gfx_blocky (2, "%5d", steps - stepbase[t->tm_wday]);
+   gfx_blocky (2, "%5d", steps - stepbase);
    gfx_pos (199, 199, GFX_B | GFX_R | GFX_V);
    gfx_battery ();
    gfx_percent ();

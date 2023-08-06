@@ -32,6 +32,7 @@ const uint8_t btn[] = { GPIOBTN2, GPIOBTN3, GPIOBTN1, GPIOBTN4 };
 #define	BTNMASK	((1LL<<GPIOBTN1)|(1LL<<GPIOBTN2)|(1LL<<GPIOBTN3)|(1LL<<GPIOBTN4))
 
 RTC_NOINIT_ATTR time_t moon_next;       // Next full moon
+RTC_NOINIT_ATTR uint32_t stepbase;      // Current step count day base
 RTC_NOINIT_ATTR uint32_t steps; // Current step count
 RTC_NOINIT_ATTR uint8_t last_hour;      // Last hour number (to detect new hour)
 RTC_NOINIT_ATTR uint8_t last_min;       // Last minute number (to detect new minute)
@@ -48,7 +49,7 @@ RTC_NOINIT_ATTR char rtctz[30]; // Current timezone string
 	u8lr(face,0)	\
 	u8lr(flip,5)	\
 	s8r(testday,0)	\
-	u32al(stepbase,7)\
+	u32al(stepday,7)\
 
 #define	port_mask(x)	((x)&0x7F)
 #define u32(n,d)        uint32_t n;

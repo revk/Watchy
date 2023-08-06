@@ -372,6 +372,9 @@ menu_steps (struct tm *t, char key)
       menu1 = 0;
       return;
    }
+   bits.startup = 1;
+   if (!bits.revkstarted)
+      return;
    gfx_menu (t, "");
    t->tm_mday -= 7;
    const int top = 10;
@@ -379,11 +382,13 @@ menu_steps (struct tm *t, char key)
    {
       t->tm_mday++;
       mktime (t);
-      uint32_t s = (i < 6 ? stepbase[(t->tm_wday + 1) % 7] : steps) - stepbase[t->tm_wday];
+      int32_t s = (i < 6 ? stepday[(t->tm_wday + 1) % 7] : steps) - stepday[t->tm_wday];
       char dow[4];
       strftime (dow, sizeof (dow), "%a", t);
       gfx_pos (left, top + i * 8 * 3, GFX_L | GFX_T | GFX_V);
       gfx_text (3, "%s", dow);
+      if (s < 0)
+         continue;
       gfx_pos (200 - left, top + i * 8 * 3, GFX_R | GFX_T | GFX_V);
       gfx_text (3, "%d", s);
    }

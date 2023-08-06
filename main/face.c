@@ -314,12 +314,14 @@ face_show (time_t now, char key)
    if (bits.newhour && !t.tm_hour)
    {                            // New day
       char temp[20];
-      sprintf (temp, "stepbase%d", t.tm_wday + 1);
+      sprintf (temp, "stepday%d", t.tm_wday + 1);
       jo_t j = jo_object_alloc ();
-      jo_int (j, temp, steps - stepbase[t.tm_wday]);
+      jo_int (j, temp, steps);
       revk_setting (j);
       bits.newday = 1;
    }
+   if (bits.revkstarted)
+      stepbase = stepday[t.tm_wday];
    if (bits.newhour || !moon_next || now >= moon_next / 60LL * 60LL)
    {                            // Get next full moon
       int cycle = lunarcycle (now);
@@ -364,7 +366,7 @@ face_basic (struct tm *t)
    gfx_wifi ();
    gfx_mqtt ();
    gfx_pos (199, 165, GFX_R | GFX_B | GFX_H);
-   gfx_7seg (2, "%6d", steps - stepbase[t->tm_wday]);
+   gfx_7seg (2, "%6d", steps - stepbase);
    strftime (temp, sizeof (temp), "%a", t);
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_text (4, "%s", temp);
@@ -385,7 +387,7 @@ face_combined (struct tm *t)
    strftime (temp, sizeof (temp), "%b", t);
    gfx_text (-3, "%s", temp);
    gfx_pos (5, 80, GFX_L | GFX_T);
-   gfx_7seg (2, "%d", steps - stepbase[t->tm_wday]);
+   gfx_7seg (2, "%d", steps - stepbase);
    gfx_pos (115, 199, GFX_C | GFX_B | GFX_V);
    gfx_battery ();
    gfx_percent ();
@@ -408,7 +410,7 @@ face_analogue (struct tm *t)
    gfx_text (2, "%s", temp);
    gfx_box (38 + 2, 18 + 2, 255);
    gfx_pos (100, 150, GFX_C | GFX_M);
-   gfx_7seg (2, "%6d", steps - stepbase[t->tm_wday]);
+   gfx_7seg (2, "%6d", steps - stepbase);
    gfx_pos (100, 50, GFX_C | GFX_M);
    gfx_icon (ajk);
    gfx_pos (0, 0, GFX_L | GFX_T);
