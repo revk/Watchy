@@ -321,7 +321,11 @@ face_show (time_t now, char key)
       bits.newday = 1;
    }
    if (bits.revkstarted)
+   {
       stepbase = stepday[t.tm_wday];
+      if (stepbase > steps)
+         stepbase = stepday[t.tm_wday] = steps; // Bodge
+   }
    if (bits.newhour || !moon_next || now >= moon_next / 60LL * 60LL)
    {                            // Get next full moon
       int cycle = lunarcycle (now);
