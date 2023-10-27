@@ -210,12 +210,20 @@ static volatile char key1 = 0,
 static SemaphoreHandle_t key_mutex = NULL;
 
 static void
-key_check (void)
+key_check (uint64_t ext1)
 {                               // Actually check for keys (TODO queue keys)
    uint8_t btns = 0;
-   for (uint8_t b = 0; b < 4; b++)
-      if (gpio_get_level (btn[b]))
-         btns |= (1 << b);
+   if (ext1)
+   {
+      for (uint8_t b = 0; b < 4; b++)
+         if (ext1 & (1LL << btn[b]))
+            btns |= (1 << b);
+   } else
+   {
+      for (uint8_t b = 0; b < 4; b++)
+         if (gpio_get_level (btn[b]))
+            btns |= (1 << b);
+   }
    last_btn &= btns;
    if (!key2)                   // Two key buffering
       for (uint8_t b = 0; b < 4; b++)
@@ -238,7 +246,7 @@ key_task (void *pvParameters)
 {
    while (1)
    {
-      key_check ();
+      key_check (0);
       usleep (1000);
    }
 }
@@ -296,7 +304,7 @@ app_main ()
 
    key_mutex = xSemaphoreCreateBinary ();
    xSemaphoreGive (key_mutex);
-   key_check ();                // pick up as soon as possible, before task runs
+   key_check (lastbtn ? 0 : esp_sleep_get_ext1_wakeup_status ());       // pick up as soon as possible, before task runs
    revk_task ("Key", key_task, NULL, 1);
    char key = next_key ();
 
