@@ -304,7 +304,7 @@ app_main ()
 
    key_mutex = xSemaphoreCreateBinary ();
    xSemaphoreGive (key_mutex);
-   key_check (lastbtn ? 0 : esp_sleep_get_ext1_wakeup_status ());       // pick up as soon as possible, before task runs
+   key_check (last_btn ? 0 : esp_sleep_get_ext1_wakeup_status ());       // pick up as soon as possible, before task runs
    revk_task ("Key", key_task, NULL, 1);
    char key = next_key ();
 
