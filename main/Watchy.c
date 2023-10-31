@@ -43,6 +43,7 @@ RTC_NOINIT_ATTR uint8_t menu2;
 RTC_NOINIT_ATTR uint8_t menu3;
 RTC_NOINIT_ATTR uint8_t moon_phase;
 RTC_NOINIT_ATTR char rtctz[30]; // Current timezone string
+RTC_NOINIT_ATTR char rtcdeadline[20];   // Deadline ISO time
 
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
@@ -50,6 +51,7 @@ RTC_NOINIT_ATTR char rtctz[30]; // Current timezone string
 	u8lr(flip,5)	\
 	s8r(testday,0)	\
 	u32al(stepday,7)\
+	s(deadline,"0000-12-25")	\
 
 #define	port_mask(x)	((x)&0x7F)
 #define u32(n,d)        uint32_t n;
@@ -304,7 +306,7 @@ app_main ()
 
    key_mutex = xSemaphoreCreateBinary ();
    xSemaphoreGive (key_mutex);
-   key_check (last_btn ? 0 : esp_sleep_get_ext1_wakeup_status ());       // pick up as soon as possible, before task runs
+   key_check (last_btn ? 0 : esp_sleep_get_ext1_wakeup_status ());      // pick up as soon as possible, before task runs
    revk_task ("Key", key_task, NULL, 1);
    char key = next_key ();
 
@@ -320,6 +322,9 @@ app_main ()
          *rtctz = 0;
          ESP_LOGE (TAG, "TZ not set");
       }
+      for (l = 0; l < sizeof (rtcdeadline) && rtcdeadline[l]; l++);
+      if (l >= sizeof (rtcdeadline))
+         strcpy (rtcdeadline, "0000-12-25");    // Default
    }
 
    void epaper_init (void)
@@ -433,6 +438,7 @@ app_main ()
    {                            // RTC cached
       extern char *tz;
       strncpy (rtctz, tz, sizeof (rtctz));
+      strncpy (rtcdeadline, deadline, sizeof (rtcdeadline));
    }
 
    if (!bits.wakeup || bits.newhour)
