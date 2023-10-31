@@ -49,7 +49,7 @@ face_countdown (struct tm *t)
       gfx_pos (199, 199, GFX_B | GFX_R | GFX_V);
       gfx_7seg (4, "%3d %02d:%02d", days, seconds / 3600, seconds / 60 % 60, seconds % 60);
 
-      gfx_pos (0, 150, GFX_L | GFX_B | GFX_V);
+      gfx_pos (0, 154, GFX_L | GFX_B | GFX_V);
       if (m == 12 && d == 25)
          gfx_text (4, "XMAS");
    }
