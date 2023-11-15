@@ -48,7 +48,7 @@ RTC_NOINIT_ATTR char rtcdeadline[20];   // Deadline ISO time
 // Settings (RevK library used by MQTT setting command)
 #define settings                \
 	u8lr(face,0)	\
-	u8lr(flip,5)	\
+	u8lr(flip,0)	\
 	s8r(testday,0)	\
 	u32al(stepday,7)\
 	s(deadline,"0000-12-25")	\
@@ -232,7 +232,8 @@ key_check (uint64_t ext1)
          if ((btns & (1 << b)) && !(last_btn & (1 << b)))
          {
             last_btn |= (1 << b);
-            char key = "RLUDRULD"[(b ^ flip) & 7];      // Mapped for display flipping
+            //char key = "RLUDRULD"[(b ^ flip) & 7];      // Mapped for display flipping
+            char key = "RULDRLUD"[(b ^ flip) & 7];      // Mapped for display flipping
             ESP_LOGI (TAG, "Key %d=%c (flip %X)", b, key, flip);
             xSemaphoreTake (key_mutex, portMAX_DELAY);
             if (key1)
