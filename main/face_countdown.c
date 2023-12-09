@@ -57,10 +57,12 @@ face_countdown (struct tm *t)
    gfx_pos (100, 90, GFX_C | GFX_T | GFX_V);
    gfx_7seg (3, "%s", temp);
 
-   gfx_pos (199, 140, GFX_R | GFX_M | GFX_H);
+   gfx_pos (199, 130, GFX_R | GFX_M | GFX_H);
    gfx_battery ();
    gfx_percent ();
    gfx_charging ();
    gfx_wifi ();
    gfx_mqtt ();
+   gfx_pos (199, 150, GFX_R | GFX_M | GFX_H);
+   gfx_7seg (2, "%6d", steps - stepbase);
 }
