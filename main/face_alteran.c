@@ -127,7 +127,7 @@ face_alteran (struct tm *t)
             d++;
       picked |= (1ULL << d);
       icon_sg (d + 1);
-      gfx_pos (gfx_x () + 2, gfx_y (), GFX_L | GFX_B | GFX_H);
+      gfx_pos (gfx_x () + 1, gfx_y (), GFX_L | GFX_B | GFX_H);
    }
    gfx_icon (sg01big);
 }
