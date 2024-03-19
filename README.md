@@ -16,7 +16,7 @@ Faces include:-
 - Lunar (with moon phase, next full moon date/time)
 - Death Star (like lunar but *that's no moon*)
 - Minecraft (blocky text, etc)
-- Coundown (to XMAS, dayes, hours, minutes), my grandkids love this one
+- Coundown (to XMAS, days, hours, minutes), my grandkids love this one
 - Alteran digits and random Srtargate address
 
 ## Build/install
