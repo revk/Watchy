@@ -21,7 +21,6 @@ mc (gfx_pos_t s, uint8_t c)
    {
       data = gfx_pack (data, &lx, &hx, &ly, &hy, 8);
       uint8_t d = 0;
-      ESP_LOGE ("Minecraft", "lx=%d hx=%d ly=%d hy=%d data=%02X %02X %02X", lx, hx, ly, hy, data[0], data[1], data[2]);
       for (gfx_pos_t row = 0; row < 5; row++)
          for (gfx_pos_t col = 0; col < 3; col++)
          {
