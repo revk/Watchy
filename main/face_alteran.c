@@ -3,51 +3,50 @@
 #include "face.h"
 
 static void
-digit(int s, uint8_t c)
+digit (int s, uint8_t c)
 {
-   gfx_pos_t       x,
-                   y;
-   gfx_draw(c == ':' || c == '.' ? s : s * 3, s * 8, s, s, &x, &y);
-   uint16_t        m = (c == ' ' ? 0 : c == '-' ? 0x1C0 : c == ':' ? 0x208 : c == '0' ? 0x16F : (1 << (c - '0')) - 1);
-   gfx_pos_t       nx = gfx_x();
-   gfx_pos_t       ny = gfx_y();
-   gfx_pos_t       na = gfx_a();
-   //TODO this could go 3 x4 for letters
-      maybe
-         for (int row = 0; row < 4; row++)
-         for (int col = 0; col < 3; col++)
-         {
-            if (m & 1)
-               for (int dx = 0; dx < s; dx++)
-                  for (int dy = 0; dy < s * 2; dy++)
-                     gfx_pixel(x + col * s + dx, y + row * s * 2 + dy, 0xFF);
-            m >>= 1;
-         }
+   gfx_pos_t x,
+     y;
+   gfx_draw (c == ':' || c == '.' ? s : s * 3, s * 8, s, s, &x, &y);
+   uint16_t m = (c == ' ' ? 0 : c == '-' ? 0x1C0 : c == ':' ? 0x208 : c == '0' ? 0x16F : (1 << (c - '0')) - 1);
+   gfx_pos_t nx = gfx_x ();
+   gfx_pos_t ny = gfx_y ();
+   gfx_pos_t na = gfx_a ();
+   // TODO this could go 3 x4 for letters maybe
+   for (int row = 0; row < 4; row++)
+      for (int col = 0; col < 3; col++)
+      {
+         if (m & 1)
+            for (int dx = 0; dx < s; dx++)
+               for (int dy = 0; dy < s * 2; dy++)
+                  gfx_pixel (x + col * s + dx, y + row * s * 2 + dy, 0xFF);
+         m >>= 1;
+      }
    if (c >= '0' && c <= '9')
    {
       //This is only for digits
-         m = 0x17;
+      m = 0x17;
       for (int row = 0; row < 3; row++)
          for (int col = 0; col < 3; col++)
          {
             if (m & 1)
                for (int dx = 0; dx < s; dx++)
                   for (int dy = 0; dy < s; dy++)
-                     gfx_pixel(x + col * s + dx, y + 3 * s * 2 + row * s + dy, 0xFF);
+                     gfx_pixel (x + col * s + dx, y + 3 * s * 2 + row * s + dy, 0xFF);
             m >>= 1;
          }
    }
-   gfx_pos(nx, ny, na);
+   gfx_pos (nx, ny, na);
 }
 
 static void
-digits(int s, const char *t)
+digits (int s, const char *t)
 {
    while (*t)
    {
-      digit(s, *t++);
+      digit (s, *t++);
       if (s >= 10)
-         gfx_pos(gfx_x() - 1, gfx_y(), gfx_a());
+         gfx_pos (gfx_x () - 1, gfx_y (), gfx_a ());
    }
 }
 
@@ -95,55 +94,56 @@ static const unsigned char *sg[] = {
 };
 
 static void
-icon_sg(int n)
+icon_sg (int n)
 {
-   if (n >= sizeof(sg) / sizeof(*sg))
+   if (n >= sizeof (sg) / sizeof (*sg))
       return;
-   gfx_square_icon(sg[n], icon_sg01_size, 1);
+   gfx_square_icon (sg[n], icon_sg01_size, 1);
 
 }
 
 void
-face_alteran(struct tm *t)
+face_alteran (struct tm *t)
 {
-   char            temp[30];
-   gfx_pos(0, 0, GFX_T | GFX_L | GFX_H);
-   strftime(temp, sizeof(temp), "%H:%M", t);
-   digits(12, temp);
-   gfx_pos(0, 199, GFX_L | GFX_B | GFX_H);
-   strftime(temp, sizeof(temp), "%F", t);
-   digits(4, temp);
-   gfx_pos(199 - 2 * 4 * 5, 199 - 4 * 4, GFX_L | GFX_B | GFX_H);
-   sprintf(temp, "%05ld", steps - stepbase);
-   digits(2, temp);
-   gfx_pos(199, 199, GFX_R | GFX_B | GFX_H);
-   gfx_battery();
+   char temp[30];
+   gfx_pos (0, 0, GFX_T | GFX_L | GFX_H);
+   strftime (temp, sizeof (temp), "%H:%M", t);
+   digits (12, temp);
+   gfx_pos (0, 199, GFX_L | GFX_B | GFX_H);
+   strftime (temp, sizeof (temp), "%F", t);
+   digits (4, temp);
+   gfx_pos (199 - 2 * 4 * 5, 199 - 4 * 4, GFX_L | GFX_B | GFX_H);
+   sprintf (temp, "%05ld", steps - stepbase);
+   digits (2, temp);
+   gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
+   gfx_battery ();
    //Random gate address
-      gfx_pos(0, 150, GFX_L | GFX_B | GFX_H);
+   gfx_pos (0, 150, GFX_L | GFX_B | GFX_H);
    unsigned long long v = 0;
-   esp_fill_random(&v, sizeof(v));
+   esp_fill_random (&v, sizeof (v));
    unsigned long long picked = 0;
    for (int i = 0; i < 6; i++)
    {
       unsigned long long d = v;
+      // Would be random, but let's go for date based for most of it
       if (i == 0)
-         v = t.tm_year;
+         v = t->tm_year;
       if (i == 1)
-         v = t.tm_mon;
+         v = t->tm_mon;
       if (i == 2)
-         v = t.tm_mday;
+         v = t->tm_mday;
       if (i == 3)
-         v = t.tm_hour;
+         v = t->tm_hour;
       if (i == 4)
-         v = t.tm_min;
-      d %= (38 - i;
+         v = t->tm_min;
+      d %= (38 - i);
       v /= (38 - i);
       for (int c = 0; c <= d; c++)
          if (picked & (1ULL << c))
             d++;
       picked |= (1ULL << d);
-      icon_sg(d + 1);
-      gfx_pos(gfx_x() + 1, gfx_y(), gfx_a());
+      icon_sg (d + 1);
+      gfx_pos (gfx_x () + 1, gfx_y (), gfx_a ());
    }
-   gfx_icon(sg01big);
+   gfx_icon (sg01big);
 }
