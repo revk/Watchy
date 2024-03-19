@@ -12,14 +12,24 @@ all:
 	@cp build/$(PROJECT_NAME).bin $(PROJECT_NAME)$(SUFFIX).bin
 	@echo Done: build/$(PROJECT_NAME)$(SUFFIX).bin
 
+beta:   
+	-git pull
+	-git submodule update --recursive
+	-git commit -a -m checkpoint
+	@make set
+	cp $(PROJECT_NAME)*.bin betarelease
+	git commit -a -m Beta
+	git push
+
 issue:
 	-git pull
 	-git submodule update --recursive
 	-git commit -a -m checkpoint
 	@make set
+	cp $(PROJECT_NAME)*.bin betarelease
 	cp $(PROJECT_NAME)*.bin release
-	-git commit -a -m release
-	-git push
+	git commit -a -m Release
+	git push
 
 main/icons.h: $(patsubst %.svg,%.h,$(wildcard icons/*.svg))
 	grep -h 'const unsigned char' icons/*.h | sed 's/const unsigned char icon_\([A-Za-z0-9]*\).*/extern const unsigned char icon_\1[];extern const unsigned int icon_\1_size;/' > main/icons.h
