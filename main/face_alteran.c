@@ -42,7 +42,11 @@ static void
 digits (int s, const char *t)
 {
    while (*t)
+   {
       digit (s, *t++);
+      if (s >= 10)
+         gfx_pos (gfx_x () - 1, gfx_y (), gfx_a ());
+   }
 }
 
 static const unsigned char *sg[] = {
@@ -127,7 +131,7 @@ face_alteran (struct tm *t)
             d++;
       picked |= (1ULL << d);
       icon_sg (d + 1);
-      gfx_pos (gfx_x () + 1, gfx_y (), GFX_L | GFX_B | GFX_H);
+      gfx_pos (gfx_x () + 1, gfx_y (), gfx_a ());
    }
    gfx_icon (sg01big);
 }
