@@ -14,5 +14,6 @@ face(lunar,Lunar)
 face(deathstar,Death Star)
 face(minecraft,Minecraft)
 face(countdown,Countdown)
+face(alteran,Alteran)
 
 #undef face

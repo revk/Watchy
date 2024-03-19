@@ -1,4 +1,4 @@
-// Luna faces
+// Minecraft faces
 
 #include "face.h"
 
