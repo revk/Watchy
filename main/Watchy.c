@@ -24,6 +24,9 @@ static const char __attribute__((unused)) TAG[] = "Watchy";
 #ifndef	CONFIG_RTC_CLK_SRC_EXT_OSC
 #warning You want CONFIG_RTC_CLK_SRC_EXT_OSC, I expect
 #endif
+#ifdef	CONFIG_REVK_GPIO_INIT
+#error	RevK GPIO reset will break stuff, turn off CONFIG_REVK_GPIO_INIT
+#endif
 
 bits_t bits = { 0 };
 

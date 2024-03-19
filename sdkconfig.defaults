@@ -1,6 +1,6 @@
 #
 # Automatically generated file. DO NOT EDIT.
-# Espressif IoT Development Framework (ESP-IDF)  Project Configuration
+# Espressif IoT Development Framework (ESP-IDF) 5.1.1 Project Configuration
 #
 CONFIG_SOC_BROWNOUT_RESET_SUPPORTED="Not determined"
 CONFIG_SOC_TWAI_BRP_DIV_SUPPORTED="Not determined"
@@ -1710,6 +1710,7 @@ CONFIG_REVK_WEB_TZ=y
 # CONFIG_REVK_SEASON is not set
 # CONFIG_REVK_LUNAR is not set
 CONFIG_REVK_OLD_SETTINGS=y
+# CONFIG_REVK_GPIO_INIT is not set
 # CONFIG_REVK_SETTINGS_DEBUG is not set
 # end of RevK
 # end of Component config
