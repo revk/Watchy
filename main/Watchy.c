@@ -48,56 +48,6 @@ RTC_NOINIT_ATTR uint8_t moon_phase;
 RTC_NOINIT_ATTR char rtctz[30]; // Current timezone string
 RTC_NOINIT_ATTR char rtcdeadline[20];   // Deadline ISO time
 
-// Settings (RevK library used by MQTT setting command)
-#define settings                \
-	u8lr(face,0)	\
-	u8lr(flip,0)	\
-	s8r(testday,0)	\
-	u32al(stepday,7)\
-	s(deadline,"0000-12-25")	\
-
-#define	port_mask(x)	((x)&0x7F)
-#define u32(n,d)        uint32_t n;
-#define u32al(n,a)        uint32_t n[a];
-#define u32l(n,d)        uint32_t n;
-#define s8(n,d) int8_t n;
-#define s8l(n,d) int8_t n;
-#define s8n(n,d) int8_t n[d];
-#define u8(n,d) uint8_t n;
-#define u8r(n,d) RTC_NOINIT_ATTR uint8_t n,ring##n;
-#define u16(n,d) uint16_t n;
-#define s16(n,d) int16_t n;
-#define s16lr(n,d) RTC_NOINIT_ATTR int16_t n;
-#define u16r(n,d) uint16_t n,ring##n;
-#define s8r(n,d) RTC_NOINIT_ATTR int8_t n,ring##n;
-#define s16r(n,d) int16_t n,ring##n;
-#define u8l(n,d) uint8_t n;
-#define u8lr(n,d) RTC_NOINIT_ATTR uint8_t n;
-#define b(n) uint8_t n;
-#define s(n,d) char * n;
-#define io(n,d)           uint8_t n;
-#define ioa(n,a,d)      uint8_t n[a];
-settings
-#undef ioa
-#undef io
-#undef u32
-#undef u32al
-#undef u32l
-#undef s8
-#undef s8l
-#undef s8n
-#undef u8
-#undef u8r
-#undef u16
-#undef s16
-#undef s16lr
-#undef u16r
-#undef s8r
-#undef s16r
-#undef u8l
-#undef u8lr
-#undef b
-#undef s
 const char *
 app_callback (int client, const char *prefix, const char *target, const char *suffix, jo_t j)
 {
@@ -397,47 +347,6 @@ app_main ()
    ESP_LOGI (TAG, "Revk boot wakeup=%d wifi=%d holdoff=%d key=%c", bits.wakeup, bits.wifi, bits.holdoff, key);
    bits.revkstarted = 1;
    revk_boot (&app_callback);
-#define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
-#define ioa(n,a,d)           revk_register(#n,a,sizeof(*n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
-#define b(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN);
-#define u32(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
-#define u32al(n,a) revk_register(#n,a,sizeof(*n),&n,NULL,SETTING_LIVE);
-#define u32l(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_LIVE);
-#define s8(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_SIGNED);
-#define s8l(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_SIGNED|SETTING_LIVE);
-#define s8n(n,d) revk_register(#n,d,sizeof(*n),&n,NULL,SETTING_SIGNED);
-#define u8(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
-#define u8r(n,d) revk_register(#n,0,sizeof(n),&n,#d,0); revk_register("ring"#n,0,sizeof(ring##n),&ring##n,#d,0);
-#define u16(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
-#define s16(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_SIGNED);
-#define s16lr(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_SIGNED);
-#define u16r(n,d) revk_register(#n,0,sizeof(n),&n,#d,0); revk_register("ring"#n,0,sizeof(ring##n),&ring##n,#d,0);
-#define s8r(n,d) revk_register(#n,0,sizeof(n),&n,#d,0); revk_register("ring"#n,0,sizeof(ring##n),&ring##n,#d,SETTING_SIGNED);
-#define s16r(n,d) revk_register(#n,0,sizeof(n),&n,#d,0); revk_register("ring"#n,0,sizeof(ring##n),&ring##n,#d,SETTING_SIGNED);
-#define u8l(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_LIVE);
-#define u8lr(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_LIVE);
-#define s(n,d) revk_register(#n,0,0,&n,#d,0);
-   settings
-#undef io
-#undef ioa
-#undef u32
-#undef u32al
-#undef u32l
-#undef s8
-#undef s8l
-#undef s8n
-#undef u8
-#undef u8r
-#undef u16
-#undef s16
-#undef s16lr
-#undef u16r
-#undef s8r
-#undef s16r
-#undef u8l
-#undef u8lr
-#undef b
-#undef s
    {                            // RTC cached
       extern char *tz;
       strncpy (rtctz, tz, sizeof (rtctz));

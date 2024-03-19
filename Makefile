@@ -6,12 +6,14 @@
 PROJECT_NAME := Watchy
 SUFFIX := $(shell components/ESP32-RevK/buildsuffix)
 
-all:
+all:	settings.h
 	@echo Make: build/$(PROJECT_NAME)$(SUFFIX).bin
 	@idf.py build
 	@cp build/$(PROJECT_NAME).bin $(PROJECT_NAME)$(SUFFIX).bin
 	@echo Done: build/$(PROJECT_NAME)$(SUFFIX).bin
 
+settings.h:     components/ESP32-RevK/revk_settings settings.def components/ESP32-RevK/settings.def
+	components/ESP32-RevK/revk_settings $^
 beta:   
 	-git pull
 	-git submodule update --recursive
