@@ -122,7 +122,10 @@ face_alteran (struct tm *t)
    unsigned long long v = 0;
    esp_fill_random (&v, sizeof (v));
    unsigned long long picked = 0;
-   for (int i = 0; i < 6; i++)
+   int n = 6;
+   if (!t->tm_min)
+      n = 7;                    // 8 glyph address
+   for (int i = 0; i < n; i++)
    {
       unsigned long long d = v;
       // Would be random, but let's go for date based for most of it
@@ -145,5 +148,8 @@ face_alteran (struct tm *t)
       icon_sg (d + 1);
       gfx_pos (gfx_x () + 1, gfx_y (), gfx_a ());
    }
-   gfx_icon (sg01big);
+   if (n == 6)
+      gfx_icon (sg01big);
+   else
+      gfx_icon (sg01);
 }
