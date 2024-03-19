@@ -135,7 +135,7 @@ face_alteran (struct tm *t)
       if (i == 3)
          d = t->tm_hour;
       if (i == 4)
-         d = t->tm_min;
+         d = t->tm_hour * 60 + t->tm_min;
       d %= (38 - i);
       v /= (38 - i);
       for (int c = 0; c <= d; c++)
