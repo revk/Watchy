@@ -19,13 +19,13 @@ mc (gfx_pos_t s, uint8_t c)
   const uint8_t *data=gfx_font_pack0[c-'0'];
    data = gfx_pack (data, &lx, &hx, &ly, &hy, 8);
    uint8_t d = 0;
-   for (gfx_pos_t row = 0; row < h; row++)
+   for (gfx_pos_t row = 0; row < 5; row++)
    {  
-      for (gfx_pos_t col = 0; col < w; col++)
+      for (gfx_pos_t col = 0; col < 3; col++)
       {                         
          if (row >= ly && row < hy && col >= lx && col < hx && !(col & 7))
             d = *data++;
-         if (col >= dx&&(d&0x80))
+         if (d&0x80)
 	 {
 	      gfx_pos (x + col * s, y + row * s, 0);
               gfx_icon (minecraft);
