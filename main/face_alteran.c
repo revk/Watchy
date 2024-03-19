@@ -3,13 +3,12 @@
 #include "face.h"
 
 static void
-digit (gfx_pos_t s, uint8_t c)
+digit (int s, uint8_t c)
 {
    gfx_pos_t x,
      y;
-   gfx_draw (c == ':' ? s : s * 3, s * 8, s, s, &x, &y);
-   // TODO expand to full text logic and processing a string
-   uint16_t m = (c == ':' ? 0x208 : c == '0' ? 0x16F : (1 << (c - '0')) - 1);
+   gfx_draw (c == ':' || c == '.' ? s : s * 3, s * 8, s, s, &x, &y);
+   uint16_t m = (c == ' ' ? 0 : c == '-' ? 0x1C0 : c == ':' ? 0x208 : c == '0' ? 0x16F : (1 << (c - '0')) - 1);
    gfx_pos_t nx = gfx_x ();
    gfx_pos_t ny = gfx_y ();
    gfx_pos_t na = gfx_a ();
@@ -39,32 +38,27 @@ digit (gfx_pos_t s, uint8_t c)
    gfx_pos (nx, ny, na);
 }
 
+static void
+digits (int s, const char *t)
+{
+   while (*t)
+      digit (s, *t++);
+}
+
 void
 face_alteran (struct tm *t)
 {
    char temp[30];
    gfx_pos (0, 0, GFX_T | GFX_L | GFX_H);
-   digit (12, '0' + t->tm_hour / 10);
-   digit (12, '0' + t->tm_hour % 10);
-   digit (12, ':');
-   digit (12, '0' + t->tm_min / 10);
-   digit (12, '0' + t->tm_min % 10);
-   gfx_pos (0, 100, GFX_L | GFX_T | GFX_V);
-   strftime (temp, sizeof (temp), "%a", t);
-   gfx_text (3, "%s", temp);
-   gfx_gap (3);
-   gfx_text (5, "%2d", t->tm_mday);
-   strftime (temp, sizeof (temp), "%b", t);
-   gfx_text (-3, "%s", temp);
-   gfx_pos (199, 100, GFX_R | GFX_T | GFX_V);
-   gfx_text (2, "%4d", t->tm_year + 1900);
-   gfx_gap (10);
-   gfx_text (2, "%5d", steps - stepbase);
-   gfx_pos (199, 199, GFX_B | GFX_R | GFX_V);
+   strftime (temp, sizeof (temp), "%H:%M", t);
+   digits (12, temp);
+   gfx_pos (0, 199, GFX_L | GFX_B | GFX_H);
+   strftime (temp, sizeof (temp), "%F", t);
+   digits (4, temp);
+   gfx_pos (199, 180, GFX_R | GFX_B | GFX_H);
+   sprintf (temp, "%05ld", steps - stepbase);
+   digits (2, temp);
+   gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_battery ();
-   gfx_percent ();
-   gfx_charging ();
-   gfx_pos (180, 199, GFX_B | GFX_R | GFX_V);
    gfx_wifi ();
-   gfx_mqtt ();
 }
