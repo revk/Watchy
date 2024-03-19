@@ -11,15 +11,28 @@ mc (gfx_pos_t s, uint8_t c)
    gfx_pos_t nx = gfx_x ();
    gfx_pos_t ny = gfx_y ();
    gfx_pos_t na = gfx_a ();
-   extern const uint8_t gfx_font0[];
-   const uint8_t *f = gfx_font0 + (c - ' ') * 5;
-   for (uint8_t r = 0; r < 5; r++)
-      for (uint8_t c = 0; c < 3; c++)
-         if (f[r] & (1 << c))
-         {
-            gfx_pos (x + c * s, y + r * s, 0);
-            gfx_icon (minecraft);
-         }
+  uint8_t lx,
+     hx,
+     ly,
+     hy; 
+  extern uint8_t const *gfx_font_pack0[];
+  const uint8_t *data=gfx_font_pack0[c-'0'];
+   data = gfx_pack (data, &lx, &hx, &ly, &hy, 8);
+   uint8_t d = 0;
+   for (gfx_pos_t row = 0; row < h; row++)
+   {  
+      for (gfx_pos_t col = 0; col < w; col++)
+      {                         
+         if (row >= ly && row < hy && col >= lx && col < hx && !(col & 7))
+            d = *data++;
+         if (col >= dx&&(d&0x80))
+	 {
+	      gfx_pos (x + col * s, y + row * s, 0);
+              gfx_icon (minecraft);
+	 }
+         d <<= 1;
+      }
+   }
    gfx_pos (nx, ny, na);
 }
 
