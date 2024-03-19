@@ -127,15 +127,15 @@ face_alteran (struct tm *t)
       unsigned long long d = v;
       // Would be random, but let's go for date based for most of it
       if (i == 0)
-         v = t->tm_year;
+         d = t->tm_year;
       if (i == 1)
-         v = t->tm_mon;
+         d = t->tm_mon;
       if (i == 2)
-         v = t->tm_mday;
+         d = t->tm_mday;
       if (i == 3)
-         v = t->tm_hour;
+         d = t->tm_hour;
       if (i == 4)
-         v = t->tm_min;
+         d = t->tm_min;
       d %= (38 - i);
       v /= (38 - i);
       for (int c = 0; c <= d; c++)
