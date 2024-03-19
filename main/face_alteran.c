@@ -111,7 +111,7 @@ face_alteran (struct tm *t)
    gfx_pos (0, 199, GFX_L | GFX_B | GFX_H);
    strftime (temp, sizeof (temp), "%F", t);
    digits (4, temp);
-   gfx_pos (199, 180, GFX_R | GFX_B | GFX_H);
+   gfx_pos (199 - 2 * 4 * 5, 180, GFX_L | GFX_B | GFX_H);
    sprintf (temp, "%05ld", steps - stepbase);
    digits (2, temp);
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);

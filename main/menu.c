@@ -260,7 +260,6 @@ menu_upgrade (struct tm *t, char key)
    if (!bits.revkstarted)
       return;
    gfx_menu (t, "Upgrade");
-   extern const char *otahost;
    gfx_text (-2, "from...");
    gfx_text (strlen (otahost) > 16 ? -1 : -2, "%s", otahost);
    if (revk_link_down ())
@@ -419,7 +418,6 @@ menu_info (struct tm *t, char key)
    gfx_gap (10);
    gfx_text (2, "WiFi");
    gfx_gap (5);
-   extern const char *wifissid;
    gfx_text (strlen (wifissid) > 16 ? -1 : -2, "%s", wifissid);
    gfx_pos (100, 199 - margin, GFX_C | GFX_B);
    gfx_qr ("HTTPS://WATCHY.REVK.UK", 2);
@@ -448,15 +446,13 @@ menu_mqtt (struct tm *t, char key)
    if (!bits.revkstarted)
       return;
    gfx_menu (t, "MQTT");
-   extern const char *wifissid;
-   extern const char *mqtthost;
    if (!*wifissid)
    {
       gfx_text (-2, "WiFi not set");
       gfx_text (-2, "Use WiFi menu");
       return;
    }
-   if (!*mqtthost)
+   if (!*mqtthost[0])
    {
       gfx_text (-2, "MQTT not set");
       gfx_text (-2, "Use WiFi menu");
@@ -464,7 +460,7 @@ menu_mqtt (struct tm *t, char key)
    }
    gfx_text (2, "Host");
    gfx_gap (5);
-   gfx_text (strlen (mqtthost) > 16 ? -1 : -2, "%s", mqtthost);
+   gfx_text (strlen (mqtthost[0]) > 16 ? -1 : -2, "%s", mqtthost[0]);
    gfx_gap (10);
    gfx_text (2, "Name");
    gfx_gap (5);

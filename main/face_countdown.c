@@ -39,7 +39,7 @@ face_countdown (struct tm *t)
             days--;             // Passed current time
       }
     struct tm deadt = { tm_year: y - 1900, tm_mon: m - 1, tm_mday: d - days, tm_hour: H, tm_min: M, tm_isdst:-1 };
-      t->tm_sec = 0;             // Whole minutes
+      t->tm_sec = 0;            // Whole minutes
       int seconds = mktime (&deadt) - mktime (t);
       if (days < 0)
          days = seconds = 0;    // Deadline reached

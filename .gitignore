@@ -13,3 +13,5 @@ sdkconfig
 makering
 *.dSYM
 icons/*.h
+settings.c
+settings.h
