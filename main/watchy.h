@@ -20,6 +20,7 @@
 #define	GPIOACCINT1	14
 #define	GPIOACCINT2	12
 #define	GPIOBUSY	19
+#define	GPIO32KHZ	33
 
 // Other fixed values
 #define	I2CPORT	0
