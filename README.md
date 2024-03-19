@@ -17,7 +17,7 @@ Faces include:-
 - Death Star (like lunar but *that's no moon*)
 - Minecraft (blocky text, etc)
 - Coundown (to XMAS, days, hours, minutes), my grandkids love this one
-- Alteran digits and random Srtargate address
+- Alteran digits and random Stargate address
 
 ## Build/install
 
