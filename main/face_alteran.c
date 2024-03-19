@@ -45,6 +45,58 @@ digits (int s, const char *t)
       digit (s, *t++);
 }
 
+static const unsigned char *sg[] = {
+   icon_sg01,
+   icon_sg02,
+   icon_sg03,
+   icon_sg04,
+   icon_sg05,
+   icon_sg06,
+   icon_sg07,
+   icon_sg08,
+   icon_sg09,
+   icon_sg10,
+   icon_sg11,
+   icon_sg12,
+   icon_sg13,
+   icon_sg14,
+   icon_sg15,
+   icon_sg16,
+   icon_sg17,
+   icon_sg18,
+   icon_sg19,
+   icon_sg20,
+   icon_sg21,
+   icon_sg22,
+   icon_sg23,
+   icon_sg24,
+   icon_sg25,
+   icon_sg26,
+   icon_sg27,
+   icon_sg28,
+   icon_sg29,
+   icon_sg30,
+   icon_sg31,
+   icon_sg32,
+   icon_sg33,
+   icon_sg34,
+   icon_sg35,
+   icon_sg36,
+   icon_sg37,
+   icon_sg38,
+   icon_sg39,
+   icon_sg40,
+};
+
+static void
+icon_sg (int n)
+{
+   if (n >= sizeof (sg) / sizeof (*sg))
+      return;
+   gfx_square_icon (sg[n], icon_sg01_size, 1);
+
+}
+
 void
 face_alteran (struct tm *t)
 {
@@ -61,13 +113,21 @@ face_alteran (struct tm *t)
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_battery ();
    gfx_wifi ();
-   gfx_pos(0,160,GFX_L|GFX_B|GFX_H);
-   gfx_icon(sg01);
-   gfx_icon(sg02);
-   gfx_icon(sg03);
-   gfx_icon(sg04);
-   gfx_icon(sg05);
-   gfx_icon(sg06);
-   gfx_icon(sg07);
-   gfx_icon(sg08);
+   // Random gate address
+   gfx_pos (0, 150, GFX_L | GFX_B | GFX_H);
+   unsigned long long v = 0;
+   esp_fill_random (&v, sizeof (v));
+   unsigned long long picked = 0;
+   for (int i = 0; i < 6; i++)
+   {
+      unsigned long long d = v % (38 - i);
+      v /= (38 - i);
+      for (int c = 0; c <= d; c++)
+         if (picked & (1ULL << c))
+            d++;
+      picked |= (1ULL << d);
+      icon_sg (d + 1);
+      gfx_pos (gfx_x () + 2, gfx_y (), GFX_L | GFX_B | GFX_H);
+   }
+   gfx_icon (sg01big);
 }
