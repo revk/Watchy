@@ -61,4 +61,13 @@ face_alteran (struct tm *t)
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_battery ();
    gfx_wifi ();
+   gfx_pos(0,160,GFX_L|GFX_B|GFX_H);
+   gfx_icon(sg01);
+   gfx_icon(sg02);
+   gfx_icon(sg03);
+   gfx_icon(sg04);
+   gfx_icon(sg05);
+   gfx_icon(sg06);
+   gfx_icon(sg07);
+   gfx_icon(sg08);
 }
