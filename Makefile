@@ -14,6 +14,10 @@ all:	settings.h
 
 settings.h:     components/ESP32-RevK/revk_settings settings.def components/ESP32-RevK/settings.def
 	components/ESP32-RevK/revk_settings $^
+
+components/ESP32-RevK/revk_settings: components/ESP32-RevK/revk_settings.c
+	make -C components/ESP32-RevK
+
 beta:   
 	-git pull
 	-git submodule update --recursive
