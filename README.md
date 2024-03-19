@@ -2,11 +2,22 @@
 
 <img align=right width=25% src='Manuals/face.jpg'>
 
-This is an ESP IDF basd build of code for the Watchy, available from [SQFMI](https://watchy.sqfmi.com).
+This is an ESP IDF based build of code for the Watchy. Hardware available from [SQFMI](https://watchy.sqfmi.com).
 
-It includes menus on the watch for a choice of faces, time zones, WiFi setting, and over teh air s/w updates. It inlcudes step counters.
+It includes menus on the watch for a choice of faces, time zones, WiFi setting, and over the air s/w updates. It inlcudes step counters.
 
-It does not yet do the buzzer, and does not do weather app stuff. It does have the good battery life you woudl expect (several weeks per charge).
+It does not yet do the buzzer. It does have the good battery life you would expect (several weeks per charge).
+
+Faces include:-
+
+- Simple digital face
+- Combined analogue/digital
+- Analogue face
+- Lunar (with moon phase, next full moon date/time)
+- Death Star (like lunar but *that's no moon*)
+- Minecraft (blocky text, etc)
+- Coundown (to XMAS, dayes, hours, minutes), my grandkids love this one
+- Alteran digits and random Srtargate address
 
 ## Build/install
 
