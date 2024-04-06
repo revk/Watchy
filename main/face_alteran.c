@@ -117,7 +117,13 @@ face_alteran (struct tm *t)
    digits (2, temp);
    gfx_pos (199, 199, GFX_R | GFX_B | GFX_H);
    gfx_battery ();
-   //Random gate address
+   // Day of week
+   for (int i = 0; i < t->tm_wday; i++)
+   {
+      gfx_pos (25 * i + 2, 110, GFX_L | GFX_B | GFX_H);
+      gfx_fill (21, 5, 255);
+   }
+   // Random gate address
    gfx_pos (0, 150, GFX_L | GFX_B | GFX_H);
    unsigned long long v = 0;
    esp_fill_random (&v, sizeof (v));
