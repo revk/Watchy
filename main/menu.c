@@ -321,10 +321,11 @@ menu_face (struct tm *t, char key)
    if (menu3)
    {                            // Selected
       menu1 = 0;
-      face = menu2 - 1;
       jo_t j = jo_object_alloc ();
-      jo_int (j, "face", face);
+      jo_int (j, "face", menu2 - 1);
       revk_setting (j);
+      jo_free (&j);
+      face = menu2 - 1;
    }
 }
 
@@ -334,11 +335,11 @@ menu_flip (struct tm *t, char key)
    bits.startup = 1;
    if (!bits.revkstarted)
       return;
-   flip ^= 3;
    jo_t j = jo_object_alloc ();
-   jo_int (j, "flip", flip);
+   jo_int (j, "flip", flip ^ 3);
    revk_setting (j);
    jo_free (&j);
+   flip ^= 3;
    gfx_flip (flip);
    menu1 = 0;
 }
@@ -349,11 +350,11 @@ menu_turn (struct tm *t, char key)
    bits.startup = 1;
    if (!bits.revkstarted)
       return;
-   flip ^= 5;
    jo_t j = jo_object_alloc ();
-   jo_int (j, "flip", flip);
+   jo_int (j, "flip", flip ^ 5);
    revk_setting (j);
    jo_free (&j);
+   flip ^= 5;
    gfx_flip (flip);
    menu1 = 0;
 }

@@ -400,7 +400,7 @@ app_main ()
          read_steps ();
          read_battery ();
       }
-      if (key)
+      if (key || now != last)
       {
          do
             face_show (now, key);
