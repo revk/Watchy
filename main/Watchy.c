@@ -185,7 +185,7 @@ key_check (uint64_t ext1)
          if ((btns & (1 << b)) && !(last_btn & (1 << b)))
          {
             last_btn |= (1 << b);
-            char key = "URDLLRDU"[(b ^ flip) & 7];      // Mapped for display flipping
+            char key = "URDLUDRL"[(b ^ flip) & 7];      // Mapped for display flipping
             ESP_LOGI (TAG, "Key %d=%c (flip %X)", b, key, flip);
             xSemaphoreTake (key_mutex, portMAX_DELAY);
             if (key1)
