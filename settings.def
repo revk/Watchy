@@ -1,5 +1,5 @@
-u8	face		0		.live=1	.rtc=1
-u8	flip		0		.live=1	.rtc=1
-s8	testday		0		.rtc=1
+u8	face				.live=1	.rtc=1
+u8	flip				.live=1	.rtc=1
+s8	testday				.rtc=1
 u32	stepday				.live=1	.rtc=1	.array=7
 s	deadline	"0000-12-25"	
