@@ -6,7 +6,7 @@
 	url = https://github.com/revk/QR
 [submodule "components/ESP32-RevK"]
 	path = components/ESP32-RevK
-	url = https://github.com/revk/ESP32-RevK
+	url = https://codeberg.org/RevK/ESP32-RevK
 [submodule "components/ESP32-GFX"]
 	path = components/ESP32-GFX
 	url = https://github.com/revk/ESP32-GFX
